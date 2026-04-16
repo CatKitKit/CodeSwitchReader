@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Cards - Code-switch Reader</title>
+  <style>
+    :root {
+      --bg-color: #e5ebf7;
+      --card-bg: #ffffff;
+      --text-color: #222;
+      --border-color: #ddd;
+      --accent: #007bff;
+      --hard: #dc3545;
+      --soso: #ffc107;
+      --easy: #28a745;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --border-color: #333;
+      --accent: #4dabf7;
+    }
+
+    rt { font-size: 0.6em; color: var(--accent); user-select: none; font-weight: normal; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      transition: background 0.3s;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: 2px solid var(--text-color);
+      color: var(--text-color);
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 1.5rem; }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+    button:hover { opacity: 0.9; }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-hard { background: var(--hard); color: white; }
+    .btn-soso { background: var(--soso); color: #222; }
+    .btn-easy { background: var(--easy); color: white; }
+
+    /* Dashboard */
+    #dashboard { display: block; }
+    .deck-list { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .deck-item {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .deck-item:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+
+    /* Review UI */
+    #reviewArea { display: none; text-align: left; }
+    .editable-field { position: relative; display: flex; align-items: center; padding: 2px 0; flex-wrap: wrap; }
+    .editable-field .edit-icon { display: inline-block; opacity: 0; cursor: pointer; margin-left: 8px; font-size: 1rem; transition: opacity 0.2s, transform 0.1s; pointer-events: none; }
+    .editable-field:hover .edit-icon { opacity: 0.5; pointer-events: auto; }
+    .editable-field .edit-icon:hover { opacity: 1; transform: scale(1.1); }
+    .review-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+    .review-item {
+      background: var(--card-bg);
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 15px;
+    }
+    .review-item:hover { background: rgba(0,0,0,0.02); }
+    .review-text { flex: 1; font-size: 0.95rem; display: flex; flex-direction: column; align-items: flex-start; }
+    .review-col1 { font-weight: bold; margin-bottom: 4px; }
+    .review-col2 { color: #666; }
+    .review-hint { font-size: 0.8rem; color: var(--accent); margin-top: 4px; }
+    .delete-btn-sm {
+        background: none; border: none; color: var(--hard); cursor: pointer;
+        font-size: 1.2rem; font-weight: bold; padding: 0 5px; opacity: 0.5;
+    }
+    .delete-btn-sm:hover { opacity: 1; }
+    #undoToast {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: #333; color: white; padding: 10px 20px; border-radius: 30px;
+        display: none; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+    }
+    #undoToast button {
+        background: var(--accent); color: white; padding: 5px 15px; font-size: 0.9rem;
+    }
+
+    /* Study UI */
+    #studyArea { display: none; }
+    .flashcard {
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      border: 2px dashed var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .cloze-blank {
+      display: inline-block;
+      min-width: 50px;
+      border-bottom: 3px solid var(--accent);
+      color: transparent;
+      margin: 0 5px;
+    }
+    .cloze-blank rt {
+      visibility: hidden;
+    }
+    .revealed .cloze-blank {
+      color: var(--accent);
+      border-bottom: none;
+      font-weight: bold;
+    }
+    .revealed .cloze-blank rt {
+      visibility: visible;
+    }
+
+    .voice-controls {
+      display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .voice-settings {
+      display: flex; gap: 10px; align-items: center; justify-content: center;
+      margin-bottom: 15px; font-size: 0.9rem;
+      background: rgba(0,0,0,0.03); padding: 10px; border-radius: 10px;
+    }
+    .voice-settings select { padding: 5px; border-radius: 5px; border: 1px solid var(--border-color); max-width: 200px;}
+
+    #answerArea { display: none; margin-top: 20px; }
+    .col3-note { font-size: 1rem; color: #666; margin-top: 15px; font-style: italic; }
+
+    .rating-buttons {
+      display: flex; gap: 10px; justify-content: center; margin-top: 20px;
+    }
+    .rating-buttons button { flex: 1; padding: 15px; font-size: 1.1rem; }
+    
+    .top-nav { display: flex; justify-content: space-between; margin-bottom: 15px; }
+
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🗂️ Study Cards</h1>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="file" id="importFile" style="display:none" accept=".json,.csv" onchange="importDB(event)">
+        <button class="btn-primary" style="background:#17a2b8;" onclick="document.getElementById('importFile').click()">📥 Import</button>
+        <button class="btn-primary" style="background:#28a745;" onclick="backupCSV()">📊 Backup (CSV)</button>
+        <button class="btn-primary" onclick="backupDB()">💾 Backup (JSON)</button>
+        <button class="theme-toggle" id="themeBtn" type="button" onclick="toggleTheme()">🌙 ☀️</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="card">
+    <h2>Your Decks</h2>
+    <div id="deckList" class="deck-list">Loading...</div>
+    <div style="font-size: 0.85rem; color: #888; margin-top: 25px; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 15px;">
+        ⚠️ <b>Note:</b> All data is auto-saved and stored locally in your browser. Cards and progress will be erased if you clear your browser data or cache. <br>Be sure to <b>Backup</b> occasionally, especially after a long study session! <br><span style="font-size: 0.8rem; opacity: 0.8;">(Importing a backup is not necessary each time; only needed when data is lost or moving to a new device)</span>
+    </div>
+  </div>
+
+  <!-- Study Area -->
+  <div id="studyArea" class="card">
+    <div class="top-nav" style="align-items: center;">
+        <button onclick="goBack()" style="background: var(--border-color);">⬅ Back</button>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <span id="deckTitle" style="font-weight: bold;">Deck Name</span>
+            <span id="cardCount" style="color: #888; font-size: 0.85rem;">0 cards</span>
+        </div>
+        <div style="width: 70px;"></div>
+    </div>
+
+    <div class="voice-settings">
+        <span>🎤 Voice:</span>
+        <select id="voiceSelect"></select>
+        <span>Speed:</span>
+        <input type="range" id="voiceSpeed" min="0.5" max="2.0" step="0.1" value="1.0" style="width:80px">
+        <span id="speedVal">1.0x</span>
+    </div>
+
+    <div class="flashcard" id="flashcardContent" style="position: relative;">
+        <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 8px;">
+            <button onclick="hideCurrentCard()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6;" title="Hide this card from study">📴</button>
+            <button onclick="deleteCurrentCard()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6;" title="Delete this card">🗑️</button>
+        </div>
+        <div id="frontText">Front</div>
+        
+        <!-- NEW HINT AREA -->
+        <div id="hintArea" style="margin-top: 15px; font-size: 1rem; color: #888; min-height: 30px;"></div>
+
+        <div id="answerArea">
+            <div id="backText" style="margin-top:20px; font-weight:bold; color:var(--accent);">Back</div>
+            <div id="col3Text" class="col3-note">Notes</div>
+        </div>
+    </div>
+
+    <div class="voice-controls">
+        <button onclick="playTTS('word')" style="background:#e2e6ea;">🔊 Word</button>
+        <button onclick="playTTS('cloze')" style="background:#e2e6ea;">🔊 Cloze</button>
+        <button onclick="playTTS('sentence')" style="background:#e2e6ea;">🔊 Sentence</button>
+    </div>
+
+    <button id="revealBtn" class="btn-primary" style="width:100%; padding:20px; font-size:1.2rem;" onclick="revealCard()">👀 Reveal</button>
+
+    <div id="ratingBtns" style="display:none; flex-direction: column; align-items: center;">
+        <div class="rating-buttons" style="width: 100%;">
+            <button class="btn-hard" onclick="rateCard('hard')">Hard</button>
+            <button class="btn-soso" onclick="rateCard('soso')">So-so</button>
+            <button class="btn-easy" onclick="rateCard('easy')">Easy</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #888; margin-top: 15px; text-align: center;">
+            Cards marked as <b>Hard</b> will reappear sooner, while <b>Easy</b> cards will be pushed further into the future.
+        </p>
+    </div>
+  </div>
+
+  <!-- Review Area -->
+  <div id="reviewArea" class="card">
+    <div class="top-nav" style="align-items: center;">
+        <button onclick="goBack()" style="background: var(--border-color);">⬅ Back</button>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <span id="reviewDeckTitle" style="font-weight: bold;">Deck Name</span>
+            <span id="reviewCardCount" style="color: #888; font-size: 0.85rem;">0 cards</span>
+        </div>
+        <div style="width: 70px;"></div>
+    </div>
+    <div id="reviewList" class="review-list">Loading...</div>
+  </div>
+
+  <div id="undoToast">
+      <span>Card deleted.</span>
+      <button onclick="undoDeleteReview()" style="cursor: pointer; border: none; border-radius: 5px;">Undo</button>
+  </div>
+
+<script>
+  // Theme logic
+  let currentTheme = "light";
+  try {
+      const raw = localStorage.getItem("coleLanguageLab_v9_turbo");
+      if (raw) {
+          const state = JSON.parse(raw);
+          if (state.theme === "dark") currentTheme = "dark";
+      }
+  } catch (e) {}
+  document.documentElement.setAttribute("data-theme", currentTheme);
+
+  function toggleTheme() {
+      currentTheme = (currentTheme === "dark") ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", currentTheme);
+      try {
+          const raw = localStorage.getItem("coleLanguageLab_v9_turbo");
+          let state = raw ? JSON.parse(raw) : {};
+          state.theme = currentTheme;
+          localStorage.setItem("coleLanguageLab_v9_turbo", JSON.stringify(state));
+      } catch(e) {}
+  }
+
+  let db;
+  let currentDeck = "";
+  let queue = [];
+  let unseen = [];
+  let currentCard = null;
+  let sessionCount = 0;
+
+  // --- Dictionary Logic ---
+  let jpTokenizer = null;
+  
+  let readerSettings = {};
+  try {
+      const raw = localStorage.getItem("coleLanguageLab_v10_grid_beta");
+      if (raw) readerSettings = JSON.parse(raw);
+  } catch(e) {}
+
+  if (readerSettings.useKuromoji && !window.kuromoji) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js";
+      script.onload = () => {
+          window.kuromoji.builder({ dicPath: "dict/" }).build((err, tokenizer) => {
+              if (!err) { jpTokenizer = tokenizer; if (currentCard) nextCard(); }
+          });
+      };
+      document.head.appendChild(script);
+  }
+
+  if (readerSettings.usePinyin && !window.pinyinPro) {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/pinyin-pro";
+      script.onload = () => { if (currentCard) nextCard(); };
+      document.head.appendChild(script);
+  }
+
+  if (readerSettings.useJyutping && !window.ToJyutping) {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/to-jyutping@3.1.1/dist/index.js";
+      script.onload = () => { if (currentCard) nextCard(); };
+      document.head.appendChild(script);
+  }
+
+  function katakanaToHiragana(kata) {
+      return kata.replace(/[\u30a1-\u30f6]/g, function(match) {
+          return String.fromCharCode(match.charCodeAt(0) - 0x60);
+      });
+  }
+
+  function applyRuby(text, deckName) {
+      if (!text) return text;
+      const d = (deckName || "").toLowerCase();
+      
+      if (d.includes("japan") && jpTokenizer) {
+          const tokens = jpTokenizer.tokenize(text);
+          let resultHTML = "";
+          
+          for (const t of tokens) {
+              let surface = t.surface_form;
+              let reading = t.reading && t.reading !== "*" ? katakanaToHiragana(t.reading) : surface;
+              let hasKanji = /[\u4e00-\u9faf]/.test(surface);
+              
+              if (hasKanji && surface !== reading && reading.length > 0) {
+                  let suffixLength = 0;
+                  while (suffixLength < surface.length && suffixLength < reading.length) {
+                      if (surface[surface.length - 1 - suffixLength] === reading[reading.length - 1 - suffixLength] && /[\u3040-\u309f]/.test(surface[surface.length - 1 - suffixLength])) {
+                          suffixLength++;
+                      } else break;
+                  }
+                  let prefixLength = 0;
+                  while (prefixLength < surface.length - suffixLength && prefixLength < reading.length - suffixLength) {
+                      if (surface[prefixLength] === reading[prefixLength] && /[\u3040-\u309f]/.test(surface[prefixLength])) {
+                          prefixLength++;
+                      } else break;
+                  }
+                  
+                  const baseKanji = surface.substring(prefixLength, surface.length - suffixLength);
+                  const baseReading = reading.substring(prefixLength, reading.length - suffixLength);
+                  
+                  let chunkHtml = "";
+                  if (prefixLength > 0) chunkHtml += surface.substring(0, prefixLength);
+                  if (baseKanji) {
+                      chunkHtml += `<ruby>${baseKanji}<rt>${baseReading}</rt></ruby>`;
+                  } else {
+                      chunkHtml += surface;
+                  }
+                  if (suffixLength > 0) chunkHtml += surface.substring(surface.length - suffixLength);
+                  
+                  resultHTML += chunkHtml;
+              } else {
+                  resultHTML += surface;
+              }
+          }
+          return resultHTML;
+      }
+      
+      if ((d.includes("cantonese") || d.includes("jyutping")) && window.ToJyutping && window.ToJyutping.getJyutpingText) {
+          if (!/[\u4e00-\u9fff]/.test(text)) return text;
+          const jyutpings = window.ToJyutping.getJyutpingText(text);
+          const chars = Array.from(text);
+          const readings = jyutpings.split(" ");
+          
+          if (chars.length === readings.length) {
+              let resultHTML = "";
+              for(let i=0; i<chars.length; i++) {
+                  if (/[\u4e00-\u9fff]/.test(chars[i])) {
+                      resultHTML += `<ruby>${chars[i]}<rt>${readings[i]}</rt></ruby>`;
+                  } else {
+                      resultHTML += chars[i];
+                  }
+              }
+              return resultHTML;
+          } else {
+              return `<ruby>${text}<rt>${jyutpings}</rt></ruby>`;
+          }
+      }
+      
+      if ((d.includes("mandarin") || d.includes("chinese")) && window.pinyinPro && window.pinyinPro.pinyin) {
+           if (!/[\u4e00-\u9fff]/.test(text)) return text;
+           const result = window.pinyinPro.pinyin(text, { type: 'all' });
+           if (result && Array.isArray(result)) {
+               let resultHTML = "";
+               result.forEach(item => {
+                   if (item.isZh) {
+                       resultHTML += `<ruby>${item.origin}<rt>${item.pinyin}</rt></ruby>`;
+                   } else {
+                       resultHTML += item.origin;
+                   }
+               });
+               return resultHTML;
+           }
+      }
+      
+      return text;
+  }
+
+  function applyRubyToHTML(htmlStr, deckName) {
+      if (!htmlStr) return htmlStr;
+      const div = document.createElement('div');
+      div.innerHTML = htmlStr;
+      
+      const walk = document.createTreeWalker(div, NodeFilter.SHOW_TEXT, null, false);
+      const nodesToReplace = [];
+      let n;
+      while(n = walk.nextNode()) {
+          if (n.nodeValue.trim() !== "") nodesToReplace.push(n);
+      }
+      
+      nodesToReplace.forEach(node => {
+          const span = document.createElement('span');
+          span.innerHTML = applyRuby(node.nodeValue, deckName);
+          node.parentNode.replaceChild(span, node);
+          // Unwrap the span to avoid cluttering DOM
+          while(span.firstChild) {
+              span.parentNode.insertBefore(span.firstChild, span);
+          }
+          span.parentNode.removeChild(span);
+      });
+      
+      return div.innerHTML;
+  }
+  
+  const synth = window.speechSynthesis;
+  let voices = [];
+
+  document.getElementById("voiceSpeed").oninput = function() {
+      document.getElementById("speedVal").textContent = this.value + "x";
+      if(currentDeck) localStorage.setItem(`cole_speed_${currentDeck}`, this.value);
+  }
+  document.getElementById("voiceSelect").onchange = function() {
+      if(currentDeck) localStorage.setItem(`cole_voice_${currentDeck}`, this.value);
+  }
+
+  function initVoices() {
+      const select = document.getElementById("voiceSelect");
+      const prevValue = select.value;
+
+      voices = synth.getVoices();
+      select.innerHTML = "";
+      voices.forEach((v, i) => {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = `${v.name} (${v.lang})`;
+          select.appendChild(opt);
+      });
+
+      // Restore previously selected voice to prevent resetting during playback
+      if (prevValue !== "") {
+          select.value = prevValue;
+      }
+      
+      // If we are in a deck, ensure the saved setting is applied
+      if (currentDeck) {
+          const savedVoice = localStorage.getItem(`cole_voice_${currentDeck}`);
+          if (savedVoice !== null) select.value = savedVoice;
+      }
+  }
+  synth.onvoiceschanged = initVoices;
+  initVoices();
+
+  // Initialize DB
+  const request = indexedDB.open("coleFlashcardsDB", 1);
+  request.onupgradeneeded = function(event) {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains("cards")) {
+          const store = db.createObjectStore("cards", { keyPath: "id", autoIncrement: true });
+          store.createIndex("deck", "deck", { unique: false });
+      }
+  };
+  request.onsuccess = function(event) {
+      db = event.target.result;
+      loadDashboard();
+  };
+  request.onerror = function(event) {
+      alert("Database error: " + event.target.error);
+  };
+
+  function loadDashboard() {
+      document.getElementById("dashboard").style.display = "block";
+      document.getElementById("studyArea").style.display = "none";
+      const list = document.getElementById("deckList");
+      list.innerHTML = "Loading...";
+
+      const transaction = db.transaction(["cards"], "readonly");
+      const store = transaction.objectStore("cards");
+      const request = store.getAll();
+
+      request.onsuccess = function(event) {
+          const allCards = event.target.result;
+          const decks = {};
+          
+          allCards.forEach(card => {
+              if(!decks[card.deck]) decks[card.deck] = { count: 0, new: 0 };
+              decks[card.deck].count++;
+              if(card.isNew) decks[card.deck].new++;
+          });
+
+          list.innerHTML = "";
+          if(Object.keys(decks).length === 0) {
+              list.innerHTML = "<p>No cards found. Go to the Reader Notebook to send cards here!</p>";
+              return;
+          }
+
+          for (const [deckName, info] of Object.entries(decks)) {
+              const div = document.createElement("div");
+              div.className = "deck-item";
+              
+              const alias = localStorage.getItem(`cole_deck_alias_${deckName}`);
+              const displayName = alias ? `${deckName} <span style="color:var(--accent); font-size:0.9em; font-weight:normal;">(${alias})</span>` : deckName;
+
+              div.innerHTML = `
+                  <div>
+                      <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                          ${displayName}
+                          <button style="background:none; border:none; cursor:pointer; font-size:0.8em; opacity:0.5; padding:0;" onclick="renameDeck('${deckName}')" title="Add note/alias to deck">✏️</button>
+                      </h3>
+                      <span style="font-size:0.9rem; color:#666;">${info.count} total (${info.new} new)</span>
+                  </div>
+                  <div style="display:flex; gap:10px;">
+                      <button class="btn-primary" onclick="startStudy('${deckName}')">Study</button>
+                      <button class="btn-primary" style="background:#17a2b8;" onclick="startReview('${deckName}')">Review</button>
+                      <button class="btn-hard" style="padding: 10px;" title="Delete Deck" onclick="deleteDeck('${deckName}')">🗑️</button>
+                  </div>
+              `;
+              list.appendChild(div);
+          }
+      };
+  }
+
+  function renameDeck(deckName) {
+      const currentAlias = localStorage.getItem(`cole_deck_alias_${deckName}`) || "";
+      const newAlias = prompt(`Add a note/nickname for ${deckName} (e.g. German):`, currentAlias);
+      if (newAlias !== null) {
+          if (newAlias.trim() === "") {
+              localStorage.removeItem(`cole_deck_alias_${deckName}`);
+          } else {
+              localStorage.setItem(`cole_deck_alias_${deckName}`, newAlias.trim());
+          }
+          loadDashboard();
+      }
+  }
+
+  function deleteDeck(deckName) {
+      if (!confirm(`Are you sure you want to completely delete the deck "${deckName}" and all its cards? This cannot be undone.`)) return;
+
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      const index = store.index("deck");
+      const request = index.getAllKeys(deckName);
+
+      request.onsuccess = function() {
+          const keys = request.result;
+          keys.forEach(key => store.delete(key));
+      };
+
+      transaction.oncomplete = function() {
+          loadDashboard();
+      };
+
+      transaction.onerror = function(err) {
+          alert("Error deleting deck: " + err.target.error);
+      };
+  }
+
+  function startStudy(deckName) {
+      currentDeck = deckName;
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("studyArea").style.display = "block";
+      
+      const alias = localStorage.getItem(`cole_deck_alias_${deckName}`);
+      document.getElementById("deckTitle").innerHTML = alias ? `${deckName} <span style="font-size:0.85em; font-weight:normal; opacity:0.8;">(${alias})</span>` : deckName;
+      
+      // Load saved voice settings for this deck
+      const savedVoice = localStorage.getItem(`cole_voice_${deckName}`);
+      if(savedVoice !== null) document.getElementById("voiceSelect").value = savedVoice;
+      const savedSpeed = localStorage.getItem(`cole_speed_${deckName}`);
+      if(savedSpeed !== null) {
+          document.getElementById("voiceSpeed").value = savedSpeed;
+          document.getElementById("speedVal").textContent = savedSpeed + "x";
+      }
+
+      const transaction = db.transaction(["cards"], "readonly");
+      const store = transaction.objectStore("cards");
+      const index = store.index("deck");
+      const request = index.getAll(deckName);
+
+      request.onsuccess = function(event) {
+          let cards = event.target.result;
+          
+          // Filter out hidden cards
+          cards = cards.filter(c => !c.isHidden);
+          
+          document.getElementById("cardCount").textContent = cards.length + " cards";
+          
+          // Separate into unseen and queue
+          unseen = cards.filter(c => c.isNew);
+          queue = cards.filter(c => !c.isNew);
+          
+          // Migrate and sort by dueTurn
+          queue.forEach(c => {
+              if (c.dueTurn === undefined) c.dueTurn = c.queuePos || 0;
+              if (c.ease === undefined) c.ease = 2.5;
+              if (c.interval === undefined) c.interval = 0;
+          });
+          queue.sort((a, b) => a.dueTurn - b.dueTurn);
+          
+          sessionCount = 0;
+          nextCard();
+      };
+  }
+
+  function goBack() {
+      currentCard = null;
+      document.getElementById("studyArea").style.display = "none";
+      document.getElementById("reviewArea").style.display = "none";
+      document.getElementById("undoToast").style.display = "none";
+      lastDeletedCard = null;
+      loadDashboard();
+  }
+
+  let lastDeletedCard = null;
+  let undoTimeout = null;
+
+  function startReview(deckName) {
+      currentDeck = deckName;
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("studyArea").style.display = "none";
+      document.getElementById("reviewArea").style.display = "block";
+      document.getElementById("undoToast").style.display = "none";
+      
+      const alias = localStorage.getItem(`cole_deck_alias_${deckName}`);
+      document.getElementById("reviewDeckTitle").innerHTML = alias ? `${deckName} <span style="font-size:0.85em; font-weight:normal; opacity:0.8;">(${alias})</span>` : deckName;
+      
+      renderReviewList();
+  }
+
+  function renderReviewList() {
+      const list = document.getElementById("reviewList");
+      list.innerHTML = "Loading...";
+
+      const transaction = db.transaction(["cards"], "readonly");
+      const store = transaction.objectStore("cards");
+      const index = store.index("deck");
+      const request = index.getAll(currentDeck);
+
+      request.onsuccess = function(event) {
+          const cards = event.target.result;
+          document.getElementById("reviewCardCount").textContent = cards.length + " cards";
+          list.innerHTML = "";
+
+          if (cards.length === 0) {
+              list.innerHTML = "<p style='text-align:center; color:#888;'>This deck is empty.</p>";
+              return;
+          }
+
+          cards.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+          cards.forEach(card => {
+              const div = document.createElement("div");
+              div.className = "review-item";
+              div.id = `review-item-${card.id}`;
+              
+              let hintHTML = card.col3 
+                  ? `<div class="review-hint editable-field" id="col3-container-${card.id}"><span style="flex: 0 1 auto;">💡 ${card.col3}</span><span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col3')">🪄</span></div>` 
+                  : `<div class="review-hint editable-field" id="col3-container-${card.id}"><span style="flex:1; cursor:pointer; opacity: 0.5;" onclick="startEditReview(${card.id}, 'col3')">[ + add hint/note ]</span><span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col3')">🪄</span></div>`;
+              
+              const isChecked = !card.isHidden ? "checked" : "";
+              div.innerHTML = `
+                  <div class="review-text">
+                      <div class="review-col1 editable-field" id="col1-container-${card.id}">
+                          <span style="flex: 0 1 auto;">${card.col1 || ""}</span>
+                          <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col1')">🪄</span>
+                      </div>
+                      <div class="review-col2 editable-field" id="col2-container-${card.id}">
+                          <span style="flex: 0 1 auto;">${card.col2 || ""}</span>
+                          <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col2')">🪄</span>
+                      </div>
+                      ${hintHTML}
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 15px;">
+                      <input type="checkbox" title="Uncheck to hide card in flashcard" ${isChecked} onchange="toggleHideReview(${card.id}, this.checked)" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+                      <button class="delete-btn-sm" onclick="deleteCardReview(${card.id})" title="Delete Card">×</button>
+                  </div>
+              `;
+              list.appendChild(div);
+          });
+      };
+  }
+
+  function deleteCardReview(id) {
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      const request = store.get(id);
+
+      request.onsuccess = function(event) {
+          const card = event.target.result;
+          if (card) {
+              lastDeletedCard = card;
+              store.delete(id).onsuccess = () => {
+                  const elem = document.getElementById(`review-item-${id}`);
+                  if (elem) elem.remove();
+                  const countSpan = document.getElementById("reviewCardCount");
+                  const currentCount = parseInt(countSpan.textContent) || 0;
+                  if (currentCount > 0) countSpan.textContent = (currentCount - 1) + " cards";
+                  showUndoToast();
+              };
+          }
+      };
+  }
+
+  function showUndoToast() {
+      const toast = document.getElementById("undoToast");
+      toast.style.display = "flex";
+      if (undoTimeout) clearTimeout(undoTimeout);
+      undoTimeout = setTimeout(() => {
+          toast.style.display = "none";
+          lastDeletedCard = null;
+      }, 5000);
+  }
+
+  function undoDeleteReview() {
+      if (!lastDeletedCard) return;
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      
+      delete lastDeletedCard.id;
+
+      store.add(lastDeletedCard).onsuccess = () => {
+          lastDeletedCard = null;
+          document.getElementById("undoToast").style.display = "none";
+          if (undoTimeout) clearTimeout(undoTimeout);
+          renderReviewList(); // It's okay to full re-render on undo to keep code simple
+      };
+  }
+
+  function startEditReview(id, field) {
+      const transaction = db.transaction(["cards"], "readonly");
+      const store = transaction.objectStore("cards");
+      const request = store.get(id);
+      
+      request.onsuccess = function(event) {
+          const card = event.target.result;
+          if (card) {
+              const safeText = (card[field] || "").replace(/"/g, '&quot;');
+              const safeOriginal = (card[field] || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              const parent = document.getElementById(`${field}-container-${id}`);
+              
+              parent.innerHTML = `
+                  <div style="display:flex; gap:8px; align-items:center; width:100%;">
+                      <input type="text" id="edit-input-${id}-${field}" value="${safeText}" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:4px; background:var(--bg-color); color:var(--text-color); font-size: 0.95rem;">
+                      <button onclick="saveEditReview(${id}, '${field}')" style="background:none; border:none; cursor:pointer; color:var(--easy); font-size:1.2rem; padding:0; transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Save">✔</button>
+                      <button onclick="cancelEditReview(${id}, '${field}', '${safeOriginal}')" style="background:none; border:none; cursor:pointer; color:var(--hard); font-size:1.2rem; padding:0; transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancel">🗴</button>
+                  </div>
+              `;
+              const input = document.getElementById(`edit-input-${id}-${field}`);
+              input.focus();
+              input.addEventListener("keydown", (e) => {
+                  if (e.key === "Enter") saveEditReview(id, field);
+                  if (e.key === "Escape") cancelEditReview(id, field, card[field] || "");
+              });
+          }
+      };
+  }
+
+  function cancelEditReview(id, field, originalText) {
+      const parent = document.getElementById(`${field}-container-${id}`);
+      if (parent) {
+          if (field === 'col3') {
+              if (originalText.trim() === "") {
+                  parent.innerHTML = `<span style="flex:1; cursor:pointer; opacity: 0.5;" onclick="startEditReview(${id}, 'col3')">[ + add hint/note ]</span><span class="edit-icon" title="Edit" onclick="startEditReview(${id}, 'col3')">🪄</span>`;
+              } else {
+                  parent.innerHTML = `<span style="flex: 0 1 auto;">💡 ${originalText}</span><span class="edit-icon" title="Edit" onclick="startEditReview(${id}, 'col3')">🪄</span>`;
+              }
+          } else {
+              parent.innerHTML = `
+                  <span style="flex: 0 1 auto;">${originalText}</span>
+                  <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')">🪄</span>
+              `;
+          }
+      }
+  }
+
+  function saveEditReview(id, field) {
+      const input = document.getElementById(`edit-input-${id}-${field}`);
+      if (!input) return;
+      const newText = input.value.trim();
+      
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      const request = store.get(id);
+      
+      request.onsuccess = function(event) {
+          const card = event.target.result;
+          if (card) {
+              card[field] = newText;
+              store.put(card).onsuccess = function() {
+                  const parent = document.getElementById(`${field}-container-${id}`);
+                  if (parent) {
+                      parent.innerHTML = `
+                          <span style="flex: 0 1 auto;">${newText}</span>
+                          <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')">🪄</span>
+                      `;
+                  }
+              };
+          }
+      };
+  }
+
+  function saveQueueState() {
+      // Legacy wrapper: cards are now saved individually on rating.
+      return Promise.resolve();
+  }
+
+  function hideCurrentCard() {
+      if(!currentCard) return;
+      
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      currentCard.isHidden = true;
+      store.put(currentCard);
+      
+      transaction.oncomplete = () => {
+          currentCard = null;
+          const countSpan = document.getElementById("cardCount");
+          const currentCount = parseInt(countSpan.textContent) || 0;
+          if (currentCount > 0) countSpan.textContent = (currentCount - 1) + " cards";
+          nextCard();
+      };
+      transaction.onerror = (err) => {
+          alert("Error hiding card: " + err.target.error);
+      };
+  }
+
+  function toggleHideReview(id, isVisible) {
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      const request = store.get(id);
+      
+      request.onsuccess = function(event) {
+          const card = event.target.result;
+          if (card) {
+              card.isHidden = !isVisible;
+              store.put(card);
+          }
+      };
+  }
+
+  function deleteCurrentCard() {
+      if(!currentCard) return;
+      if(!confirm("Are you sure you want to delete this card?")) return;
+      
+      const transaction = db.transaction(["cards"], "readwrite");
+      const store = transaction.objectStore("cards");
+      store.delete(currentCard.id);
+      
+      transaction.oncomplete = () => {
+          currentCard = null;
+          // Update card count visually
+          const countSpan = document.getElementById("cardCount");
+          const currentCount = parseInt(countSpan.textContent) || 0;
+          if (currentCount > 0) countSpan.textContent = (currentCount - 1) + " cards";
+          
+          nextCard();
+      };
+      transaction.onerror = (err) => {
+          alert("Error deleting card: " + err.target.error);
+      };
+  }
+
+  function nextCard() {
+      if(queue.length === 0 && unseen.length === 0) {
+          document.getElementById("frontText").innerHTML = "🎉 Deck finished! (Wait, how?)";
+          return;
+      }
+
+      sessionCount++;
+      let globalTurn = parseInt(localStorage.getItem(`cole_turn_${currentDeck}`)) || 0;
+      
+      let pullNew = false;
+      if (unseen.length > 0) {
+          if (sessionCount % 5 === 0) {
+              pullNew = true; // Every 5th turn pull a new card
+          } else if (queue.length === 0) {
+              pullNew = true; // Queue is empty
+          } else if (queue[0].dueTurn > globalTurn) {
+              pullNew = true; // Next card in queue is not due yet
+          }
+      }
+      
+      if (pullNew) {
+          currentCard = unseen.shift();
+          currentCard.isNew = false;
+          if (currentCard.ease === undefined) currentCard.ease = 2.5;
+          if (currentCard.interval === undefined) currentCard.interval = 0;
+      } else if (queue.length > 0) {
+          currentCard = queue.shift();
+      } else {
+          document.getElementById("frontText").innerHTML = "🎉 Deck finished! (Wait, how?)";
+          return;
+      }
+
+      document.getElementById("flashcardContent").classList.remove("revealed");
+      document.getElementById("answerArea").style.display = "none";
+      document.getElementById("ratingBtns").style.display = "none";
+      document.getElementById("revealBtn").style.display = "block";
+
+      // Auto-Cloze Logic
+      let col1 = currentCard.col1 || "";
+      let col2 = currentCard.col2 || "";
+      
+      let sentence = col1;
+      let word = col2;
+      
+      if (col2.length > col1.length) {
+          sentence = col2;
+          word = col1;
+      }
+      
+      let frontHTML = sentence;
+      let backHTML = word;
+
+      // If sentence has word in it, create cloze
+      if (sentence && word && sentence.toLowerCase().includes(word.toLowerCase())) {
+          // Replace word with a blank
+          // We need to escape word for regex to avoid errors if it contains special characters
+          const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(escapedWord, 'gi');
+          frontHTML = sentence.replace(regex, `<span class="cloze-blank">${word}</span>`);
+          backHTML = word;
+      } else if (col1 && col2) {
+          // Standard Word -> Translation or Sentence -> Translation
+          frontHTML = col1;
+          backHTML = col2;
+      } else {
+          frontHTML = col1 || col2 || "Empty Card";
+      }
+
+      frontHTML = applyRubyToHTML(frontHTML, currentDeck);
+      backHTML = applyRubyToHTML(backHTML, currentDeck);
+
+      document.getElementById("frontText").innerHTML = frontHTML;
+      document.getElementById("backText").innerHTML = backHTML;
+      document.getElementById("col3Text").innerHTML = currentCard.col3 ? `Notes: ${currentCard.col3}` : "";
+      if(currentCard.col4) document.getElementById("col3Text").innerHTML += `<br>${currentCard.col4}`;
+      renderHintArea();
+  }
+
+  function renderHintArea() {
+      const hintDiv = document.getElementById("hintArea");
+      if (!currentCard) return;
+      
+      if (currentCard.col3) {
+          hintDiv.innerHTML = `<span style="cursor:pointer; opacity: 0.8; transition: opacity 0.2s;" onclick="editHint()" title="Click to show/edit hint">💡 Hint</span>`;
+      } else {
+          hintDiv.innerHTML = `<span style="cursor:pointer; opacity: 0.4; font-size: 0.9em; transition: opacity 0.2s;" onclick="editHint()" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">[ + add hint ]</span>`;
+      }
+  }
+
+  function editHint() {
+      const hintDiv = document.getElementById("hintArea");
+      const currentHint = currentCard.col3 || "";
+      const safeHint = currentHint.replace(/"/g, '&quot;');
+      
+      hintDiv.innerHTML = `
+          <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+              <input type="text" id="hintInput" placeholder="Type and save your hint" value="${safeHint}" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 0.9rem; width: 60%; text-align: center;">
+              <button class="btn-primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="saveHint()">Save/Hide</button>
+          </div>
+      `;
+      
+      const input = document.getElementById("hintInput");
+      input.focus();
+      input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") saveHint();
+      });
+  }
+
+  function saveHint() {
+      const input = document.getElementById("hintInput");
+      if (!input) return;
+      currentCard.col3 = input.value.trim();
+      
+      const transaction = db.transaction(["cards"], "readwrite");
+      transaction.objectStore("cards").put(currentCard);
+      
+      transaction.oncomplete = () => {
+          renderHintArea();
+          document.getElementById("col3Text").innerHTML = currentCard.col3 ? `Notes: ${currentCard.col3}` : "";
+          if(currentCard.col4) document.getElementById("col3Text").innerHTML += `<br>${currentCard.col4}`;
+      };
+  }
+
+  function revealCard() {
+      document.getElementById("flashcardContent").classList.add("revealed");
+      document.getElementById("answerArea").style.display = "block";
+      document.getElementById("revealBtn").style.display = "none";
+      document.getElementById("ratingBtns").style.display = "flex";
+  }
+
+  function rateCard(rating) {
+      if(!currentCard) return;
+
+      let globalTurn = parseInt(localStorage.getItem(`cole_turn_${currentDeck}`)) || 0;
+      globalTurn++;
+      localStorage.setItem(`cole_turn_${currentDeck}`, globalTurn);
+
+      if (currentCard.ease === undefined) currentCard.ease = 2.5;
+      if (currentCard.interval === undefined) currentCard.interval = 0;
+
+      if (rating === 'hard') {
+          currentCard.ease = Math.max(1.3, currentCard.ease - 0.20);
+          currentCard.interval = Math.floor(Math.random() * 4) + 5; // 5 to 8 turns
+      } else if (rating === 'soso') {
+          if (currentCard.interval === 0) {
+              currentCard.interval = Math.floor(Math.random() * 11) + 15; // 15 to 25
+          } else {
+              currentCard.interval = Math.round(currentCard.interval * currentCard.ease);
+          }
+      } else if (rating === 'easy') {
+          currentCard.ease += 0.15;
+          if (currentCard.interval === 0) {
+              currentCard.interval = 40;
+          } else {
+              currentCard.interval = Math.round(currentCard.interval * currentCard.ease * 1.3);
+          }
+      }
+
+      currentCard.dueTurn = globalTurn + currentCard.interval;
+      
+      // Insert into sorted queue
+      let inserted = false;
+      for (let i = 0; i < queue.length; i++) {
+          if (currentCard.dueTurn < queue[i].dueTurn) {
+              queue.splice(i, 0, currentCard);
+              inserted = true;
+              break;
+          }
+      }
+      if (!inserted) queue.push(currentCard);
+      
+      // Save directly to database
+      const transaction = db.transaction(["cards"], "readwrite");
+      transaction.objectStore("cards").put(currentCard);
+
+      nextCard();
+  }
+
+  function playTTS(type) {
+      if(!currentCard) return;
+      synth.cancel();
+      
+      let col1 = currentCard.col1 || "";
+      let col2 = currentCard.col2 || "";
+      
+      let sentence = col1;
+      let word = col2;
+      
+      if (col2.length > col1.length) {
+          sentence = col2;
+          word = col1;
+      }
+
+      let textToRead = "";
+      if (type === 'word') {
+          textToRead = word || sentence;
+      } else if (type === 'sentence') {
+          textToRead = sentence || word;
+      } else if (type === 'cloze') {
+          if (sentence && word && sentence.toLowerCase().includes(word.toLowerCase())) {
+              const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(escapedWord, 'gi');
+              textToRead = sentence.replace(regex, " blank ");
+          } else {
+              textToRead = sentence || word;
+          }
+      }
+
+      if(!textToRead) return;
+
+      const u = new SpeechSynthesisUtterance(textToRead);
+      const voiceIdx = document.getElementById("voiceSelect").value;
+      if(voices[voiceIdx]) {
+          u.voice = voices[voiceIdx];
+          u.lang = voices[voiceIdx].lang;
+      }
+      u.rate = parseFloat(document.getElementById("voiceSpeed").value);
+      synth.speak(u);
+  }
+
+  function backupDB() {
+      const transaction = db.transaction(["cards"], "readonly");
+      const store = transaction.objectStore("cards");
+      const request = store.getAll();
+
+      request.onsuccess = async function(event) {
+          const cards = event.target.result;
+          const dataStr = JSON.stringify(cards, null, 2);
+          const blob = new Blob([dataStr], {type: "application/json"});
+          const suggestedName = `cole_flashcards_backup_${new Date().toISOString().split('T')[0]}.json`;
+          
+          try {
+              if (window.showSaveFilePicker) {
+                  const handle = await window.showSaveFilePicker({
+                      suggestedName,
+                      id: 'cole_flashcards_backup',
+                      types: [{ description: 'JSON File', accept: {'application/json': ['.json']} }]
+                  });
+                  const writable = await handle.createWritable();
+                  await writable.write(blob);
+                  await writable.close();
+                  return;
+              }
+          } catch (err) {
+              if (err.name !== 'AbortError') console.error(err);
+              return;
+          }
+          
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = suggestedName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      };
+  }
+
+  function backupCSV() {
+      const transaction = db.transaction(["cards"], "readonly");
+      const store = transaction.objectStore("cards");
+      const request = store.getAll();
+
+      request.onsuccess = async function(event) {
+          const cards = event.target.result;
+          if (cards.length === 0) {
+              alert("No cards to export.");
+              return;
+          }
+          let csvContent = "deck,col1,col2,col3,col4,queuePos,isNew\n";
+          cards.forEach(card => {
+              let row = [
+                  `"${(card.deck || "").replace(/"/g, '""')}"`,
+                  `"${(card.col1 || "").replace(/"/g, '""')}"`,
+                  `"${(card.col2 || "").replace(/"/g, '""')}"`,
+                  `"${(card.col3 || "").replace(/"/g, '""')}"`,
+                  `"${(card.col4 || "").replace(/"/g, '""')}"`,
+                  card.queuePos,
+                  card.isNew
+              ];
+              csvContent += row.join(",") + "\n";
+          });
+          const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv; charset=utf-8;' });
+          const suggestedName = `cole_flashcards_backup_${new Date().toISOString().split('T')[0]}.csv`;
+          
+          try {
+              if (window.showSaveFilePicker) {
+                  const handle = await window.showSaveFilePicker({
+                      suggestedName,
+                      id: 'cole_flashcards_backup',
+                      types: [{ description: 'CSV File', accept: {'text/csv': ['.csv']} }]
+                  });
+                  const writable = await handle.createWritable();
+                  await writable.write(blob);
+                  await writable.close();
+                  return;
+              }
+          } catch (err) {
+              if (err.name !== 'AbortError') console.error(err);
+              return;
+          }
+          
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = suggestedName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      };
+  }
+
+  function importDB(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          let content = e.target.result;
+          if (content.charCodeAt(0) === 0xFEFF) {
+              content = content.slice(1);
+          }
+          let cardsToAdd = [];
+
+          try {
+              if (file.name.endsWith(".json")) {
+                  const parsed = JSON.parse(content);
+                  cardsToAdd = Array.isArray(parsed) ? parsed : [];
+              } else if (file.name.endsWith(".csv")) {
+                  const arr = [];
+                  let quote = false;
+                  let row = 0, col = 0;
+                  for (let c = 0; c < content.length; c++) {
+                      let cc = content[c], nc = content[c+1];
+                      arr[row] = arr[row] || [];
+                      arr[row][col] = arr[row][col] || '';
+                      if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+                      if (cc == '"') { quote = !quote; continue; }
+                      if (cc == ',' && !quote) { ++col; continue; }
+                      if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+                      if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+                      if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+                      arr[row][col] += cc;
+                  }
+                  
+                  if (arr.length > 0) {
+                      const h = arr[0].map(s => s.trim());
+                      for (let i = 1; i < arr.length; i++) {
+                          if (arr[i].length < 2) continue;
+                          let card = { createdAt: Date.now() };
+                          for (let j = 0; j < h.length; j++) {
+                              let val = arr[i][j] || "";
+                              if (h[j] === 'queuePos' || h[j] === 'id') {
+                                  card[h[j]] = parseInt(val) || 0;
+                              } else if (h[j] === 'isNew') {
+                                  card[h[j]] = (val === 'true');
+                              } else {
+                                  card[h[j]] = val;
+                              }
+                          }
+                          if (card.deck && (card.col1 || card.col2)) {
+                              cardsToAdd.push(card);
+                          }
+                      }
+                  }
+              }
+              
+              if (cardsToAdd.length > 0) {
+                  const transaction = db.transaction(["cards"], "readwrite");
+                  const store = transaction.objectStore("cards");
+                  let added = 0;
+                  cardsToAdd.forEach(c => {
+                      delete c.id; // Let DB auto-assign
+                      if (c.createdAt === undefined) c.createdAt = Date.now();
+                      store.add(c);
+                      added++;
+                  });
+                  transaction.oncomplete = () => {
+                      alert(`Successfully imported ${added} cards!`);
+                      loadDashboard();
+                  };
+                  transaction.onerror = (err) => {
+                      alert("Error importing cards: " + err.target.error);
+                  };
+              } else {
+                  alert("No valid cards found in the file.");
+              }
+          } catch (err) {
+              alert("Failed to parse file: " + err.message);
+          }
+          event.target.value = "";
+      };
+      reader.readAsText(file);
+  }
+
+</script>
+</body>
+</html>

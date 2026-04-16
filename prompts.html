@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Generator - CodeSwitchReader</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Lora', serif;
+    }
+    .sidebar {
+      width: 280px;
+      background-color: var(--card-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+    }
+    .sidebar-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-color);
+      padding: 12px 15px;
+      text-align: left;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1em;
+      transition: all 0.2s;
+      font-family: 'Lora', serif;
+    }
+    .sidebar-btn:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    .sidebar-btn.active {
+      background: var(--accent);
+      color: var(--bg-color);
+    }
+    .main-content {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    .prompt-section {
+      display: none;
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .prompt-section.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: var(--text-color);
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      box-sizing: border-box;
+      font-family: 'Lora', serif;
+      font-size: 1em;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .radio-group {
+      display: flex;
+      gap: 20px;
+    }
+    .radio-group label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .btn-generate {
+      background-color: var(--accent);
+      color: var(--bg-color);
+      border: none;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.1em;
+      width: 100%;
+      margin-top: 10px;
+      font-family: 'Lora', serif;
+      transition: opacity 0.2s;
+    }
+    .btn-generate:hover {
+      opacity: 0.9;
+    }
+    .output-area {
+      margin-top: 30px;
+    }
+    .output-box {
+      width: 100%;
+      height: 250px;
+      padding: 15px;
+      border: 2px dashed var(--accent);
+      border-radius: 8px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: monospace;
+      font-size: 0.95em;
+      resize: vertical;
+      box-sizing: border-box;
+      line-height: 1.5;
+    }
+    .btn-copy {
+      background-color: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 15px;
+      font-family: 'Lora', serif;
+      font-size: 1em;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover {
+      background-color: var(--accent);
+      color: var(--bg-color);
+    }
+    .btn-random {
+      background-color: #f1f3f4;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.8em;
+      margin-left: 10px;
+      transition: background 0.2s;
+    }
+    .btn-random:hover {
+      background-color: #e2e6ea;
+    }
+    .info-box {
+      background: rgba(176,90,47,0.05);
+      border-left: 4px solid var(--accent);
+      padding: 15px;
+      margin-bottom: 25px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2 style="margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); color: var(--accent);">✨ Prompts</h2>
+    <button class="sidebar-btn active" onclick="switchTab('story')">📖 Story / Article</button>
+    <button class="sidebar-btn" onclick="switchTab('podcast')">🎙️ Podcast Script</button>
+    <button class="sidebar-btn" onclick="switchTab('vocab')">🧩 Vocab Sentences</button>
+    <div style="height: 1px; background: var(--border-color); margin: 10px 0;"></div>
+    <button class="sidebar-btn" onclick="switchTab('roleplay')">🚨 Survival Roleplay</button>
+    <button class="sidebar-btn" onclick="switchTab('monologue')">🗣️ Shadowing Monologue</button>
+    <button class="sidebar-btn" onclick="switchTab('grammar')">🏗️ Grammar Drills</button>
+    <button class="sidebar-btn" onclick="switchTab('poetry')">🎵 Song / Poetry</button>
+    <button class="sidebar-btn" onclick="switchTab('culture')">🌍 Cultural Deep-Dive</button>
+    
+    <div style="flex: 1;"></div>
+    <div style="font-size: 0.85em; opacity: 0.7; text-align: center; padding-top: 15px;">
+      Generate prompts to feed into ChatGPT, Claude, or Gemini.
+    </div>
+  </div>
+
+  <div class="main-content">
+    
+    <!-- STORY / ARTICLE -->
+    <div id="story" class="prompt-section active">
+      <h2 style="margin-top: 0; color: var(--accent);">📖 Bilingual Story / Article</h2>
+      <div class="info-box">Generates a story or article formatted for the Grid Editor.</div>
+      <div class="form-group radio-group">
+        <label><input type="radio" name="storyOrArticle" value="story" checked style="accent-color: var(--accent);"> Story</label>
+        <label><input type="radio" name="storyOrArticle" value="article" style="accent-color: var(--accent);"> Article</label>
+      </div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="s_lang" class="form-control" placeholder="e.g. Spanish, Japanese"></div>
+      <div class="form-group"><label>Type/Genre * <button type="button" class="btn-random" onclick="randomizeStory()">🎲 Randomize</button></label><input type="text" id="s_type" class="form-control" placeholder="e.g. Heartwarming slice of life"></div>
+      <div class="form-group"><label>Words to include</label><input type="text" id="s_words" class="form-control" placeholder="e.g. cat, computer, bowl"></div>
+      <div class="form-group"><label>Characters</label><input type="text" id="s_chars" class="form-control" placeholder="e.g. A retired detective"></div>
+      <div class="form-group"><label>Setting</label><input type="text" id="s_setting" class="form-control" placeholder="e.g. Tokyo 1990"></div>
+      <div class="form-group"><label>The story/article is...</label><input type="text" id="s_mood" class="form-control" placeholder="e.g. funny, suspenseful"></div>
+      <div class="form-group"><label>Level of text</label><select id="s_level" class="form-control"><option value="">Native (Default)</option><option value="A1">A1 (Absolute Beginner)</option><option value="A2">A2 (Pre-Intermediate)</option><option value="B1">B1 (Intermediate)</option><option value="B2">B2 (Upper Intermediate)</option><option value="C1">C1 (Advanced)</option><option value="C2">C2 (Proficiency)</option></select></div>
+      <div class="form-group"><label>Length</label><select id="s_length" class="form-control"><option value="250 - 400 words">Short (250 - 400 words)</option><option value="400 - 600 words">Medium (400 - 600 words)</option><option value="600 - 900 words">Long (600 - 900 words)</option></select></div>
+      <div class="form-group"><label>Translate it? (Enter your Native Language)</label><input type="text" id="s_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generateStoryPrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="s_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('s_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- PODCAST -->
+    <div id="podcast" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🎙️ Podcast / Dialogue</h2>
+      <div class="info-box">Generates a natural script perfect for the <strong>Vertical Editor</strong>. Formats names nicely so voices are auto-assigned!</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="p_lang" class="form-control" placeholder="e.g. French, Korean"></div>
+      <div class="form-group"><label>Topic / Scenario *</label><input type="text" id="p_topic" class="form-control" placeholder="e.g. Two friends reviewing a terrible movie"></div>
+      <div class="form-group"><label>Speaker 1 Name</label><input type="text" id="p_speaker1" class="form-control" placeholder="e.g. Kit" value="Speaker 1"></div>
+      <div class="form-group"><label>Speaker 2 Name</label><input type="text" id="p_speaker2" class="form-control" placeholder="e.g. Cole" value="Speaker 2"></div>
+      <div class="form-group"><label>Level of text</label><select id="p_level" class="form-control"><option value="">Native (Default)</option><option value="A1">A1 (Absolute Beginner)</option><option value="B1">B1 (Intermediate)</option><option value="C1">C1 (Advanced)</option></select></div>
+      <div class="form-group"><label>Length</label><select id="p_length" class="form-control"><option value="250 - 400 words">Short</option><option value="400 - 600 words">Medium</option><option value="600 - 900 words">Long</option></select></div>
+      <div class="form-group"><label>Translate it? (Enter Native Language)</label><input type="text" id="p_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generatePodcastPrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="p_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('p_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- VOCAB SENTENCES -->
+    <div id="vocab" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🧩 Vocab Sentences</h2>
+      <div class="info-box">Provide words you want to learn. Generates 4 distinct example sentences per word.</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="v_lang" class="form-control" placeholder="e.g. German"></div>
+      <div class="form-group"><label>Vocabulary Words / Phrases *</label><input type="text" id="v_words" class="form-control" placeholder="e.g. house, laugh"></div>
+      <div class="form-group"><label>Translate it? (Enter Native Language)</label><input type="text" id="v_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generateVocabPrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="v_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('v_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- SURVIVAL ROLEPLAY -->
+    <div id="roleplay" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🚨 Survival Roleplay</h2>
+      <div class="info-box">Generates high-stakes or ultra-specific real-life scenarios for the Vertical Editor.</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="rp_lang" class="form-control" placeholder="e.g. Japanese"></div>
+      <div class="form-group"><label>High-Stakes Scenario *</label><input type="text" id="rp_scenario" class="form-control" placeholder="e.g. Reporting a stolen wallet to the police, Arguing with a landlord"></div>
+      <div class="form-group"><label>Your Role (Speaker 1)</label><input type="text" id="rp_s1" class="form-control" value="Me"></div>
+      <div class="form-group"><label>NPC Role (Speaker 2)</label><input type="text" id="rp_s2" class="form-control" value="Officer / Landlord"></div>
+      <div class="form-group"><label>Translate it? (Enter Native Language)</label><input type="text" id="rp_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generateRoleplayPrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="rp_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('rp_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- SHADOWING MONOLOGUE -->
+    <div id="monologue" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🗣️ Shadowing Monologue</h2>
+      <div class="info-box">Punchy, spoken-word sentences that aren't too long. Perfect for listening, pausing, and repeating in the Grid Editor.</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="m_lang" class="form-control" placeholder="e.g. Spanish"></div>
+      <div class="form-group"><label>Persona / Speaker *</label><input type="text" id="m_persona" class="form-control" placeholder="e.g. A tech CEO giving a keynote, A tired detective"></div>
+      <div class="form-group"><label>Translate it? (Enter Native Language)</label><input type="text" id="m_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generateMonologuePrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="m_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('m_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- GRAMMAR DRILLS -->
+    <div id="grammar" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🏗️ Grammar Drills</h2>
+      <div class="info-box">Generates 20 standalone sentences targeting a specific grammar rule, scaling from easy to hard.</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="g_lang" class="form-control" placeholder="e.g. French"></div>
+      <div class="form-group"><label>Grammar Point *</label><input type="text" id="g_point" class="form-control" placeholder="e.g. The Subjunctive, Past Perfect"></div>
+      <div class="form-group"><label>Translate it? (Enter Native Language)</label><input type="text" id="g_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generateGrammarPrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="g_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('g_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- SONG / POETRY -->
+    <div id="poetry" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🎵 Song / Poetry Explainer</h2>
+      <div class="info-box">Forces the AI to generate a 3-column output: Original Text, Literal Translation, and Natural Meaning. Ideal for Voice 1, 2, and 3 in Grid Mode!</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="po_lang" class="form-control" placeholder="e.g. Russian"></div>
+      <div class="form-group"><label>Theme / Topic *</label><input type="text" id="po_theme" class="form-control" placeholder="e.g. A melancholic song about winter"></div>
+      <div class="form-group"><label>Native Language *</label><input type="text" id="po_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generatePoetryPrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="po_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('po_output')">📋 Copy Prompt</button></div>
+    </div>
+
+    <!-- CULTURAL DEEP-DIVE -->
+    <div id="culture" class="prompt-section">
+      <h2 style="margin-top: 0; color: var(--accent);">🌍 Cultural Deep-Dive</h2>
+      <div class="info-box">An "Explain Like I'm 5" article about a complex cultural concept using simple vocabulary.</div>
+      <div class="form-group"><label>Target Language *</label><input type="text" id="c_lang" class="form-control" placeholder="e.g. Japanese"></div>
+      <div class="form-group"><label>Cultural Concept *</label><input type="text" id="c_concept" class="form-control" placeholder="e.g. The concept of 'Tatemae' and 'Honne'"></div>
+      <div class="form-group"><label>Translate it? (Enter Native Language)</label><input type="text" id="c_native" class="form-control" placeholder="e.g. English"></div>
+      <button class="btn-generate" onclick="generateCulturePrompt()">Generate Master Prompt</button>
+      <div class="output-area"><textarea id="c_output" class="output-box" placeholder="Your prompt will appear here..."></textarea><button class="btn-copy" onclick="copyToClipboard('c_output')">📋 Copy Prompt</button></div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.prompt-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sidebar-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function copyToClipboard(elementId) {
+      const el = document.getElementById(elementId);
+      el.select();
+      document.execCommand('copy');
+      
+      const btn = el.nextElementSibling;
+      const originalText = btn.innerText;
+      btn.innerText = "✅ Copied!";
+      setTimeout(() => {
+        btn.innerText = originalText;
+      }, 2000);
+    }
+
+    function randomizeStory() {
+      const storyTypes = [
+        'Heartwarming slice of life', 'Fantasy', 'Near-future sci-fi', 'Bedtime story', 
+        'Coming-of-age story', 'Romance', 'Crime mystery', 'Thriller', 'Historical fiction', 
+        'Comedy', 'Tragedy', 'fictional news', 'an example of a news article', 'Action/adventure', 
+        'Short crime riddle', 'educational story', 'Dystopian', 'Superhero', 'Paranormal', 
+        'Cyberpunk', 'Space opera'
+      ];
+      
+      const characters = [
+        'A 14-year-old high schooler', 'A Retired detective', 'A Mad scientist', 'A Single mom', 
+        'A cute fox', 'A talking cat', 'A struggling artist', 'A cunning lawyer', 'A wise mentor',
+        'A world-renowned chef', 'A friendly robot', 'A space pirate', 'A vengeful ghost', 
+        'A time traveler and a historian', 'A vampire hunter and a vampire'
+      ];
+      
+      const settings = [
+        'New York, 1990', 'Cancun, Mexico', 'mystical forest', 'A post-apocalyptic city', 
+        'An abandoned island', 'A haunted mansion', 'A deep-sea research facility', 
+        'An alien planet', 'A futuristic space station', 'Tokyo, Japan', 'A secret underground bunker',
+        'A hidden temple in the mountains', 'A bustling night market'
+      ];
+      
+      const storyMoods = [
+        'funny', 'sad', 'scary', 'surprising', 'educational and fun', 'heartwarming', 
+        'encouraging', 'inspiring', 'witty', 'thrilling', 'suspenseful', 'thought-provoking', 
+        'mysterious', 'surreal', 'satirical', 'philosophical'
+      ];
+
+      const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+      document.getElementById('s_type').value = pick(storyTypes);
+      document.getElementById('s_chars').value = pick(characters);
+      document.getElementById('s_setting').value = pick(settings);
+      document.getElementById('s_mood').value = pick(storyMoods);
+    }
+
+    function generateStoryPrompt() {
+      const isStory = document.querySelector('input[name="storyOrArticle"]:checked').value === 'story';
+      const lang = document.getElementById('s_lang').value || '[Target Language]';
+      const type = document.getElementById('s_type').value || '[Genre/Topic]';
+      const words = document.getElementById('s_words').value;
+      const chars = document.getElementById('s_chars').value;
+      const setting = document.getElementById('s_setting').value;
+      const mood = document.getElementById('s_mood').value;
+      const level = document.getElementById('s_level').value;
+      const length = document.getElementById('s_length').value;
+      const native = document.getElementById('s_native').value;
+
+      let prompt = `As a professional novelist and language expert, your job is to write a complete and interesting ${isStory ? 'story with dialogue' : 'article'} in ${lang}.\n\n`;
+      prompt += `Type / Genre: ${type}\n`;
+      
+      if (chars) prompt += `Characters: ${chars}\n`;
+      if (setting) prompt += `Setting: ${setting}\n`;
+      if (mood) prompt += `The ${isStory ? 'story' : 'article'} is: ${mood}\n`;
+      if (level) prompt += `The level of the text should be suitable for ${level} learners.\n`;
+      if (length) prompt += `Length: Roughly ${length}\n`;
+      if (words) prompt += `Mandatory Vocabulary: You MUST include these words/phrases in the text: "${words}". They can be in any form or tense.\n`;
+
+      prompt += `\n`;
+
+      if (native) {
+        prompt += `Because I am importing this into a dual-language reader app, please provide a line-by-line translation in ${native}. Format the output strictly by alternating the languages on each line like this:\n\n`;
+        prompt += `[Line 1 in ${lang}]\n`;
+        prompt += `[Line 1 translated to ${native}]\n`;
+        prompt += `[Line 2 in ${lang}]\n`;
+        prompt += `[Line 2 translated to ${native}]\n\n`;
+        prompt += `Very important: Do not include any intro, outro, conversational filler, or bold text. Output the translated text block directly.`;
+      } else {
+        prompt += `Very important: Do not include any intro, outro, conversational filler, or bold text. Output the text block directly.`;
+      }
+
+      document.getElementById('s_output').value = prompt;
+    }
+
+    function generatePodcastPrompt() {
+      const lang = document.getElementById('p_lang').value || '[Target Language]';
+      const topic = document.getElementById('p_topic').value || '[Topic]';
+      const s1 = document.getElementById('p_speaker1').value || 'Speaker 1';
+      const s2 = document.getElementById('p_speaker2').value || 'Speaker 2';
+      const level = document.getElementById('p_level').value;
+      const length = document.getElementById('p_length').value;
+      const native = document.getElementById('p_native').value;
+
+      let prompt = `Act as an expert language teacher and scriptwriter. Please write a natural, engaging dialogue/podcast script in ${lang}.\n\n`;
+      prompt += `Topic: ${topic}\n`;
+      if (level) prompt += `The level of the text should be suitable for ${level} learners.\n`;
+      if (length) prompt += `Length: Roughly ${length}\n`;
+
+      prompt += `\n`;
+      prompt += `Make the conversation flow naturally with realistic reactions and filler words.\n\n`;
+
+      if (native) {
+        prompt += `Because I am importing this into a dual-language reader app that auto-detects speaker names, please provide a line-by-line translation in ${native}. Format the output strictly by alternating the languages on each line, keeping the speaker name on BOTH lines, like this:\n\n`;
+        prompt += `${s1}: [Line 1 in ${lang}]\n`;
+        prompt += `${s1}: [Line 1 translated to ${native}]\n`;
+        prompt += `${s2}: [Line 2 in ${lang}]\n`;
+        prompt += `${s2}: [Line 2 translated to ${native}]\n\n`;
+      } else {
+        prompt += `Because I am importing this into a reader app that auto-detects speaker names, format the output strictly like this:\n\n`;
+        prompt += `${s1}: [Text in ${lang}]\n`;
+        prompt += `${s2}: [Text in ${lang}]\n\n`;
+      }
+      
+      prompt += `Very important: Do not include any intro, outro, conversational filler outside of the script, or bold text. Output the script directly.`;
+
+      document.getElementById('p_output').value = prompt;
+    }
+
+    function generateVocabPrompt() {
+      const lang = document.getElementById('v_lang').value || '[Target Language]';
+      const words = document.getElementById('v_words').value || '[Vocabulary]';
+      const native = document.getElementById('v_native').value;
+
+      let prompt = `Act as an expert language teacher. I want to learn the following vocabulary words/phrases in ${lang}:\n"${words}"\n\n`;
+      prompt += `Please generate 4 distinct example sentences for each word/phrase to show how they are used in different contexts.\n\n`;
+
+      if (native) {
+        prompt += `Because I am importing this into a dual-language reader app, please provide a line-by-line translation in ${native}. Format the output strictly by alternating the languages on each line like this:\n\n`;
+        prompt += `[Sentence 1 in ${lang}]\n`;
+        prompt += `[Sentence 1 translated to ${native}]\n\n`;
+        prompt += `Please separate each word's section with a blank line. Very important: Do not include conversational filler outside of the sentences, and do not bold the vocabulary words.`;
+      } else {
+        prompt += `Very important: Do not include any intro, outro, or conversational filler outside of the sentences themselves, and do not bold the vocabulary words. Output the text directly.`;
+      }
+
+      document.getElementById('v_output').value = prompt;
+    }
+
+    function generateRoleplayPrompt() {
+      const lang = document.getElementById('rp_lang').value || '[Target Language]';
+      const scenario = document.getElementById('rp_scenario').value || '[Scenario]';
+      const s1 = document.getElementById('rp_s1').value || 'Speaker 1';
+      const s2 = document.getElementById('rp_s2').value || 'Speaker 2';
+      const native = document.getElementById('rp_native').value;
+
+      let prompt = `Act as an expert language teacher. Write a highly realistic, practical survival roleplay script in ${lang}.\n\n`;
+      prompt += `Scenario: ${scenario}\n\n`;
+      prompt += `This should not sound like a stiff textbook. Use natural phrasing, slight hesitations, and real-world vocabulary that native speakers would actually use in this situation.\n\n`;
+
+      if (native) {
+        prompt += `Format the output strictly by alternating the languages on each line, keeping the speaker name on BOTH lines, like this:\n\n`;
+        prompt += `${s1}: [Line 1 in ${lang}]\n`;
+        prompt += `${s1}: [Line 1 translated to ${native}]\n`;
+        prompt += `${s2}: [Line 2 in ${lang}]\n`;
+        prompt += `${s2}: [Line 2 translated to ${native}]\n\n`;
+      } else {
+        prompt += `Format the output strictly like this:\n\n`;
+        prompt += `${s1}: [Text in ${lang}]\n`;
+        prompt += `${s2}: [Text in ${lang}]\n\n`;
+      }
+      
+      prompt += `Very important: Do not include any intro, outro, conversational filler outside of the script, or bold text. Output the script directly.`;
+
+      document.getElementById('rp_output').value = prompt;
+    }
+
+    function generateMonologuePrompt() {
+      const lang = document.getElementById('m_lang').value || '[Target Language]';
+      const persona = document.getElementById('m_persona').value || '[Persona]';
+      const native = document.getElementById('m_native').value;
+
+      let prompt = `Act as an expert language teacher. I am practicing 'shadowing' (listen-and-repeat exercises) to improve my pronunciation in ${lang}.\n\n`;
+      prompt += `Please write a 2-minute spoken-word monologue from the perspective of: ${persona}\n\n`;
+      prompt += `Crucial Constraint: Because I need to repeat these sentences out loud, keep every single sentence relatively short and punchy. Avoid long, winding run-on sentences. Use natural spoken phrasing.\n\n`;
+
+      if (native) {
+        prompt += `Format the output strictly by alternating the languages on each line like this:\n\n`;
+        prompt += `[Short sentence 1 in ${lang}]\n`;
+        prompt += `[Short sentence 1 translated to ${native}]\n`;
+        prompt += `[Short sentence 2 in ${lang}]\n`;
+        prompt += `[Short sentence 2 translated to ${native}]\n\n`;
+      } else {
+        prompt += `Format the output with one sentence per line.\n\n`;
+      }
+      
+      prompt += `Very important: Do not include any intro, outro, conversational filler, or bold text. Output the text directly.`;
+
+      document.getElementById('m_output').value = prompt;
+    }
+
+    function generateGrammarPrompt() {
+      const lang = document.getElementById('g_lang').value || '[Target Language]';
+      const point = document.getElementById('g_point').value || '[Grammar Point]';
+      const native = document.getElementById('g_native').value;
+
+      let prompt = `Act as an expert language teacher. I want to drill the following grammar point in ${lang}:\n"${point}"\n\n`;
+      prompt += `Generate 20 standalone sentences that heavily utilize this grammar point. \n`;
+      prompt += `Scale the difficulty: Start with very short, simple sentences (1-5) and progressively make them longer and more complex towards the end (16-20).\n\n`;
+
+      if (native) {
+        prompt += `Format the output strictly by alternating the languages on each line like this:\n\n`;
+        prompt += `[Sentence 1 in ${lang}]\n`;
+        prompt += `[Sentence 1 translated to ${native}]\n\n`;
+      } else {
+        prompt += `Format the output with one sentence per line.\n\n`;
+      }
+      
+      prompt += `Very important: Do not include any numbering (1., 2., etc), bullet points, intros, outros, or bold text. Just output the raw sentences so I can paste them into my flashcard app.`;
+
+      document.getElementById('g_output').value = prompt;
+    }
+
+    function generatePoetryPrompt() {
+      const lang = document.getElementById('po_lang').value || '[Target Language]';
+      const theme = document.getElementById('po_theme').value || '[Theme]';
+      const native = document.getElementById('po_native').value || '[Native Language]';
+
+      let prompt = `Act as a poet and language teacher. Write a short, culturally authentic poem or song lyric in ${lang} about: ${theme}.\n\n`;
+      prompt += `I am putting this into a 3-column reader app to study how the language constructs metaphors differently than my native language.\n\n`;
+      prompt += `Format the output strictly into three alternating lines per stanza/verse, like this:\n\n`;
+      
+      prompt += `[Line 1 in original ${lang}]\n`;
+      prompt += `[Line 1 Literal, awkward word-for-word translation in ${native}]\n`;
+      prompt += `[Line 1 Natural, poetic meaning in ${native}]\n\n`;
+      
+      prompt += `[Line 2 in original ${lang}]\n`;
+      prompt += `[Line 2 Literal, awkward word-for-word translation in ${native}]\n`;
+      prompt += `[Line 2 Natural, poetic meaning in ${native}]\n\n`;
+
+      prompt += `Very important: Do not include any intro, outro, conversational filler, verse labels, or bold text. Output the 3-line blocks directly.`;
+
+      document.getElementById('po_output').value = prompt;
+    }
+
+    function generateCulturePrompt() {
+      const lang = document.getElementById('c_lang').value || '[Target Language]';
+      const concept = document.getElementById('c_concept').value || '[Concept]';
+      const native = document.getElementById('c_native').value;
+
+      let prompt = `Act as an expert language teacher. Write an 'Explain Like I'm 5' educational article about the following cultural concept: ${concept}.\n\n`;
+      prompt += `Write the article in ${lang}. Use simple, clear vocabulary that an intermediate language learner can easily understand, but ensure the cultural explanation is accurate and insightful.\n\n`;
+
+      if (native) {
+        prompt += `Because I am importing this into a dual-language reader app, please provide a line-by-line translation in ${native}. Format the output strictly by alternating the languages on each line like this:\n\n`;
+        prompt += `[Line 1 in ${lang}]\n`;
+        prompt += `[Line 1 translated to ${native}]\n`;
+        prompt += `[Line 2 in ${lang}]\n`;
+        prompt += `[Line 2 translated to ${native}]\n\n`;
+      } else {
+        prompt += `Format the output with one sentence per line.\n\n`;
+      }
+      
+      prompt += `Very important: Do not include any intro, outro, conversational filler, or bold text. Output the text directly.`;
+
+      document.getElementById('c_output').value = prompt;
+    }
+  </script>
+</body>
+</html>

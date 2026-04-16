@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="A powerful language learning reader app that supports multiple voices, code-switching, listening training, pop-up dictionaries, and Anki vocabulary export." />
+  <meta name="keywords" content="language learning, code-switch reader, listening training, Anki export, pop-up dictionary, language reading app, shadowing tool" />
+  <meta name="author" content="Kit" />
+  <title>Code-switch Reader - Train Your Listening</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- QUICK NAVIGATION SIDEBAR -->
+  <div class="quick-nav">
+    <button class="quick-nav-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" type="button">
+      <span class="icon">📖</span>
+      <span data-i18n="nav_reader">Reader</span>
+    </button>
+    <button class="quick-nav-btn" onclick="document.getElementById('notebookSection').scrollIntoView({behavior: 'smooth'})" type="button">
+      <span class="icon">📓</span>
+      <span data-i18n="nav_notebook">Notebook</span>
+    </button>
+    <button class="quick-nav-btn" onclick="window.open('cards.html', '_blank')" type="button">
+      <span class="icon">🗂️</span>
+      <span data-i18n="nav_flashcards">Flashcards</span>
+    </button>
+    <div style="width: 80%; height: 1px; background: var(--border-color); margin: 5px auto;"></div>
+    <button class="quick-nav-btn" onclick="window.open('https://translate.google.com/?sl=auto', '_blank')" type="button" style="opacity: 0.8;">
+      <span class="icon" style="font-size: 1.2em;">🌐</span>
+      <span style="font-size: 0.8em;" data-i18n="google_translate">Google</span>
+    </button>
+    <button class="quick-nav-btn" onclick="window.open('https://www.deepl.com/en/translator', '_blank')" type="button" style="opacity: 0.8;">
+      <span class="icon" style="font-size: 1.2em;">🟦</span>
+      <span style="font-size: 0.8em;" data-i18n="deepl">DeepL</span>
+    </button>
+  </div>
+
+  <div class="header" style="flex-wrap: wrap; gap: 10px;">
+    <h1 data-i18n="app_title">Cole's Language Lab</h1>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <select id="langSelect" style="border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); font-weight:bold; font-size:0.89em; cursor:pointer; border-radius:8px; padding:6px 10px;">
+        <option value="en">🌐 English</option>
+        <option value="ja">🌐 日本語</option>
+        <option value="zh-CN">🌐 简体中文</option>
+        <option value="zh-TW">🌐 繁體中文</option>
+        <option value="es">🌐 Español</option>
+      </select>
+      <button class="theme-toggle" id="themeBtn" type="button" style="white-space: nowrap;">🌙 ☀️</button>
+    </div>
+  </div>
+
+  <div id="readerSection" class="card" style="border: 1px solid var(--border-color); padding: 20px; position: relative;">
+
+    <!-- Top Middle Ko-fi Button -->
+    <div style="position:absolute; top:15px; left:50%; transform: translateX(-50%); z-index:10; display:flex;">
+        <a href="https://ko-fi.com/kitkatkat#checkoutModal" target="_blank" onclick="window.open(this.href, 'kofi', 'width=500,height=700'); return false;" style="background: #00b9fe; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: bold; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; white-space: nowrap;">
+            ☕ Support us
+        </a>
+    </div>
+
+    <!-- Top Right Buttons -->
+    <div style="position:absolute; top:15px; right:15px; display:flex; gap:8px; z-index:10; align-items:center;">
+        <div style="display:flex; gap:4px; font-size: 0.75em; font-weight: 800; opacity: 0.8; cursor: pointer; user-select: none; transition: opacity 0.2s;"
+             onclick="document.getElementById('advSettingsModal').style.display='flex'"
+             onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'"
+             title="Advanced Language Settings">
+            <span style="background: var(--card-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-color);">JP</span>
+            <span style="background: var(--card-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-color);">CN</span>
+            <span style="background: var(--card-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-color);">HK</span>
+            <span style="margin-left: 2px; align-self: center; color: var(--accent); font-size: 1.4em;">➔</span>
+        </div>
+        <button class="mini-btn"
+                style="width:32px; height:32px; font-size:16px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
+                title="Advanced Language Settings"
+                onclick="document.getElementById('advSettingsModal').style.display='flex'">
+          ⚙️
+        </button>
+        <button class="mini-btn"
+                style="width:32px; height:32px; font-size:16px; font-weight:bold; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
+                onclick="document.getElementById('syntaxHelpModal').style.display='flex'">
+          ?
+        </button>
+    </div>
+
+    <!-- COMPACT TOOLS DASHBOARD (Unified with Voices) -->
+    <div style="margin-top:40px; margin-bottom:15px; padding:15px; background:rgba(0,0,0,0.03); border-radius:10px; border:1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;">
+      
+      <!-- Top Row: Controls -->
+      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content: space-between; gap:10px; font-size: 0.89em;">
+        
+        <div style="display:flex; flex-wrap:nowrap; align-items:center; gap:8px; overflow-x: auto;">
+            <!-- LEFT: Shadow -->
+            <div style="display:flex; align-items:center; gap:4px; font-size:1em; flex-shrink: 0;" title="Adds a silence gap (0s - 6s) after every sentence.">
+              <span style="cursor:help; font-size: 1.2em;">⏱️</span><span id="shadowVal" style="color:var(--accent); display:inline-block; width:1.2em; text-align:center;">0s</span>
+              <input id="shadowSlider" type="range" min="0" max="6.0" step="0.5" value="0" style="width:50px; accent-color:var(--accent);">
+            </div>
+
+            <div style="width:1px; height:35px; background:#ccc; flex-shrink: 0; margin: 0 5px;"></div>
+
+            <!-- CENTER: Eye/Audio mini-grid -->
+            <div style="display:grid; grid-template-columns: auto auto auto auto; gap:2px 8px; align-items:center; font-size:0.89em; flex-shrink: 0;">
+              <span style="font-weight:bold;" data-i18n="show">👁️ Show:</span>
+              <label style="margin:0; cursor:pointer;" title="Toggle on/off with 1 while in reader mode"><input type="checkbox" id="chkShow1" checked> 1</label>
+              <label style="margin:0; cursor:pointer;" title="Toggle on/off with 2 while in reader mode"><input type="checkbox" id="chkShow2" checked> {2}</label>
+              <label style="margin:0; cursor:pointer;" title="Toggle on/off with 3 while in reader mode"><input type="checkbox" id="chkShow3" checked> [3]</label>
+              <span style="font-weight:bold;" data-i18n="audio">🎧 Audio:</span>
+              <label style="margin:0; cursor:pointer;" title="Toggle on/off with Shift+1 while in reader mode"><input type="checkbox" id="chkAudio1" checked> 1</label>
+              <label style="margin:0; cursor:pointer;" title="Toggle on/off with Shift+2 while in reader mode"><input type="checkbox" id="chkAudio2" checked> {2}</label>
+              <label style="margin:0; cursor:pointer;" title="Toggle on/off with Shift+3 while in reader mode"><input type="checkbox" id="chkAudio3" checked> [3]</label>
+            </div>
+
+            <div style="width:1px; height:35px; background:#ccc; flex-shrink: 0; margin: 0 5px;"></div>
+
+            <!-- RIGHT: Scroll, Clear, File -->
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; flex-shrink: 0;">
+              <div style="font-size:0.89em; display:flex; flex-direction:column; align-items:center; gap:2px; padding-right: 2px;">
+                <span style="font-weight:bold; color:var(--accent);" data-i18n="auto_scroll">Auto-Scroll</span>
+                <input type="checkbox" id="autoScrollChk" checked style="accent-color: var(--accent); width: 14px; height: 14px; margin: 0;">
+              </div>
+
+              <div style="width:1px; height:30px; background:#ccc; margin-right: 2px;"></div>
+
+              <button id="mainUndoBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="restoreMainText()" title="Undo">
+                <span style="font-size: 1.5em; color: var(--accent);">↩</span>
+              </button>
+              
+              <button class="btn-sm danger" style="display:flex; flex-direction:column; align-items:center; gap:2px; font-size:0.89em;" onclick="clearMainText()" title="Clear">
+                <span style="font-size: 1.5em;">🗑️</span>
+              </button>
+
+              <input type="file" id="fileLoader" style="display:none" accept=".txt">
+              <button class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="document.getElementById('fileLoader').click()" title="Import unformatted text for 1 voice&#10;OR&#10;Previously formatted saved text">
+                <span style="font-size: 1.5em; color: #ffc107;">🗁</span>
+              </button>
+              
+              <button class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="downloadText()" title="Save as TXT">
+                <span style="font-size: 1.5em; color: #6f42c1;">🗀</span>
+              </button>
+            </div>
+        </div>
+
+        <!-- Grid/Vertical Buttons -->
+        <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+            <button id="modeGridBtn" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; border-radius: 20px; padding: 4px 12px; border: none; cursor: pointer; transition: opacity 0.2s; font-size: 0.8em;" title="For multilingual texts that are entirely separate.&#10;--------------------------------------------&#10;| English article | same article in Spanish |&#10;--------------------------------------------">☷ Grid</button>
+            <button id="modeVerticalBtn" class="btn-sm" style="background-color: transparent; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; border-radius: 20px; padding: 4px 12px; cursor: pointer; transition: opacity 0.2s; font-size: 0.8em;" title="For texts that alternate.&#10;Example:&#10;English line...&#10;Spanish line...&#10;&#10;Or transcripts:&#10;Speaker 1: ...&#10;Speaker 2: ...">⚌ Vertical</button>
+        </div>
+
+      </div>
+
+      <!-- The Shared List -->
+      <datalist id="allVoices"></datalist>
+
+      <!-- VOICE SELECTIONS (2 Rows, 3 Columns matching grid) -->
+      <div id="voicesContainer" style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr auto; gap: 8px 8px; align-items: center; padding: 0;">
+         
+         <!-- ROW 1 -->
+         <!-- Col 1: Voice Label -->
+         <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; color: var(--text-color); display: flex; align-items: center; justify-content: flex-end; overflow: visible;">
+             <span style="font-size:1.0em; margin-right:0px;"> Voice
+         </div>
+         
+         <!-- Col 2: Voice 1 -->
+         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Normal Text no brackets">
+             <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">1:</span>
+             <div class="combo-wrapper" id="wrap1" style="flex: 1; position: relative; min-width: 0;">
+                 <input type="text" id="voice1" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
+                 <button class="combo-arrow" tabindex="-1" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%);">▼</button>
+                 <div class="combo-dropdown" id="list1" style="width: max-content; min-width: 100%; max-width: 300px; font-size: 0.85em;"></div>
+             </div>
+         </div>
+
+         <!-- Col 3: Voice 2 -->
+         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="{Curly Brackets}">
+             <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">2:</span>
+             <div class="combo-wrapper" id="wrap2" style="flex: 1; position: relative; min-width: 0;">
+                 <input type="text" id="voice2" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
+                 <button class="combo-arrow" tabindex="-1" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%);">▼</button>
+                 <div class="combo-dropdown" id="list2" style="width: max-content; min-width: 100%; max-width: 300px; font-size: 0.85em;"></div>
+             </div>
+         </div>
+
+         <!-- Col 4: Voice 3 -->
+         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="[Square Brackets]">
+             <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">3:</span>
+             <div class="combo-wrapper" id="wrap3" style="flex: 1; position: relative; min-width: 0;">
+                 <input type="text" id="voice3" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
+                 <button class="combo-arrow" tabindex="-1" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%);">▼</button>
+                 <div class="combo-dropdown" id="list3" style="width: max-content; min-width: 100%; max-width: 300px; font-size: 0.85em;"></div>
+             </div>
+         </div>
+
+         <!-- Col 5: Spacer -->
+         <div style="width: 20px;"></div>
+
+
+         <!-- ROW 2 -->
+         <!-- Col 1: Speedometer Icon -->
+         <div style="display: flex; align-items: center; justify-content: flex-end; overflow: visible; padding-right: 0px;">
+             <span style="font-size: 1.5em;" title="Voice Speed"><i class="speedometer-icon"></i></span>
+         </div>
+         
+         <!-- Col 2: Speed 1 -->
+         <div class="mini-speed-row" title="Voice Speed" style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; box-sizing: border-box;">
+             <input id="rate1" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%; max-width: 135px; accent-color: var(--accent);">
+             <span id="rateVal1" style="font-size: 1em; font-weight: bold;">1.0x</span> 
+         </div>
+
+         <!-- Col 3: Speed 2 -->
+         <div class="mini-speed-row" title="Voice Speed" style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; box-sizing: border-box;">
+             <input id="rate2" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%; max-width: 135px; accent-color: var(--accent);">
+             <span id="rateVal2" style="font-size: 1em; font-weight: bold;">1.0x</span> 
+         </div>
+
+         <!-- Col 4: Speed 3 -->
+         <div class="mini-speed-row" title="Voice Speed" style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; box-sizing: border-box;">
+             <input id="rate3" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%; max-width: 135px; accent-color: var(--accent);">
+             <span id="rateVal3" style="font-size: 1em; font-weight: bold;">1.0x</span> 
+         </div>
+
+         <!-- Col 5: Spacer -->
+         <div></div>
+
+      </div>
+    </div>
+
+    <textarea id="textInput" spellcheck="false" style="display:none;"></textarea>
+
+    <div id="verticalEditorWrapper" style="display:none; margin-bottom: 20px;">
+        <div style="margin-bottom:10px; font-size: 0.89em; padding: 10px; background: rgba(176,90,47,0.04); border: 1px dashed var(--accent); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <label style="margin: 0; font-weight: bold; color: var(--text-color);">Default Pattern:</label>
+                <select id="verticalPatternSelect" style="margin: 0; padding: 4px 8px; width: auto;">
+                    <option value="12">Alternating V1, V2</option>
+                    <option value="123">Alternating V1, V2, V3</option>
+                    <option value="1">All V1</option>
+                    <option value="2">All V2</option>
+                    <option value="3">All V3</option>
+                </select>
+                <span style="font-size: 0.85em; color: var(--muted); margin-left: 8px;">(Applies when you paste text)</span>
+                <div style="font-size: 0.85em; color: var(--accent); margin-left: 8px; display: flex; align-items: center; gap: 4px; cursor: help;" title="If checked, the app ignores the Default Pattern and automatically groups matching names (e.g. 'Kit: Hello!') to the same voice track.">
+                    <input type="checkbox" id="verticalAutoDetectChk" style="accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer;">
+                    <label for="verticalAutoDetectChk" style="cursor: pointer; font-weight: bold;">Auto-detect speakers (Name: ...)</label>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; border-left: 1px solid var(--accent); padding-left: 12px; margin-left: 4px;">
+                <span style="font-weight: bold; color: var(--text-color);" title="Select a voice and click any row to quickly assign it">🖌️ Paintbrush:</span>
+                <button id="paintV1Btn" class="btn-sm" style="border: 1px solid var(--accent); background: transparent; color: var(--text-color); cursor: pointer; border-radius: 4px; padding: 2px 8px;">V1</button>
+                <button id="paintV2Btn" class="btn-sm" style="border: 1px solid var(--accent); background: transparent; color: var(--text-color); cursor: pointer; border-radius: 4px; padding: 2px 8px;">V2</button>
+                <button id="paintV3Btn" class="btn-sm" style="border: 1px solid var(--accent); background: transparent; color: var(--text-color); cursor: pointer; border-radius: 4px; padding: 2px 8px;">V3</button>
+                <button id="paintOffBtn" class="btn-sm" style="background: var(--accent); color: var(--bg-color); border: 1px solid var(--accent); cursor: pointer; border-radius: 4px; padding: 2px 8px; font-weight: bold;">Off</button>
+            </div>
+        </div>
+        <div id="verticalEditor" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+
+      <div id="gridEditorWrapper">
+        <div style="margin-bottom:10px; font-size: 0.89em; padding: 10px; background: rgba(176,90,47,0.04); border: 1px dashed var(--accent); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <label style="margin: 0; cursor: help; display: flex; align-items: center; gap: 8px; font-weight: bold; color: var(--text-color);"
+                   data-i18n-title="auto_split_help"
+                   title="Doesn't affect how your text is played if you only have 1 voice.&#10;Turn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.&#10;Toggle on/off before you paste your text and see what you prefer!&#10;&#10;Note: The larger the text, the longer it takes to process when you hit Play. Chrome users may experience ~10s wait per 2000 words.">
+                <input type="checkbox" id="autoSplitPasteChk" checked style="accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="color: var(--accent);" data-i18n="auto_split">✂️ Auto-split sentences to break up long paragraphs</div>
+                </div>
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: help;" onclick="window.findMisalignment()"
+                        data-i18n-title="align_btn_help"
+                        title="Identifies possible misalignments when the number of lines don't match.">
+                    <span data-i18n="align_btn">⚖️ Check Alignment</span>
+                </button>
+                <span id="misalignmentResult" style="font-weight: bold; font-size: 0.95em;"></span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr auto; gap: 8px; align-items: center; padding: 0 10px 5px 10px; font-size: 0.85em; font-weight: bold; color: var(--accent);">
+            <div></div>
+            <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
+                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(0)" title="Clear this column">🗑️</button>
+                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(0, this)" oncontextmenu="openBulkTextModal(event, 0)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+            </div>
+            <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
+                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(1)" title="Clear this column">🗑️</button>
+                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(1, this)" oncontextmenu="openBulkTextModal(event, 1)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+            </div>
+            <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
+                <button id="generateIpaBtn" class="btn-sm" disabled style="display: flex; opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; background-color: var(--accent); color: var(--bg-color); align-items: center; gap: 4px; font-weight: bold; border-radius: 4px; padding: 2px 6px; border: none; font-size: 0.89em; margin-right: 4px;" onclick="generateIpa()" title="✨ IPA Generator (Available when English, Russian, or Arabic is selected for Voice 2)">
+                    ✨ IPA
+                </button>
+                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(2)" title="Clear this column">🗑️</button>
+                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(2, this)" oncontextmenu="openBulkTextModal(event, 2)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+            </div>
+            <div style="display: flex; justify-content: center; align-items: center; width: 20px;">
+                <button class="btn-sm" style="font-size: 1.1em; opacity: 0.8; padding: 0; background: transparent; border: none; cursor: pointer; color: var(--accent);" onclick="window.scrollToGridBottom()" data-i18n-title="scroll_to_bottom" title="Click to go to the bottom of the grid">⏬</button>
+            </div>
+        </div>
+
+        <div id="gridEditor"></div>
+      </div>
+
+      <div id="paginationControl" style="display:none; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.03); padding:8px 15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; font-size:0.89em; font-weight:bold; color:var(--accent);">
+         <button class="btn-sm" id="prevPageBtn" onclick="prevPage()" style="font-size:1.2em;">◀</button>
+         <div>
+            Page <input type="number" id="pageJumpInput" min="1" value="1" style="width: 50px; text-align: center; border: 1px solid var(--accent); border-radius: 4px; background: var(--card-bg); color: var(--text-color); font-weight: bold;" onchange="jumpToPage(this.value)"> of <span id="totalPagesIndicator">1</span>
+         </div>
+         <button class="btn-sm" id="nextPageBtn" onclick="nextPage()" style="font-size:1.2em;">▶</button>
+      </div>
+
+      <div id="readerDisplay"></div>
+
+      <div class="btns">
+        <button class="mini-btn" id="prevBtn" type="button">⏮</button>
+        <button class="mini-btn" id="nextBtn" type="button">⏭</button>
+        <button class="mini-btn" id="loopBtn" type="button" title="Loop current sentence (Shortcut: L)">🔁</button>
+        <!-- Note: Play/Pause/Stop are here... -->
+        <button class="action-btn play" id="playBtn" type="button" data-i18n="play">▶ Play</button>
+        <button class="action-btn pause" id="pauseBtn" type="button" data-i18n="pause">⏸ Pause</button>
+        <button class="action-btn stop" id="stopBtn" type="button" style="display:none;" data-i18n="exit">⏹ Exit</button>
+
+        <!-- NEW BUTTONS -->
+        <button class="mini-btn" id="zenBtn" type="button" title="Focus / Full Page Mode" data-i18n-title="zen_mode_title">⛶</button>
+        <button class="mini-btn" onclick="document.getElementById('helpModal').style.display='flex'">?</button>
+      </div>
+  </div>
+
+  <!-- BULK TEXT MODAL (FOR DEEPL EXTENSION) -->
+  <div id="bulkTextModal" class="modal-overlay">
+     <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 600px;">
+        <span class="modal-close" onclick="document.getElementById('bulkTextModal').style.display='none'">×</span>
+        <h3 style="margin-top:0; color: var(--accent);">🗐 Bulk Text Mode</h3>
+        <p style="font-size: 0.89em; opacity: 0.8; margin-bottom: 10px;">The text below is already highlighted. Just press your DeepL shortcut (e.g., <strong>Ctrl+C+C</strong>) to translate it instantly.</p>
+        <textarea id="bulkTextContent" style="width: 100%; box-sizing: border-box; height: 300px; padding: 15px; border-radius: 8px; border: 1px solid var(--accent); background: var(--bg-color); color: var(--text-color); font-size: 15px; font-family: inherit; resize: none;" readonly></textarea>
+     </div>
+  </div>
+
+  <!-- THE POPUP WINDOW -->
+  <div id="helpModal" class="modal-overlay" onclick="this.style.display='none'">
+     <div class="modal-box" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="document.getElementById('helpModal').style.display='none'">×</span>
+        <h3 style="margin-top:0">⌨️ Reader shortcuts</h3>
+
+        <div class="key-row"><span>Play / Restart</span> <span class="key-code">Ctrl + Enter</span></div>
+        <div class="key-row"><span>Pause / Resume</span> <span class="key-code">Space</span></div>
+        <div class="key-row"><span>Prev / Next Sentence</span> <span class="key-code">← / →</span></div>
+        <div class="key-row"><span>Toggle Loop</span> <span class="key-code">L</span></div>
+        <div class="key-row"><span>Zen Mode(Fullpage ⛶)</span> <span class="key-code">Esc</span></div>
+        <div class="key-row"><span>Stop (Exit)</span> <span class="key-code">X</span></div>
+        <br>
+        <div class="key-row"><span>Play / Jump to Segment</span> <span class="key-code">Click ▶</span></div>
+        <div class="key-row"><span>Browser Window</span> <span class="key-code">Hold highlight + Ctrl + Right Click</span></div>
+        <br>
+        <div class="key-row"><span>Speak Word</span> <span class="key-code">Click</span></div>
+        <div class="key-row"><span>Speak Phrase</span> <span class="key-code">Highlight & Release</span></div>
+        <div class="key-row"><span>Save Word+Context</span> <span class="key-code">Right Click</span></div>
+        <div class="key-row"><span>Save Phrase+Context</span> <span class="key-code">Highlight + Right Click</span></div>
+        <div class="key-row"><span>Save Sentence</span> <span class="key-code">Click ➕</span></div>
+
+        <h3 style="margin-bottom:10px; margin-top:20px;">📓 Notebook</h3>
+        <div class="key-row"><span>Reorder Words</span> <span class="key-code">Left Click & Drag</span></div>
+        <div class="key-row"><span>Copy Word</span> <span class="key-code">Ctrl + Click</span></div>
+        <div class="key-row"><span>Delete Word</span> <span class="key-code">Right Click</span></div>
+     </div>
+  </div>
+
+  <!-- STUDY CARDS HELP MODAL -->
+  <div id="studyCardsHelpModal" class="modal-overlay" onclick="this.style.display='none'">
+     <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 500px;">
+        <span class="modal-close" onclick="document.getElementById('studyCardsHelpModal').style.display='none'">×</span>
+        
+        <h3 style="margin-top:0; border-bottom:2px solid var(--accent); padding-bottom:5px;">🃏 How Flashcards Work</h3>
+        
+        <div style="font-size: 0.95em; line-height: 1.5; opacity: 0.9;">
+            
+            <div style="background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin: 15px 0;">
+                <p style="margin-top: 0; font-weight: bold; font-size: 0.89em; color: var(--accent);">Example (in reader mode):</p>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div style="border: 1px solid #ccc; padding: 4px 10px; border-radius: 6px; background: var(--card-bg);">▶︎ I am a <strong>dog</strong> ↖. ➕ ▶︎ She is a cat. ➕</div>
+                </div>
+                <p style="margin-bottom: 0; font-size: 0.85em; opacity: 0.8;">Click on the word to save to notebook. The app grabs the context automatically.</p>
+            </div>
+
+            <p>Assuming your target word is <strong>'dog'</strong>, your notebook will now look like this:</p>
+
+            <div style="display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap;">
+                <div style="background: var(--bg-color); border: 1px solid var(--accent); padding: 6px 12px; border-radius: 20px; font-size: 0.89em; display: flex; align-items: center; color: var(--text-color);">
+                    <span style="opacity: 0.5; font-weight: 800; font-size: 0.8em; margin-right: 8px; font-family: 'Segoe UI', sans-serif;">1.</span> dog
+                </div>
+                <div style="background: var(--bg-color); border: 1px solid var(--accent); padding: 6px 12px; border-radius: 20px; font-size: 0.89em; display: flex; align-items: center; color: var(--text-color);">
+                    <span style="opacity: 0.5; font-weight: 800; font-size: 0.8em; margin-right: 8px; font-family: 'Segoe UI', sans-serif;">2.</span> I am a dog.
+                </div>
+            </div>
+
+            <p>Hit 📤 <strong>Send to Deck</strong>, open 🗂️ <strong>Study Cards</strong>, and you will see your deck!</p>
+
+            <p><strong>Fill-in-the-blank✨</strong><br>
+            The app automatically turns your pairs into fill-in-the-blank questions</p>
+
+            <div style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: center; margin: 15px 0;">
+                <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">I am a ___.</div>
+                <button class="action-btn" style="background: var(--accent); padding: 8px 15px; margin: 0 auto; width: auto; pointer-events: none;">👀 Reveal</button>
+            </div>
+
+            <p style="margin-bottom: 0;"><strong>Ready?</strong> Choose a deck language, click 📤 <strong>Send to Deck</strong>, and then open 🗂️ <strong>Study Cards</strong>!</p>
+        </div>
+     </div>
+  </div>
+
+  <!-- SYNTAX HELP WINDOW -->
+  <div id="syntaxHelpModal" class="modal-overlay" onclick="this.style.display='none'">
+     <div class="modal-box" onclick="event.stopPropagation()" style="max-width:500px;"> <!-- Made it slightly wider -->
+        <span class="modal-close" onclick="document.getElementById('syntaxHelpModal').style.display='none'">×</span>
+
+        <h3 style="margin-top:0; border-bottom:2px solid var(--accent); padding-bottom:5px;">💡 Tips</h3>
+
+        <div style="background: rgba(176,90,47,0.06); padding: 12px; border-radius: 8px; border: 1px dashed var(--accent); margin-bottom: 25px; font-size: 0.89em;">
+            <strong>Learning JP, CN, or HK?</strong><br>
+            Click the <strong>⚙️ gear icon</strong> in the top right to enable smart word-splitting and automatic Furigana, Pinyin, or Jyutping!
+        </div>
+
+        <h3 style="margin-top:0; border-bottom:2px solid var(--accent); padding-bottom:5px;">🎛️ Pro Controls</h3>
+
+        <div style="margin-bottom:12px;">
+            <strong>👁️ Show / 🎧 Audio (Dual Track)</strong><br>
+            <span style="font-size:0.85em; opacity:0.8;">
+            Uncheck <strong>👁️ Show</strong> to hide text (for listening practice).<br>
+            Uncheck <strong>🎧 Audio</strong> to mute a language (like a subtitle track).
+            </span>
+        </div>
+
+        <div style="margin-bottom:12px;">
+            <strong>⏱️ Shadowing Timer</strong><br>
+            <span style="font-size:0.85em; opacity:0.8;">
+            Adds a silence gap (0s - 6s) <em>after</em> every sentence. Great for repeating what you just heard aloud!
+            </span>
+        </div>
+
+        <div>
+            <strong><i class="speedometer-icon"></i> Speed Sliders</strong><br>
+            <span style="font-size:0.85em; opacity:0.8;">
+            Each voice has its own independent speed. Set your English fast (2.0x) and your Japanese slow (0.8x)!
+            </span>
+        </div>
+
+     </div>
+  </div>
+
+  <!-- ADVANCED LANGUAGE SETTINGS MODAL -->
+  <div id="advSettingsModal" class="modal-overlay" onclick="this.style.display='none'">
+     <div class="modal-box" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="document.getElementById('advSettingsModal').style.display='none'">×</span>
+        <h3 style="margin-top:0; border-bottom:2px solid var(--accent); padding-bottom:5px;" data-i18n="adv_lang">⚙️ Advanced Language Settings</h3>
+
+        <h4 style="margin-bottom: 5px; color: var(--accent);">🇯🇵 Japanese</h4>
+        <p style="font-size: 0.89em; line-height: 1.4; margin-top: 0;" data-i18n="kuromoji_desc">
+            Enable <strong>Kuromoji Dictionary</strong> to help with word splitting and Furigana.
+        </p>
+        <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 5px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;" data-i18n="enable_kuromoji">
+                <input type="checkbox" id="chkKuromoji" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                Enable Kuromoji (~15MB download)
+            </label>
+        </div>
+        <p id="kuromojiStatus" style="font-size: 0.85em; color: var(--accent); font-weight: bold; min-height: 1.2em; margin-bottom: 15px;">
+        </p>
+
+        <h4 style="margin-bottom: 5px; color: var(--accent);">🇨🇳 / 🇹🇼 Chinese</h4>
+        <p style="font-size: 0.89em; line-height: 1.4; margin-top: 0;" data-i18n="pinyin_desc">
+            Enable <strong>Pinyin Pro</strong> to display pinyin readings over Chinese characters.
+        </p>
+        <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 5px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;" data-i18n="enable_pinyin">
+                <input type="checkbox" id="chkPinyin" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                Enable Pinyin Dictionary (~3MB download)
+            </label>
+        </div>
+        <p id="pinyinStatus" style="font-size: 0.85em; color: var(--accent); font-weight: bold; min-height: 1.2em; margin-bottom: 15px;">
+        </p>
+
+        <h4 style="margin-bottom: 5px; color: var(--accent);">🇭🇰 Cantonese</h4>
+        <p style="font-size: 0.89em; line-height: 1.4; margin-top: 0;" data-i18n="jyutping_desc">
+            Enable Cantonese Jyutping dictionary to display readings over Chinese characters.
+        </p>
+        <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 5px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;" data-i18n="enable_jyutping">
+                <input type="checkbox" id="chkJyutping" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                Enable Jyutping Dictionary (~1MB download)
+            </label>
+        </div>
+        <p id="jyutpingStatus" style="font-size: 0.85em; color: var(--accent); font-weight: bold; min-height: 1.2em; margin-bottom: 0;">
+        </p>
+
+        <div style="margin-top: 20px; border-top: 1px dotted var(--border-color); padding-top: 10px; font-size: 0.8em; opacity: 0.7; text-align: center;">
+            <span data-i18n="powered_by">Powered by open-source:</span><br>
+            <a href="https://github.com/takuyaa/kuromoji.js" target="_blank" style="color: var(--text-color); text-decoration: underline;">kuromoji.js</a> •
+            <a href="https://github.com/zh-lx/pinyin-pro" target="_blank" style="color: var(--text-color); text-decoration: underline;">pinyin-pro</a> •
+            <a href="https://github.com/CanCLID/ToJyutping" target="_blank" style="color: var(--text-color); text-decoration: underline;">ToJyutping</a> •
+            <a href="https://github.com/dmort27/epitran" target="_blank" style="color: var(--text-color); text-decoration: underline;">epitran</a> •
+            <a href="https://github.com/ptarjan/ingglish" target="_blank" style="color: var(--text-color); text-decoration: underline;">ingglish</a>
+            <br><br>
+            <span><strong>Contributors:</strong> AI Assistant (Gemini)</span>
+        </div>     </div>
+  </div>
+
+  <!-- VOCAB NOTEBOOK -->
+  <div id="notebookSection" style="margin-top: 25px; padding: 20px; background: rgba(0,0,0,0.03); border: 2px solid var(--border-color); border-radius: 15px;">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 15px;">
+          <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+            <span data-i18n="notebook_title">📓 Notebook</span>
+          </h3>
+
+          <div style="display:flex; gap:12px; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                  <button id="copyAllBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" type="button" title="Copy All">
+                      <span style="font-size: 1.5em;">🗐</span>
+                  </button>
+              </div>
+
+              <div style="width:1px; height:30px; background:#ccc;"></div>
+
+              <div id="csvExportBlock" style="display:flex; align-items:center;">
+                  <button id="exportCsvBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" type="button" title="Export CSV">
+                      <span style="font-weight: bold;" data-i18n="export_csv">export CSV</span>
+                      <span style="font-size: 1.3em; color: var(--success);">🗀</span>
+                  </button>
+                  <input type="hidden" id="csvMode" value="2" />
+              </div>
+
+              <div style="width:1px; height:30px; background:#ccc;"></div>
+
+              <div style="display:flex; align-items:center; gap:8px;">
+                  <button id="vocabUndoBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="restoreVocab()" title="Undo">
+                      <span style="font-size: 1.5em; color: var(--accent);">↩</span>
+                  </button>
+
+                  <button id="clearBtn" class="btn-sm danger" style="display:flex; flex-direction:column; align-items:center; gap:2px; font-size:0.89em;" type="button" title="Clear">
+                      <span style="font-size: 1.5em; color: var(--danger);">🗑</span>
+                  </button>
+              </div>
+
+              <div style="width:1px; height:30px; background:#ccc;"></div>
+              
+              <!-- Deck & Flashcard block -->
+              <div style="display:flex; gap:12px; align-items:center; background: rgba(0,0,0,0.02); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                  <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+                      <span style="font-size: 0.85em; font-weight: bold;">Deck Language</span>
+                      <div style="display:flex; align-items:center; border:1px solid #ccc; border-radius:6px; padding:0 5px; background:var(--card-bg);">
+                          <select id="deckSelect" onclick="if(window.updateDeckAliases) window.updateDeckAliases()" style="border:none; background:none; font-size:0.85em; font-weight:bold; cursor:pointer; color:var(--accent); width:auto; padding:0;">
+                              <option value="Japanese">🇯🇵 Japanese</option>
+                              <option value="Mandarin">🇨🇳 Mandarin</option>
+                              <option value="Cantonese">🇭🇰 Cantonese</option>
+                              <option value="Spanish">🇪🇸 Spanish</option>
+                              <option value="French">🇫🇷 French</option>
+                              <option value="German">🇩🇪 German</option>
+                              <option value="Korean">🇰🇷 Korean</option>
+                              <option value="Italian">🇮🇹 Italian</option>
+                              <option value="English">🌐 English</option>
+                              <option value="Custom 1">Custom 1</option>
+                              <option value="Custom 2">Custom 2</option>
+                              <option value="Custom 3">Custom 3</option>
+                              <option value="Custom 4">Custom 4</option>
+                              <option value="Custom 5">Custom 5</option>
+                              <option value="Custom 6">Custom 6</option>
+                          </select>
+                      </div>
+                  </div>
+
+                  <div style="width:1px; height:30px; background:#ccc;"></div>
+
+                  <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start; justify-content:center;">
+                      <button class="btn-sm" id="sendToDeckBtn" type="button" style="color:var(--accent);" onclick="sendToIndexedDBDeck()">📤 Send to Deck</button>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                          <button class="btn-sm" style="color:var(--accent-b);" onclick="window.open('cards.html', '_blank')">🗂️ Study Cards</button>
+                          <button class="mini-btn" style="width:18px; height:18px; font-size:12px; font-weight:bold; border-radius:50%; border:1px solid #6610f2; color:var(--accent-b); cursor:pointer;" onclick="document.getElementById('studyCardsHelpModal').style.display='flex'">?</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div style="font-size:0.85em; opacity:0.75; margin-bottom:15px; border-bottom:1px dashed #ccc; padding-bottom:10px;" data-i18n="tip_drag">
+        💡 <strong>Tip:</strong> Left-click to drag/re-order. Right-click to delete.
+      </div>
+
+    <!-- The Drop Zone -->
+  <div id="vocabList">
+      <span class="empty-msg" data-i18n="empty_words">(Words you click or ➕ will appear here)</span>
+  </div>
+
+  </div> <!-- Close vocab card -->
+
+  <!-- NATIVE KO-FI FLOATING BUTTON -->
+  <a href="https://ko-fi.com/kitkatkat" target="_blank" class="kofi-native-btn" style="position:fixed; bottom:25px; right:25px; background-color:#00b9fe; color:#fff; padding:12px 20px; border-radius:30px; font-weight:bold; font-size:15px; text-decoration:none; box-shadow:0 4px 15px rgba(0,0,0,0.2); z-index:9999; display:flex; align-items:center; gap:8px; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.2)';">
+    <img src="https://storage.ko-fi.com/cdn/cup-border.png" style="width:22px; height:22px;" alt="Ko-fi">
+    <span data-i18n="kofi_float">Built by Kit & Cole. Support us</span>
+  </a>
+
+<div id="toast">Copied to clipboard!</div>
+
+<script type="module">
+  import { translate } from 'https://cdn.jsdelivr.net/npm/ingglish/+esm';
+  import { registerIPA } from 'https://cdn.jsdelivr.net/npm/@ingglish/ipa/+esm';
+  
+  // Explicitly register the IPA format module so Ingglish knows how to convert to IPA
+  registerIPA();
+  
+  window.ingglishTranslate = translate;
+</script>
+<script src="app.js"></script>
+<script src="onboarding.js"></script>
+<script src="reader_onboarding.js"></script>
+  </body>
+  </html>

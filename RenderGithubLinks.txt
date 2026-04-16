@@ -1,0 +1,19 @@
+https://codeswitchreader-api.onrender.com
+https://github.com/CatKitKit/CodeSwitchReader-API.git
+C:\Users\Cathy Lau\Desktop\CodeSwitchReader-API
+https://github.com/CatKitKit/CodeSwitchReader-API/tree/main 
+Cloud run
+https://codeswitchreader-api-539648342659.europe-west1.run.app
+gcr.io/cloudrun/placeholder@sha256:aafee0b13cdc19d6dd055be74d3405b9435b8108b0a3f181c01c38b4c8abf899
+name: codeswitchreader-api-00001-jpf
+
+1. git add .
+(This says: "Hey Git, take all the files I just modified and put them in a box.")
+2. git commit -m "Your message here"
+(This says: "Tape the box shut and put a label on it so I know what's inside.")
+3. git push origin main
+(This says: "Drive the truck to GitHub!")
+
+
+const response = await fetch("https://codeswitchreader-api.onrender.com/generate-ipa", {                       
+const response = await fetch("https://codeswitchreader-api-539648342659.europe-west1.run.app/generate-ipa", {  
