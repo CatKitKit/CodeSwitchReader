@@ -20,14 +20,15 @@
             {
                 title: "Tool 1: Track Controls 🎛️",
                 text: "Use the 👁️ icon to **hide the text** for any track.<br><br>Use the 🎧 icon to **mute a voice**.",
-                target: "div[style*='grid-template-columns: auto auto auto auto']", // Selects the specific Eye/Audio mini-grid
+                target: "div[style*='grid-template-columns: auto auto auto auto']",
                 action: "Next",
                 onShow: () => {
-                    // Try to highlight the Eye/Audio mini-grid
                     const grid = document.querySelector("div[style*='grid-template-columns: auto auto auto auto']");
                     if(grid) {
+                        // Darken the entire page, then lift just the Show/Audio grid above it
+                        overlay.style.display = 'block';
                         targetElement = grid;
-                        targetElement.classList.add("onboarding-highlight");
+                        targetElement.classList.add("onboarding-highlight-overlay");
                     }
                 }
             },
@@ -133,6 +134,15 @@
                         border-radius: 4px;
                         pointer-events: auto;
                     }
+                    .onboarding-highlight-overlay {
+                        position: relative;
+                        z-index: 10001 !important;
+                        box-shadow: 0 0 0 4px var(--accent, #b05a2f) !important;
+                        border-radius: 6px;
+                        pointer-events: auto;
+                        background: var(--card-bg, #fff);
+                        padding: 4px;
+                    }
                     .pulse-highlight {
                         animation: pulse-ring 1.5s infinite;
                     }
@@ -156,7 +166,7 @@
         function renderStep() {
             const step = steps[stepIndex];
             
-            document.querySelectorAll('.onboarding-highlight').forEach(el => el.classList.remove('onboarding-highlight', 'pulse-highlight'));
+            document.querySelectorAll('.onboarding-highlight, .onboarding-highlight-overlay').forEach(el => el.classList.remove('onboarding-highlight', 'onboarding-highlight-overlay', 'pulse-highlight'));
             
             if (step.target) {
                 // onShow might have already set targetElement
@@ -218,7 +228,7 @@
         };
 
         window.finishReaderOnboarding = () => {
-            document.querySelectorAll('.onboarding-highlight').forEach(el => el.classList.remove('onboarding-highlight', 'pulse-highlight'));
+            document.querySelectorAll('.onboarding-highlight, .onboarding-highlight-overlay').forEach(el => el.classList.remove('onboarding-highlight', 'onboarding-highlight-overlay', 'pulse-highlight'));
             if(overlay) overlay.remove();
             if(tooltip) tooltip.remove();
             

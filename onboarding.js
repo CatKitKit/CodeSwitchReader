@@ -85,7 +85,8 @@ Luego se iba al gimnasio.`;
         {
             title: "Step 5: Adjust Speed ⚡",
             text: "Each voice has its own independent speed slider! You can set your English fast and your Spanish slow. Adjust them here if you want.",
-            target: ".mini-speed-row", // Targets the first speed slider row, or we could target the whole container if we give it an id
+            target: ".mini-speed-row",
+            position: "above",
             action: "Next",
             onShow: () => {
                 const rateSlider = document.getElementById("rate1");
@@ -225,19 +226,18 @@ Luego se iba al gimnasio.`;
         tooltip.style.transform = "none";
         const rect = targetElement.getBoundingClientRect();
         const tooltipRect = tooltip.getBoundingClientRect();
-        
-        // For the dropdown steps (1 and 2), we want to make sure the tooltip 
-        // doesn't overlap the dropdown menu that appears below it.
-        // We will force the tooltip to the right or top instead of below.
+        const step = steps[stepIndex];
+
         let top = rect.bottom + 15;
         let left = rect.left;
 
         if (stepIndex === 1 || stepIndex === 2) {
-            // Put tooltip to the right of the dropdown wrapper
             top = rect.top;
-            left = rect.right + 20; 
+            left = rect.right + 20;
         } else if (stepIndex === 3 || stepIndex === 4) {
-            // Put tooltip above the column block so it doesn't hide the input
+            top = rect.top - tooltipRect.height - 15;
+            left = rect.left;
+        } else if (step.position === "above") {
             top = rect.top - tooltipRect.height - 15;
             left = rect.left;
         }
@@ -251,7 +251,6 @@ Luego se iba al gimnasio.`;
         }
         if (left + tooltipRect.width > window.innerWidth) {
             left = Math.max(10, window.innerWidth - tooltipRect.width - 15);
-            // If it had to squish left, maybe drop it down below if it was side-mounted
             if ((stepIndex === 1 || stepIndex === 2) && left < rect.right) {
                  top = rect.bottom + 15;
                  left = rect.left;

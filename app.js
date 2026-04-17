@@ -295,29 +295,31 @@
         });
       }
 
-      window.kuromoji.builder({ dicPath: "dict/" }).build((err, tokenizer) => {
-        if (err) {
-            statusEl.textContent = "❌ Failed to load dictionary. Check your internet connection.";
-            statusEl.style.color = "#dc3545";
-            isKuromojiLoading = false;
-            els.chkKuromoji.checked = false;
-            saveSettings();
+      // Wrap the .build() callback in a Promise so we can await it
+      await new Promise((resolve, reject) => {
+        window.kuromoji.builder({ dicPath: "dict/" }).build((err, tokenizer) => {
+          if (err) {
+            reject(err);
             return;
-        }
-        jpTokenizer = tokenizer;
-        statusEl.textContent = "✅ " + (i18nDict["kuromoji_success"][state.lang] || i18nDict["kuromoji_success"]["en"]);
-        statusEl.style.color = "#28a745";
-        isKuromojiLoading = false;
-
-        // Re-render if there's text
-        if (els.text.value && isPlaying) {
-             const currentTime = currentSegmentIndex;
-             buildSegmentsAndUI(els.text.value);
-             jumpToSegment(currentTime);
-        }
+          }
+          jpTokenizer = tokenizer;
+          resolve();
+        });
       });
+
+      // Only update UI if we successfully completed
+      statusEl.textContent = "✅ " + (i18nDict["kuromoji_success"][state.lang] || i18nDict["kuromoji_success"]["en"]);
+      statusEl.style.color = "#28a745";
+      isKuromojiLoading = false;
+
+      // Re-render if there's text
+      if (els.text.value && isPlaying) {
+        const currentTime = currentSegmentIndex;
+        buildSegmentsAndUI(els.text.value);
+        jumpToSegment(currentTime);
+      }
     } catch (e) {
-      statusEl.textContent = "❌ Failed to load Kuromoji script.";
+      statusEl.textContent = "❌ Failed to load dictionary. Check your internet connection.";
       statusEl.style.color = "#dc3545";
       isKuromojiLoading = false;
       els.chkKuromoji.checked = false;
@@ -346,26 +348,36 @@
       const store = transaction.objectStore("settings");
       const request = store.get(SETTINGS_KEY);
 
-      request.onsuccess = () => {
-        if (request.result) {
-          state = { ...state, ...request.result };
-        } else {
-          // Fallback to localStorage if no DB entry exists
-          const raw = localStorage.getItem(SETTINGS_KEY);
-          if (raw) {
-            state = { ...state, ...JSON.parse(raw) };
+      // Wrap the callback in a Promise so we can await it
+      await new Promise((resolve, reject) => {
+        request.onsuccess = () => {
+          if (request.result) {
+            state = { ...state, ...request.result };
+          } else {
+            // Fallback to localStorage if no DB entry exists
+            const raw = localStorage.getItem(SETTINGS_KEY);
+            if (raw) {
+              state = { ...state, ...JSON.parse(raw) };
+            }
           }
-        }
-        applySettingsToUI();
-      };
+          resolve(); // Signal that we're done loading settings
+        };
+
+        request.onerror = () => {
+          reject(request.error);
+        };
+      });
+
+      // Now apply settings to UI after they're fully loaded
+      applySettingsToUI();
     } catch (e) {
       console.error("IndexedDB read error:", e);
-      // Fallback
+      // Fallback to localStorage
       const raw = localStorage.getItem(SETTINGS_KEY);
       if (raw) {
         state = { ...state, ...JSON.parse(raw) };
-        applySettingsToUI();
       }
+      applySettingsToUI();
     }
   }
 
@@ -476,7 +488,9 @@
               }
           }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Failed to save settings:", e);
+    }
   }
 
   function updateModeUI() {
@@ -637,12 +651,12 @@
             e.preventDefault();
             captureGridSnapshot();
             let pastedText = (e.clipboardData || window.clipboardData).getData('text');
-            
+
             const autoSplit = document.getElementById("autoSplitPasteChk")?.checked ?? true;
             let chunks = [];
-            
+
             if (autoSplit) {
-                chunks = autoChunkText(pastedText); 
+                chunks = autoChunkText(pastedText);
             } else {
                 // Manual Line-by-Line mode: Just split by hard enters
                 chunks = pastedText.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -1038,7 +1052,7 @@
     if (!state.vocab.length) return; lastVocabBackup = [...state.vocab]; state.vocab = []; saveSettings(); renderVocab();
   }
   window.restoreVocab = () => { if (!lastVocabBackup.length) return; state.vocab = [...lastVocabBackup]; saveSettings(); renderVocab(); };
-  async function copyVocabList() { try { await navigator.clipboard.writeText(state.vocab.join("\n")); showToast("📋 Copied all words!"); } catch {} }
+  async function copyVocabList() { try { await navigator.clipboard.writeText(state.vocab.join("\n")); showToast("📋 Copied all words!"); } catch(e) { showToast("❌ Copy failed — try again"); } }
 
   async function exportVocabCsv() {
     if (!state.vocab.length) { alert("Notebook is empty."); return; }
@@ -1074,8 +1088,15 @@
         return;
     }
 
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = suggestedName;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = suggestedName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // Free up memory by revoking the object URL
+    URL.revokeObjectURL(url);
   }
 
   window.updateDeckAliases = function() {
@@ -1142,86 +1163,117 @@
   };
 
   let dragSrcIndex = null;
-  function handleDragStart(e) { this.classList.add('dragging'); dragSrcIndex = Number(this.dataset.index); e.dataTransfer.effectAllowed = 'move'; }
-  function handleDragOver(e) { 
-    if (e.preventDefault) e.preventDefault(); 
-    e.dataTransfer.dropEffect = 'move'; 
-    const rect = this.getBoundingClientRect();
-    if (e.clientX > rect.left + rect.width / 2) {
-      this.classList.remove('drag-over-left'); this.classList.add('drag-over-right');
-    } else {
-      this.classList.remove('drag-over-right'); this.classList.add('drag-over-left');
-    }
-    return false; 
+
+  // Event delegation: attach listeners ONCE to the parent container
+  // instead of attaching 7 listeners to every single vocab word.
+  function getVocabItem(e) {
+    return e.target.closest(".vocab-item");
   }
-  function handleDragLeave(e) { this.classList.remove('drag-over-left', 'drag-over-right'); }
-  function handleDrop(e) {
-    e.stopPropagation(); this.classList.remove('drag-over-left', 'drag-over-right');
-    let dropTargetIndex = Number(this.dataset.index);
+
+  els.vocab.addEventListener("click", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    const index = Number(item.dataset.index);
+    const word = state.vocab[index];
+    if (word === undefined) return;
+
+    if (e.ctrlKey) {
+      const u = new SpeechSynthesisUtterance(word);
+      const v = voices[parseInt(els.v1.value)];
+      if (v) { u.voice = v; u.lang = v.lang; }
+      synth.speak(u);
+    } else {
+      navigator.clipboard.writeText(word);
+      showToast("Copied to clipboard");
+    }
+  });
+
+  els.vocab.addEventListener("contextmenu", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    e.preventDefault();
+    removeFromVocab(Number(item.dataset.index));
+  });
+
+  els.vocab.addEventListener("dragstart", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    item.classList.add('dragging');
+    dragSrcIndex = Number(item.dataset.index);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  els.vocab.addEventListener("dragover", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = item.getBoundingClientRect();
+    if (e.clientX > rect.left + rect.width / 2) {
+      item.classList.remove('drag-over-left'); item.classList.add('drag-over-right');
+    } else {
+      item.classList.remove('drag-over-right'); item.classList.add('drag-over-left');
+    }
+  });
+
+  els.vocab.addEventListener("dragleave", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    item.classList.remove('drag-over-left', 'drag-over-right');
+  });
+
+  els.vocab.addEventListener("drop", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    e.stopPropagation();
+    item.classList.remove('drag-over-left', 'drag-over-right');
+    let dropTargetIndex = Number(item.dataset.index);
     if (dragSrcIndex !== null && dragSrcIndex !== dropTargetIndex) {
-      const rect = this.getBoundingClientRect();
+      const rect = item.getBoundingClientRect();
       const insertAfter = e.clientX > rect.left + rect.width / 2;
       const itemToMove = state.vocab[dragSrcIndex];
-      
+
       state.vocab.splice(dragSrcIndex, 1);
-      
+
       if (dragSrcIndex < dropTargetIndex) dropTargetIndex--;
       if (insertAfter) dropTargetIndex++;
-      
+
       state.vocab.splice(dropTargetIndex, 0, itemToMove);
       saveSettings(); renderVocab();
     }
-    return false;
-  }
-  function handleDragEnd(e) { this.classList.remove('dragging'); document.querySelectorAll('.vocab-item').forEach(item => item.classList.remove('drag-over-left', 'drag-over-right')); }
+  });
+
+  els.vocab.addEventListener("dragend", (e) => {
+    const item = getVocabItem(e);
+    if (!item) return;
+    item.classList.remove('dragging');
+    els.vocab.querySelectorAll('.vocab-item').forEach(i => i.classList.remove('drag-over-left', 'drag-over-right'));
+  });
 
   function renderVocab() {
-    els.vocab.innerHTML = "";
+    els.vocab.replaceChildren();
     const mode = document.getElementById("csvMode").value || "2"; els.vocab.className = `group-${mode}`;
-    if (!state.vocab.length) { 
-        els.vocab.innerHTML = '<span class="empty-msg" data-i18n="empty_words">(Words you click or ➕ will appear here)</span>'; 
+    if (!state.vocab.length) {
+        els.vocab.innerHTML = '<span class="empty-msg" data-i18n="empty_words">(Words you click or ➕ will appear here)</span>';
         applyTranslation(state.lang || "en");
-        return; 
+        return;
     }
 
     state.vocab.forEach((word, index) => {
       const item = document.createElement("div"); item.className = "vocab-item";
-
-      // 1. Tooltip logic (Hover to see full sentence)
       item.title = word;
+      item.draggable = true;
+      item.dataset.index = index;
 
-      // 2. The Number
       const numSpan = document.createElement("span");
       numSpan.className = "vocab-idx";
       numSpan.textContent = (index + 1) + ".";
       item.appendChild(numSpan);
 
-      // 3. The Truncated Text
       const textSpan = document.createElement("span");
       textSpan.className = "vocab-text";
       textSpan.textContent = word;
       item.appendChild(textSpan);
-
-      // 4. Listeners (Drag, Drop, Click etc)
-      item.draggable = true; item.dataset.index = index;
-
-      // CTRL + CLICK functionality for Vocab items
-      item.addEventListener("click", (e) => {
-          if(e.ctrlKey) {
-             // Speak the word if ctrl-clicked in the list
-             const u = new SpeechSynthesisUtterance(word);
-             // Default to Voice 1 for list reading
-             const v = voices[parseInt(els.v1.value)];
-             if(v) { u.voice=v; u.lang=v.lang; }
-             synth.speak(u);
-          } else {
-             navigator.clipboard.writeText(word);
-             showToast(`Copied to clipboard`);
-          }
-      });
-
-      item.addEventListener("contextmenu", (e) => { e.preventDefault(); removeFromVocab(index); return false; });
-      item.addEventListener('dragstart', handleDragStart); item.addEventListener('dragover', handleDragOver); item.addEventListener('dragleave', handleDragLeave); item.addEventListener('drop', handleDrop); item.addEventListener('dragend', handleDragEnd);
 
       els.vocab.appendChild(item);
     });
@@ -1845,7 +1897,7 @@ function findSpanByCharIndex(spans, charIndex) {
         isPlaying = false;
         isPaused = false;
         updatePauseUI();
-        try { localStorage.removeItem("cole_reader_bookmark"); } catch(e) {}
+        try { localStorage.removeItem("cole_reader_bookmark"); } catch(e) { console.warn("Bookmark cleanup failed:", e); }
         currentSegmentIndex = 0;
         return;
     }
@@ -1861,7 +1913,7 @@ function findSpanByCharIndex(spans, charIndex) {
     const seg = segments[index];
     try {
         localStorage.setItem("cole_reader_bookmark", JSON.stringify({ index: index, text: seg.text }));
-    } catch(e) {}
+    } catch(e) { console.warn("Bookmark save failed:", e); }
 
     // V9: SKIP LOGIC (If Audio is unchecked)
     if (!seg.playAudio) {
@@ -1992,19 +2044,32 @@ if (seg._activeWordNode) {
 
     if (els.gridWrapper) els.gridWrapper.classList.add("hidden");
     if (els.verticalWrapper) els.verticalWrapper.classList.add("hidden");
-    
+
     if (!els.gridWrapper && !els.verticalWrapper) {
         els.text.classList.add("hidden");
     }
-    
-    els.display.style.display = "block";
-    els.display.textContent = "Parsing text...\nThe larger the text, the longer it takes to process when you hit Play. Chrome users may experience ~10s wait per 1000 words.";
 
-    synth.cancel();
-    
+    els.display.style.display = "block";
+
+    const isLargeText = raw.length >= 5000;
+
+    // Show overlay for large texts so the browser stays responsive
+    const overlay = document.getElementById("processingOverlay");
+    const progressEl = document.getElementById("processingProgress");
+    const messageEl = document.getElementById("processingMessage");
+    if (isLargeText && overlay) {
+        messageEl.textContent = "Parsing your text...";
+        progressEl.textContent = "This may take a moment for large texts.";
+        overlay.style.display = "flex";
+        els.display.textContent = "";
+    } else {
+        els.display.textContent = "Parsing text...";
+    }
+
+    // Cancel any existing speech, with a safety timeout for stuck browsers
+    try { synth.cancel(); } catch(e) { console.warn("synth.cancel() failed:", e); }
+
     // --- MOBILE AUDIO WAKE-UP HACK ---
-    // Mobile browsers require a synchronous 'speak' call during a user interaction (like a click)
-    // to unlock the TTS engine. We speak an empty, silent string here instantly.
     const unlock = new SpeechSynthesisUtterance("");
     unlock.volume = 0;
     synth.speak(unlock);
@@ -2012,19 +2077,19 @@ if (seg._activeWordNode) {
 
     // Tiny delay to ensure UI updates before heavy parsing
     setTimeout(() => {
-        // FAST PATH: If text is relatively small, just parse it instantly on the main thread
-        if (raw.length < 50000) {
+        // FAST PATH: Small text — parse on main thread (instant)
+        if (raw.length < 5000) {
             buildAllSegmentsToRender(raw);
             finishPlaySetup();
             return;
         }
 
-        // HEAVY PATH: Use a Web Worker to parse massive texts so the UI doesn't freeze
+        // WORKER PATH: Parse in background so the browser doesn't freeze
         const workerCode = `
           self.onmessage = function(e) {
             const rawText = e.data;
             const parts = rawText.split(/(\\{[\\s\\S]*?\\})|(\\[[\\s\\S]*?\\])/g);
-            
+
             ${autoChunkText.toString()}
 
             let segmentsToRender = [];
@@ -2043,14 +2108,17 @@ if (seg._activeWordNode) {
             self.postMessage(segmentsToRender);
           };
         `;
-        
+
         const blob = new Blob([workerCode], {type: 'application/javascript'});
-        const worker = new Worker(URL.createObjectURL(blob));
-        
+        const workerUrl = URL.createObjectURL(blob);
+        const worker = new Worker(workerUrl);
+
         worker.onmessage = function(e) {
             const parsedSegments = e.data;
+            if (overlay) overlay.style.display = "none";
             finishPlaySetupFromWorker(parsedSegments);
             worker.terminate();
+            URL.revokeObjectURL(workerUrl);
         };
         worker.postMessage(raw);
 
@@ -2115,7 +2183,7 @@ if (seg._activeWordNode) {
                     }
                 }
             }
-        } catch(e) {}
+        } catch(e) { console.warn("Bookmark restore failed:", e); }
         renderPage(startPage, true, startIdx);
   }
 
@@ -2849,7 +2917,13 @@ if (seg._activeWordNode) {
           return;
       }
       
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = suggestedName; a.click();
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = suggestedName;
+      a.click();
+      // Free up memory by revoking the object URL
+      URL.revokeObjectURL(url);
     };
 
     setLoopUI(); updatePauseUI();

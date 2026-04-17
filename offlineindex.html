@@ -39,7 +39,10 @@
   </div>
 
   <div class="header" style="flex-wrap: wrap; gap: 10px;">
-    <h1 data-i18n="app_title">Cole's Language Lab</h1>
+    <div>
+      <h1 data-i18n="app_title" style="margin-bottom: 0;">Cole's Language Lab</h1>
+      <div id="edgeTip" style="display: none; font-size: 0.75em; opacity: 0.6; text-align: center;">Tip: Use <strong>Microsoft Edge</strong> for the best free voices</div>
+    </div>
     <div style="display: flex; gap: 10px; align-items: center;">
       <select id="langSelect" style="border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); font-weight:bold; font-size:0.89em; cursor:pointer; border-radius:8px; padding:6px 10px;">
         <option value="en">🌐 English</option>
@@ -163,7 +166,7 @@
          </div>
          
          <!-- Col 2: Voice 1 -->
-         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Normal Text no brackets">
+         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
              <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">1:</span>
              <div class="combo-wrapper" id="wrap1" style="flex: 1; position: relative; min-width: 0;">
                  <input type="text" id="voice1" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
@@ -173,7 +176,7 @@
          </div>
 
          <!-- Col 3: Voice 2 -->
-         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="{Curly Brackets}">
+         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
              <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">2:</span>
              <div class="combo-wrapper" id="wrap2" style="flex: 1; position: relative; min-width: 0;">
                  <input type="text" id="voice2" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
@@ -183,7 +186,7 @@
          </div>
 
          <!-- Col 4: Voice 3 -->
-         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="[Square Brackets]">
+         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
              <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">3:</span>
              <div class="combo-wrapper" id="wrap3" style="flex: 1; position: relative; min-width: 0;">
                  <input type="text" id="voice3" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
@@ -598,6 +601,15 @@
     <span data-i18n="kofi_float">Built by Kit & Cole. Support us</span>
   </a>
 
+<div id="processingOverlay" class="modal-overlay" style="z-index:3000; pointer-events:auto;">
+  <div class="modal-box" style="text-align:center; max-width:350px;">
+    <div style="font-size:2em; margin-bottom:10px;">⏳</div>
+    <div id="processingMessage" style="font-weight:bold; font-size:1.1em; margin-bottom:8px;">Preparing your text...</div>
+    <div id="processingProgress" style="font-size:0.9em; color:var(--accent); font-weight:bold;"></div>
+    <div style="margin-top:12px; font-size:0.8em; opacity:0.6;">For very large texts, the browser may freeze briefly. Don't worry — it'll come back!</div>
+  </div>
+</div>
+
 <div id="toast">Copied to clipboard!</div>
 
 <script type="module">
@@ -609,6 +621,7 @@
   
   window.ingglishTranslate = translate;
 </script>
+<script>if(!/Edg\//.test(navigator.userAgent)){var t=document.getElementById("edgeTip");if(t)t.style.display="block";}</script>
 <script src="app.js"></script>
 <script src="onboarding.js"></script>
 <script src="reader_onboarding.js"></script>
