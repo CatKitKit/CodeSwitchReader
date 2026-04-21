@@ -51,7 +51,9 @@
   // --- i18n Translation Logic ---
   const i18nDict = {
     "align_btn_help": { en: "Identifies possible misalignments when the number of lines don't match.", ja: "行数が一致しない場合の考えられるズレを特定します。", "zh-CN": "当行数不匹配时，识别可能的对齐错误。", "zh-TW": "當行數不匹配時，識別可能的對齊錯誤。", es: "Identifica posibles desajustes cuando el número de líneas no coincide." },
-    "align_btn": { en: "⚖️ Check Alignment", ja: "⚖️ ズレを確認", "zh-CN": "⚖️ 检查对齐", "zh-TW": "⚖️ 檢查對齊", es: "⚖️ Comprobar Alineación" },
+    "align_btn_help_ok": { en: "No misalignment. Click to check if 🔴", ja: "ズレはありません。🔴の場合のみクリックして確認できます。", "zh-CN": "无对齐错误。如果显示🔴可点击检查。", "zh-TW": "無對齊錯誤。如果顯示🔴可點擊檢查。", es: "Sin desajustes. Haz clic para comprobar si 🔴" },
+    "align_btn": { en: "Alignment 🟢", ja: "ズレ 🟢", "zh-CN": "对齐 🟢", "zh-TW": "對齊 🟢", es: "Alineación 🟢" },
+    "align_btn_red": { en: "Alignment 🔴", ja: "ズレ 🔴", "zh-CN": "对齐 🔴", "zh-TW": "對齊 🔴", es: "Alineación 🔴" },
     "scroll_to_bottom": { en: "Click to go to the bottom of the grid", ja: "クリックしてグリッドの最後に移動する", "zh-CN": "点击滚动到网格底部", "zh-TW": "點擊滾動到網格底部", es: "Haz clic para ir al final de la cuadrícula" },
     "app_title": { en: "Code-switch Reader", ja: "コードスイッチ・リーダー", "zh-CN": "代码切换阅读器", "zh-TW": "語碼轉換閱讀器", es: "Lector de Cambio de Código" },
     "v1_label": { en: "<span style=\"font-size:1.3em\">🎤</span>Voice 1", ja: "<span style=\"font-size:1.3em\">🎤</span>音声 1", "zh-CN": "<span style=\"font-size:1.3em\">🎤</span>语音 1", "zh-TW": "<span style=\"font-size:1.3em\">🎤</span>語音 1", es: "<span style=\"font-size:1.3em\">🎤</span>Voz 1" },
@@ -1382,6 +1384,12 @@
       if (voice) { u.voice = voice; u.lang = voice.lang; }
       u.rate = spd; // Matches your slider speed
       synth.speak(u);
+
+      // --- AI Context Trigger ---
+      const aiToggle = document.getElementById(`aiToggle${trackIdx}`);
+      if (aiToggle && aiToggle.checked && typeof triggerAiModal === "function") {
+          triggerAiModal(text, wordNode, trackIdx, container);
+      }
     }
   });
 
@@ -2042,6 +2050,9 @@ if (seg._activeWordNode) {
     const raw = els.text.value || ""; if (!raw.trim()) return;
     isPlaying = true; isPaused = false; updatePauseUI();
 
+    // Trigger background AI summaries if toggled
+    if (typeof kickoffAiSummaries === "function") kickoffAiSummaries();
+
     if (els.gridWrapper) els.gridWrapper.classList.add("hidden");
     if (els.verticalWrapper) els.verticalWrapper.classList.add("hidden");
 
@@ -2620,6 +2631,84 @@ if (seg._activeWordNode) {
       els.gridEditor.scrollTop = els.gridEditor.scrollHeight;
   };
 
+  window.checkAlignmentStatus = () => {
+      if (!els.gridEditor) return;
+      const rows = Array.from(els.gridEditor.querySelectorAll(".grid-row"));
+      if (rows.length === 0) return;
+
+      const totalLengths = [0, 0, 0];
+      const nonEmptyCounts = [0, 0, 0];
+
+      rows.forEach(row => {
+          const cells = row.querySelectorAll(".grid-cell");
+          for (let c = 0; c < 3; c++) {
+              const text = cells[c] ? cells[c].innerText.trim() : "";
+              const len = text.length;
+              totalLengths[c] += len;
+              if (len > 0) nonEmptyCounts[c]++;
+          }
+      });
+
+      const activeCols = [];
+      if (totalLengths[0] > 0) activeCols.push(0);
+      if (totalLengths[1] > 0) activeCols.push(1);
+      if (totalLengths[2] > 0) activeCols.push(2);
+
+      const btn = document.getElementById("btnCheckAlignment");
+      if (!btn) return;
+
+      let isRed = false;
+      if (activeCols.length >= 2) {
+          let firstCount = nonEmptyCounts[activeCols[0]];
+          for (let i = 1; i < activeCols.length; i++) {
+              if (nonEmptyCounts[activeCols[i]] !== firstCount) {
+                  isRed = true;
+                  break;
+              }
+          }
+      }
+
+      const lang = document.documentElement.lang || "en";
+      const span = btn.querySelector("span");
+      const resultSpan = document.getElementById("misalignmentResult");
+
+      if (isRed) {
+          btn.dataset.clickable = "true";
+          btn.style.cursor = "pointer";
+          const dictRed = { en: "Alignment 🔴", ja: "ズレ 🔴", "zh-CN": "对齐 🔴", "zh-TW": "對齊 🔴", es: "Alineación 🔴" };
+          const dictTitle = { en: "Identifies possible misalignments when the number of lines don't match.", ja: "行数が一致しない場合の考えられるズレを特定します。", "zh-CN": "当行数不匹配时，识别可能的对齐错误。", "zh-TW": "當行數不匹配時，識別可能的對齊錯誤。", es: "Identifica posibles desajustes cuando el número de líneas no coincide." };
+          if (span) {
+              span.textContent = dictRed[lang] || dictRed.en;
+              span.setAttribute("data-i18n", "align_btn_red");
+          }
+          btn.title = dictTitle[lang] || dictTitle.en;
+          btn.setAttribute("data-i18n-title", "align_btn_help");
+      } else {
+          btn.dataset.clickable = "false";
+          btn.style.cursor = "default";
+          const dictGreen = { en: "Alignment 🟢", ja: "ズレ 🟢", "zh-CN": "对齐 🟢", "zh-TW": "對齊 🟢", es: "Alineación 🟢" };
+          const dictTitle = { en: "No misalignment. Click to check if 🔴", ja: "ズレはありません。🔴の場合のみクリックして確認できます。", "zh-CN": "无对齐错误。如果显示🔴可点击检查。", "zh-TW": "無對齊錯誤。如果顯示🔴可點擊檢查。", es: "Sin desajustes. Haz clic para comprobar si 🔴" };
+          if (span) {
+              span.textContent = dictGreen[lang] || dictGreen.en;
+              span.setAttribute("data-i18n", "align_btn");
+          }
+          btn.title = dictTitle[lang] || dictTitle.en;
+          btn.setAttribute("data-i18n-title", "align_btn_help_ok");
+          if (resultSpan) resultSpan.textContent = "";
+      }
+  };
+
+  let alignmentDebounce;
+  const alignmentObserver = new MutationObserver(() => {
+      clearTimeout(alignmentDebounce);
+      alignmentDebounce = setTimeout(() => {
+          if (window.checkAlignmentStatus) window.checkAlignmentStatus();
+      }, 500);
+  });
+  if (els.gridEditor) {
+      alignmentObserver.observe(els.gridEditor, { childList: true, subtree: true, characterData: true });
+  }
+
   window.findMisalignment = () => {
       if (!els.gridEditor) return;
       const rows = Array.from(els.gridEditor.querySelectorAll(".grid-row"));
@@ -2945,6 +3034,390 @@ if (seg._activeWordNode) {
     });
 
     // Run on startup
+    // --- AI Context Engine ---
+    let aiSummaries = { 0: null, 1: null, 2: null };
+    let aiTexts = { 0: "", 1: "", 2: "" };
+    let aiEnabledCols = { 0: false, 1: false, 2: false };
+    
+    window.kickoffAiSummaries = async function() {
+        for (let i = 0; i < 3; i++) {
+            const toggle = document.getElementById(`aiToggle${i}`);
+            aiEnabledCols[i] = toggle && toggle.checked;
+        }
+        if (!Object.values(aiEnabledCols).some(v => v)) {
+            console.log("AI Context: No columns have the AI toggle enabled.");
+            return;
+        }
+
+        let colTexts = { 0: [], 1: [], 2: [] };
+        
+        if (state.editorMode === "grid" && state.gridData) {
+            state.gridData.forEach(r => {
+                if (aiEnabledCols[0] && r.t1 && r.t1.trim()) colTexts[0].push(r.t1.trim());
+                if (aiEnabledCols[1] && r.t2 && r.t2.trim()) colTexts[1].push(r.t2.trim());
+                if (aiEnabledCols[2] && r.t3 && r.t3.trim()) colTexts[2].push(r.t3.trim());
+            });
+        } else if (state.editorMode === "vertical" && state.verticalData) {
+            state.verticalData.forEach(r => {
+                let v = parseInt(r.voice);
+                if (v >= 1 && v <= 3 && aiEnabledCols[v - 1] && r.text && r.text.trim()) {
+                    colTexts[v - 1].push(r.text.trim());
+                }
+            });
+        }
+        
+        for (let i = 0; i < 3; i++) {
+            if (!aiEnabledCols[i]) continue;
+            let fullText = colTexts[i].join(" ");
+            if (!fullText) continue;
+            
+            // Smart Caching: Only re-summarize if the text has actually changed
+            if (aiTexts[i] === fullText && aiSummaries[i]) {
+                console.log(`AI Context (Col ${i}): Summary already cached in memory. Skipping API call.`);
+                continue;
+            }
+            
+            aiTexts[i] = fullText;
+            aiSummaries[i] = null; // Reset summary since text changed
+            
+            let wordCount = fullText.split(/\s+/).length;
+            if (wordCount > 450) {
+                console.log(`AI Context (Col ${i}): Text is ${wordCount} words (>450). Fetching background summary...`);
+                fetchGeminiSummary(i, fullText);
+            } else {
+                console.log(`AI Context (Col ${i}): Text is ${wordCount} words (<=450). Storing full text as summary. No API call needed.`);
+                aiSummaries[i] = fullText;
+            }
+        }
+    };
+
+    async function getGeminiApiKey() {
+        let key = localStorage.getItem("geminiApiKey");
+        if (!key) {
+            key = prompt("Please enter your Google Gemini API Key to use the AI Explanation feature.\n(This is stored locally in your browser)");
+            if (key) localStorage.setItem("geminiApiKey", key);
+        }
+        return key;
+    }
+
+    async function fetchGeminiSummary(colIndex, text) {
+        const apiKey = await getGeminiApiKey();
+        if (!apiKey) return;
+        
+        const promptText = `Please provide a concise 150-300 word summary of the following text to serve as global context. Do not include any pleasantries or conversational filler, just the summary itself. Keep in mind that it could be an auto caption transcript that involves multiple people and incorrect capturing. Infer the best as you can. \n\nText:\n${text}`;
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    systemInstruction: { parts: [{ text: "You are an expert summarizer." }]}
+                })
+            });
+            const data = await res.json();
+            if (data.candidates && data.candidates[0]) {
+                aiSummaries[colIndex] = data.candidates[0].content.parts[0].text;
+                console.log(`AI Summary for Column ${colIndex} ready.`);
+            }
+        } catch (e) {
+            console.error("Failed to fetch AI summary", e);
+        }
+    }
+
+    let currentAiData = { explain: '', examples: '' };
+
+    window.switchAiTab = function(tabName) {
+        document.getElementById('aiTabExplain').style.opacity = tabName === 'explain' ? '1' : '0.7';
+        document.getElementById('aiTabExplain').style.borderBottom = tabName === 'explain' ? '2px solid var(--accent)' : 'none';
+        document.getElementById('aiTabExamples').style.opacity = tabName === 'examples' ? '1' : '0.7';
+        document.getElementById('aiTabExamples').style.borderBottom = tabName === 'examples' ? '2px solid var(--accent)' : 'none';
+        
+        const contentDiv = document.getElementById('aiModalContent');
+        if (tabName === 'explain') {
+            contentDiv.innerHTML = currentAiData.explain || "No explanation available.";
+        } else {
+            contentDiv.innerHTML = currentAiData.examples || "No examples available.";
+        }
+    };
+
+    window.setAiLanguage = function() {
+        let currentLang = localStorage.getItem("aiLanguage") || "English";
+        let newLang = prompt("What language should the AI use for explanations and translations?", currentLang);
+        if (newLang !== null && newLang.trim() !== "") {
+            localStorage.setItem("aiLanguage", newLang.trim());
+            alert(`AI Explanation Language set to: ${newLang.trim()}`);
+        }
+    };
+
+    function injectRubyTags(htmlString, targetLang) {
+        // Create a temporary DOM element to parse the HTML safely
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = htmlString;
+        
+        // We only want to process text nodes, not tags or attributes
+        const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
+        const nodesToProcess = [];
+        let node;
+        while ((node = walker.nextNode())) {
+            if (node.nodeValue.trim().length > 0) {
+                nodesToProcess.push(node);
+            }
+        }
+        
+        const loc = (targetLang || "en").toLowerCase();
+        const isChinese = loc.startsWith("zh") || loc.startsWith("yue") || loc.includes("-hk") || loc.includes("-mo") || loc.includes("macau");
+        const isCantonese = loc.startsWith("yue") || loc.includes("-hk") || loc.includes("-mo") || loc.includes("macau");
+        const isJapanese = loc.startsWith("ja");
+        
+        // If neither Japanese nor Chinese dictionaries are loaded or appropriate, just return the original HTML
+        if (!((isJapanese && jpTokenizer) || (isChinese && (window.pinyinPro || window.ToJyutping)))) {
+            return htmlString;
+        }
+
+        nodesToProcess.forEach(textNode => {
+            const text = textNode.nodeValue;
+            const fragment = document.createDocumentFragment();
+            
+            if (isJapanese && jpTokenizer) {
+                const tokens = jpTokenizer.tokenize(text);
+                tokens.forEach(token => {
+                    const s = token.surface_form;
+                    if (token.reading && token.reading !== "*" && s.match(/[\u4e00-\u9faf]/)) {
+                        // Very simple Katakana to Hiragana conversion for Furigana
+                        const hiragana = token.reading.replace(/[\u30a1-\u30f6]/g, function(match) {
+                            return String.fromCharCode(match.charCodeAt(0) - 0x60);
+                        });
+                        const ruby = document.createElement("ruby");
+                        ruby.textContent = s;
+                        const rt = document.createElement("rt");
+                        rt.textContent = hiragana;
+                        // Match the main app's styling for rt, but tweaked for the popup
+                        rt.style.color = "var(--accent)";
+                        rt.style.fontSize = "0.7em";
+                        ruby.appendChild(rt);
+                        fragment.appendChild(ruby);
+                    } else {
+                        fragment.appendChild(document.createTextNode(s));
+                    }
+                });
+            } else if (isChinese) {
+                const seg = getWordSegmenter(loc);
+                if (seg) {
+                    const segments = seg.segment(text);
+                    for (const part of segments) {
+                        const s = part.segment;
+                        if (part.isWordLike && /[\u4e00-\u9fa5]/.test(s)) {
+                            let reading = null;
+                            if (isCantonese && els.chkJyutping.checked && window.ToJyutping) {
+                                reading = window.ToJyutping.getJyutpingText(s);
+                            } else if (!isCantonese && els.chkPinyin.checked && window.pinyinPro) {
+                                reading = window.pinyinPro.pinyin(s, { type: 'string' });
+                            }
+                            
+                            if (reading) {
+                                const ruby = document.createElement("ruby");
+                                ruby.textContent = s;
+                                const rt = document.createElement("rt");
+                                rt.textContent = reading;
+                                rt.style.color = "var(--accent)";
+                                rt.style.fontSize = "0.7em";
+                                ruby.appendChild(rt);
+                                fragment.appendChild(ruby);
+                            } else {
+                                fragment.appendChild(document.createTextNode(s));
+                            }
+                        } else {
+                            fragment.appendChild(document.createTextNode(s));
+                        }
+                    }
+                } else {
+                    fragment.appendChild(document.createTextNode(text));
+                }
+            } else {
+                fragment.appendChild(document.createTextNode(text));
+            }
+            
+            textNode.parentNode.replaceChild(fragment, textNode);
+        });
+        
+        return tempDiv.innerHTML;
+    }
+
+    window.triggerAiModal = async function(word, wordNode, trackIdx, container) {
+        const apiKey = await getGeminiApiKey();
+        if (!apiKey) {
+            document.getElementById(`aiToggle${trackIdx}`).checked = false;
+            return;
+        }
+
+        const modal = document.getElementById('aiModal');
+        const titleWord = document.getElementById('aiModalWord');
+        const titleTrans = document.getElementById('aiModalTranslation');
+        const contentDiv = document.getElementById('aiModalContent');
+        
+        modal.style.display = 'flex';
+        
+        // Robustly extract the reading (Furigana/Pinyin/IPA) if it exists on the word
+        let readingText = "";
+        const rtNodes = wordNode.querySelectorAll('rt');
+        if (rtNodes.length > 0) {
+            readingText = Array.from(rtNodes).map(n => n.textContent).join("");
+        }
+
+        // Render the word and its reading cleanly using flexbox instead of native <ruby> (which can break in flex headers)
+        if (readingText) {
+            titleWord.innerHTML = `<div style="display:flex; flex-direction:column; align-items:flex-start; line-height:1.1; gap:2px;">
+                <span style="font-size:0.7em; font-weight:normal; color:rgba(255,255,255,0.85);">${readingText}</span>
+                <span>${word}</span>
+            </div>`;
+        } else {
+            titleWord.textContent = word;
+        }
+        
+        titleTrans.textContent = "Loading translation...";
+        contentDiv.innerHTML = `<span style="opacity:0.7;">Reading context...</span>`;
+        currentAiData = { explain: 'Loading...', examples: 'Loading...' };
+        switchAiTab('explain');
+        
+        const rect = wordNode.getBoundingClientRect();
+        let top = rect.bottom + window.scrollY + 10;
+        let left = rect.left + window.scrollX - 20;
+        
+        if (left + 340 > window.innerWidth) left = window.innerWidth - 350;
+        if (left < 10) left = 10;
+        if (top + 300 > window.innerHeight + window.scrollY) {
+            top = rect.top + window.scrollY - 310;
+        }
+        
+        modal.style.top = `${top - window.scrollY}px`;
+        modal.style.left = `${left}px`;
+        
+        let localSentences = [];
+        const trackSegments = segments.filter(s => s.typeIndex === trackIdx);
+        const currentIndex = trackSegments.findIndex(s => s.container === container);
+        
+        let isFullTextSummary = (aiSummaries[trackIdx] && aiTexts[trackIdx] && aiSummaries[trackIdx] === aiTexts[trackIdx]);
+        let summaryText = aiSummaries[trackIdx] || "(No background summary available. Please infer from local context only.)";
+        let localContextStr = "";
+
+        if (currentIndex !== -1) {
+            if (isFullTextSummary) {
+                // If the summary is the full text, inject the marker directly and skip the redundant local context block
+                let fullTextWithMarker = [];
+                for (let i = 0; i < trackSegments.length; i++) {
+                    let prefix = (i === currentIndex) ? ">>[TARGET SENTENCE]<< " : "";
+                    fullTextWithMarker.push(prefix + trackSegments[i].text);
+                }
+                summaryText = fullTextWithMarker.join(" ");
+            } else {
+                // Regular 7-sentence zoom window
+                let start = currentIndex - 3;
+                let end = currentIndex + 3;
+                
+                // Shift the 7-sentence window if we hit the beginning or end of the text
+                if (start < 0) { end += Math.abs(start); start = 0; }
+                if (end > trackSegments.length - 1) { start -= (end - (trackSegments.length - 1)); end = trackSegments.length - 1; }
+                start = Math.max(0, start); // Failsafe if total text is less than 7 sentences
+                
+                for (let i = start; i <= end; i++) {
+                    let prefix = (i === currentIndex) ? ">>[TARGET SENTENCE]<< " : "";
+                    localSentences.push(prefix + trackSegments[i].text);
+                }
+                localContextStr = `### Local Context (Up to 7 sentences):\n${localSentences.join("\n")}\n\n`;
+            }
+        }
+        
+        const targetLang = localStorage.getItem("aiLanguage") || "English";
+        const translationInstruction = `Provide all explanations and example translations in ${targetLang}. If the source language and ${targetLang} are the same, provide explanations in simpler ${targetLang} acting as a monoligual dictionary and skip the translations.`;
+
+        const prompt = `You are a helpful language learning assistant.
+The user clicked on the word/phrase: "${word}".
+
+### Global Story Summary:
+${summaryText}
+
+${localContextStr}### Task:
+${translationInstruction}
+1. Provide a brief, literal meaning of "${word}".
+2. Explain its grammatical role and meaning *specifically within the [TARGET SENTENCE]*, considering the global context. Keep the explanation concise and easy to read.
+3. Provide 3 short example sentences using "${word}" in a similar context or meaning, along with their translations (following the instruction above).
+Keep in mind that the text can be an auto caption transcipt with incorrect captioning. Infer the best that you can.
+
+CRITICAL INSTRUCTION: You MUST output ONLY a single, valid JSON object. Your entire response must start with { and end with }.
+
+Format the response exactly like this JSON object:
+{
+  "translation": "short literal translation",
+  "explainHtml": "HTML formatted explanation (use <p>, <strong>, etc. don't use markdown headers, just simple styling. Avoid overly verbose text)",
+  "examplesHtml": "HTML formatted numbered list of 3 examples (use <ol><li><strong>Example:</strong> Translation</li>...)"
+}`;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+            const data = await res.json();
+            if (data.candidates && data.candidates[0]) {
+                let responseText = data.candidates[0].content.parts[0].text;
+                let parsed = null;
+                
+                // Try to aggressively extract JSON in case the model added conversational filler
+                let jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    try {
+                        parsed = JSON.parse(jsonMatch[0]);
+                    } catch(e) {
+                        console.warn("Extracted JSON was invalid", e);
+                    }
+                }
+                
+                if (parsed && parsed.translation) {
+                    // Valid JSON extracted
+                    // Determine language for pronunciation mapping based on the track's voice
+                    const trackInput = [els.v1, els.v2, els.v3][trackIdx];
+                    const targetName = trackInput ? trackInput.value : "";
+                    let voice = voices.find(v => `${v.name} (${v.lang})` === targetName);
+                    const langHint = voice ? voice.lang : "en";
+
+                    titleTrans.textContent = parsed.translation;
+                    currentAiData.explain = injectRubyTags(parsed.explainHtml || "No explanation.", langHint);
+                    currentAiData.examples = injectRubyTags(parsed.examplesHtml || "No examples.", langHint);
+                } else {
+                    // Fallback: The model just gave us raw text instead of JSON
+                    console.warn("Gemma refused to output valid JSON. Falling back to raw text renderer.");
+                    titleTrans.textContent = "AI Explanation";
+                    
+                    // Determine language for pronunciation mapping based on the track's voice
+                    const trackInput = [els.v1, els.v2, els.v3][trackIdx];
+                    const targetName = trackInput ? trackInput.value : "";
+                    let voice = voices.find(v => `${v.name} (${v.lang})` === targetName);
+                    const langHint = voice ? voice.lang : "en";
+                    
+                    // Simple markdown-ish conversion to HTML for the raw text
+                    let rawHtml = responseText
+                        .replace(/\n/g, '<br>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                        
+                    currentAiData.explain = `<div style="font-family: monospace; white-space: pre-wrap;">${injectRubyTags(rawHtml, langHint)}</div>`;
+                    currentAiData.examples = "<em>(Examples were not formatted correctly by the model. Please check the Explain tab.)</em>";
+                }
+                
+                switchAiTab(document.getElementById('aiTabExplain').style.opacity === '1' ? 'explain' : 'examples');
+            } else {
+                contentDiv.innerHTML = `<span style="color:red;">Failed to get AI explanation.</span>`;
+            }
+        } catch (e) {
+            console.error("AI Modal Error", e);
+            contentDiv.innerHTML = `<span style="color:red;">Error fetching data. Check your API key and connection.</span>`;
+        }
+    };
+
     setTimeout(() => {
        if (state.lang) {
            langSelect.value = state.lang;

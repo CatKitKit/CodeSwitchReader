@@ -19,16 +19,29 @@
             },
             {
                 title: "Tool 1: Track Controls 🎛️",
-                text: "Use the 👁️ icon to **hide the text** for any track.<br><br>Use the 🎧 icon to **mute a voice**.",
-                target: "div[style*='grid-template-columns: auto auto auto auto']",
+                text: "Use the 👁️ icon to <strong>hide the text</strong> for any track.<br><br>Use the 🎧 icon to <strong>mute a voice</strong>.<br><br><em>(These live inside ⚙ Playback Options — we've opened it for you!)</em>",
+                target: "#showAudioGrid",
                 action: "Next",
                 onShow: () => {
-                    const grid = document.querySelector("div[style*='grid-template-columns: auto auto auto auto']");
-                    if(grid) {
-                        // Darken the entire page, then lift just the Show/Audio grid above it
-                        overlay.style.display = 'block';
+                    // Make sure the Playback Options panel is open so the grid is visible
+                    const panel = document.getElementById("playbackOptions");
+                    const arrow = document.getElementById("playbackArrow");
+                    const btn   = document.getElementById("playbackToggleBtn");
+                    if (panel && panel.style.display === "none") {
+                        panel.style.display = "block";
+                        if (arrow) arrow.textContent = "▴";
+                        if (btn) { btn.style.borderColor = "var(--accent)"; btn.style.color = "var(--accent)"; }
+                    }
+                    // Highlight both the toggle button and the grid inside it
+                    const grid = document.getElementById("showAudioGrid");
+                    const toggleBtn = document.getElementById("playbackToggleBtn");
+                    if (grid) {
+                        overlay.style.display = "block";
                         targetElement = grid;
                         targetElement.classList.add("onboarding-highlight-overlay");
+                    }
+                    if (toggleBtn) {
+                        toggleBtn.classList.add("onboarding-highlight-overlay");
                     }
                 }
             },

@@ -15,7 +15,7 @@ Every day was the same for Sam. He woke up early and ate the same food—eggs, c
 
 Then he went to the gym.`;
 
-    const spanishSample = `Sam solo quería una cosa-quería ser el más fuerte.
+    const spanishSample = `Sam solo quería una cosa. Quería ser el más fuerte.
 
 Y no solo quería ser fuerte, sino el más fuerte. Más fuerte que todos los que conocía. No dejaba de pensar en ello en todo momento. Por la mañana, por la noche, incluso antes de dormir. Quería ser el número uno.
 
@@ -40,7 +40,7 @@ Luego se iba al gimnasio.`;
         },
         {
             title: "Step 1: Pick the Main Voice 🗣️",
-            text: "Click here to select an **English** voice for the main text.",
+            text: "Click here to select an <strong>English</strong> voice for the main text.",
             target: "#wrap1",
             action: "Next",
             onShow: () => { 
@@ -50,7 +50,7 @@ Luego se iba al gimnasio.`;
         },
         {
             title: "Step 2: Pick the Second Voice 🗣️",
-            text: "Now, select a **Spanish** voice for the translation track.",
+            text: "Now, select a <strong>Spanish</strong> voice for the translation track.",
             target: "#wrap2",
             action: "Next",
             onShow: () => { 
@@ -60,7 +60,7 @@ Luego se iba al gimnasio.`;
         },
         {
             title: "Step 3: Add English Text 🇺🇸",
-            text: `Copy this English text and paste it directly into the **first column** and see how it chops it up:<br><br>
+            text: `Copy this English text and paste it directly into the <strong>first column</strong> and see how it chops it up:<br><br>
             <div style="font-size:0.8em; background:rgba(0,0,0,0.1); padding:8px; border-radius:4px; max-height: 80px; overflow-y:auto; margin-bottom:10px; border:1px solid #ccc; color:inherit;">${englishSample.replace(/\n/g, '<br>')}</div>
             <button id="copyEnBtn" style="padding:4px 8px; cursor:pointer; border-radius:4px; font-weight:bold; border:1px solid var(--accent); background:var(--accent); color:var(--bg-color);">Copy English Text</button>`,
             target: "#gridEditor .grid-row:first-child .cell-wrapper:nth-child(1) .grid-cell",
@@ -72,7 +72,7 @@ Luego se iba al gimnasio.`;
         },
         {
             title: "Step 4: Add Spanish translation of the same story 🇪🇸",
-            text: `Copy this Spanish text and paste it into the first block of the **second column** and see how they algin automatically:<br><br>
+            text: `Copy this Spanish text and paste it into the first block of the <strong>second column</strong> and see how they align automatically:<br><br>
             <div style="font-size:0.8em; background:rgba(0,0,0,0.1); padding:8px; border-radius:4px; max-height: 80px; overflow-y:auto; margin-bottom:10px; border:1px solid #ccc; color:inherit;">${spanishSample.replace(/\n/g, '<br>')}</div>
             <button id="copyEsBtn" style="padding:4px 8px; cursor:pointer; border-radius:4px; font-weight:bold; border:1px solid var(--accent); background:var(--accent); color:var(--bg-color);">Copy Spanish Text</button>`,
             target: "#gridEditor .grid-row:first-child .cell-wrapper:nth-child(2) .grid-cell",
@@ -95,7 +95,7 @@ Luego se iba al gimnasio.`;
         },
         {
             title: "Step 6: Play! ▶️",
-            text: "You're all set! Click the **Play** button to hear the magic happen. The app will smoothly switch between the two voices.",
+            text: "You're all set! Click the <strong>Play</strong> button to hear the magic happen. The app will smoothly switch between the two voices.",
             target: "#playBtn",
             action: "Finish Setup",
             onShow: () => { 

@@ -40,7 +40,7 @@
 
   <div class="header" style="flex-wrap: wrap; gap: 10px;">
     <div>
-      <h1 data-i18n="app_title" style="margin-bottom: 0;">Cole's Language Lab</h1>
+      <h1 data-i18n="app_title" style="margin-bottom: 0;">Code-Switch Reader</h1>
       <div id="edgeTip" style="display: none; font-size: 0.75em; opacity: 0.6; text-align: center;">Tip: Use <strong>Microsoft Edge</strong> for the best free voices</div>
     </div>
     <div style="display: flex; gap: 10px; align-items: center;">
@@ -55,29 +55,28 @@
     </div>
   </div>
 
-  <div id="readerSection" class="card" style="border: 1px solid var(--border-color); padding: 20px; position: relative;">
+<!-- EDGE RECOMMENDATION BANNER (Chrome users only) -->
+<div id="edgeBanner" style="display:none; background:linear-gradient(135deg,#0078d4 0%,#005a9e 100%); color:#fff; padding:12px 20px; border-radius:10px; margin-bottom:16px; display:none; align-items:center; gap:14px; flex-wrap:wrap; box-shadow:0 3px 12px rgba(0,120,212,0.25);">
+  <span style="font-size:1.5em; flex-shrink:0;">🎙️</span>
+  <div style="flex:1; min-width:200px;">
+    <div style="font-weight:bold; font-size:0.95em; margin-bottom:2px;">Get premium voices — free</div>
+    <div style="font-size:0.82em; opacity:0.9;">Microsoft Edge unlocks neural TTS voices that sound significantly better. No cost, no account needed.</div>
+  </div>
+  <a id="edgeDeepLink" href="#" target="_blank" style="background:#fff; color:#0078d4; font-weight:bold; font-size:0.85em; padding:8px 16px; border-radius:20px; text-decoration:none; white-space:nowrap; flex-shrink:0; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Open in Edge →</a>
+  <button onclick="dismissEdgeBanner()" style="background:transparent; border:none; color:#fff; opacity:0.7; cursor:pointer; font-size:1.3em; line-height:1; padding:0 4px; flex-shrink:0;" title="Dismiss">×</button>
+</div>
 
-    <!-- Top Middle Ko-fi Button -->
-    <div style="position:absolute; top:15px; left:50%; transform: translateX(-50%); z-index:10; display:flex;">
-        <a href="https://ko-fi.com/kitkatkat#checkoutModal" target="_blank" onclick="window.open(this.href, 'kofi', 'width=500,height=700'); return false;" style="background: #00b9fe; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: bold; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; white-space: nowrap;">
-            ☕ Support us
-        </a>
-    </div>
+  <div id="readerSection" class="card" style="border: 1px solid var(--border-color); padding: 20px; position: relative;">
 
     <!-- Top Right Buttons -->
     <div style="position:absolute; top:15px; right:15px; display:flex; gap:8px; z-index:10; align-items:center;">
-        <div style="display:flex; gap:4px; font-size: 0.75em; font-weight: 800; opacity: 0.8; cursor: pointer; user-select: none; transition: opacity 0.2s;"
-             onclick="document.getElementById('advSettingsModal').style.display='flex'"
-             onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'"
-             title="Advanced Language Settings">
-            <span style="background: var(--card-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-color);">JP</span>
-            <span style="background: var(--card-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-color);">CN</span>
-            <span style="background: var(--card-bg); padding: 2px 6px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-color);">HK</span>
-            <span style="margin-left: 2px; align-self: center; color: var(--accent); font-size: 1.4em;">➔</span>
-        </div>
+        <a href="https://ko-fi.com/kitkatkat" target="_blank" style="background-color:rgba(0, 185, 254, 0.1); color:#00b9fe; padding:4px 10px; border-radius:20px; font-weight:bold; font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px; border:1px solid rgba(0, 185, 254, 0.3); transition:all 0.2s;" onmouseover="this.style.backgroundColor='#00b9fe'; this.style.color='#fff';" onmouseout="this.style.backgroundColor='rgba(0, 185, 254, 0.1)'; this.style.color='#00b9fe';">
+          <img src="https://storage.ko-fi.com/cdn/cup-border.png" style="width:14px; height:14px;" alt="Ko-fi">
+          <span data-i18n="kofi_float">Built by Kit & Cole. Support us</span>
+        </a>
         <button class="mini-btn"
                 style="width:32px; height:32px; font-size:16px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
-                title="Advanced Language Settings"
+                title="Advanced Language Settings (JP · CN · HK)"
                 onclick="document.getElementById('advSettingsModal').style.display='flex'">
           ⚙️
         </button>
@@ -88,145 +87,130 @@
         </button>
     </div>
 
-    <!-- COMPACT TOOLS DASHBOARD (Unified with Voices) -->
-    <div style="margin-top:40px; margin-bottom:15px; padding:15px; background:rgba(0,0,0,0.03); border-radius:10px; border:1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;">
-      
-      <!-- Top Row: Controls -->
-      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content: space-between; gap:10px; font-size: 0.89em;">
-        
-        <div style="display:flex; flex-wrap:nowrap; align-items:center; gap:8px; overflow-x: auto;">
-            <!-- LEFT: Shadow -->
-            <div style="display:flex; align-items:center; gap:4px; font-size:1em; flex-shrink: 0;" title="Adds a silence gap (0s - 6s) after every sentence.">
-              <span style="cursor:help; font-size: 1.2em;">⏱️</span><span id="shadowVal" style="color:var(--accent); display:inline-block; width:1.2em; text-align:center;">0s</span>
-              <input id="shadowSlider" type="range" min="0" max="6.0" step="0.5" value="0" style="width:50px; accent-color:var(--accent);">
-            </div>
+    <!-- COMPACT TOOLS DASHBOARD -->
+    <div style="margin-top:40px; margin-bottom:15px; padding:15px; background:rgba(0,0,0,0.03); border-radius:10px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:12px;">
 
-            <div style="width:1px; height:35px; background:#ccc; flex-shrink: 0; margin: 0 5px;"></div>
-
-            <!-- CENTER: Eye/Audio mini-grid -->
-            <div style="display:grid; grid-template-columns: auto auto auto auto; gap:2px 8px; align-items:center; font-size:0.89em; flex-shrink: 0;">
-              <span style="font-weight:bold;" data-i18n="show">👁️ Show:</span>
-              <label style="margin:0; cursor:pointer;" title="Toggle on/off with 1 while in reader mode"><input type="checkbox" id="chkShow1" checked> 1</label>
-              <label style="margin:0; cursor:pointer;" title="Toggle on/off with 2 while in reader mode"><input type="checkbox" id="chkShow2" checked> {2}</label>
-              <label style="margin:0; cursor:pointer;" title="Toggle on/off with 3 while in reader mode"><input type="checkbox" id="chkShow3" checked> [3]</label>
-              <span style="font-weight:bold;" data-i18n="audio">🎧 Audio:</span>
-              <label style="margin:0; cursor:pointer;" title="Toggle on/off with Shift+1 while in reader mode"><input type="checkbox" id="chkAudio1" checked> 1</label>
-              <label style="margin:0; cursor:pointer;" title="Toggle on/off with Shift+2 while in reader mode"><input type="checkbox" id="chkAudio2" checked> {2}</label>
-              <label style="margin:0; cursor:pointer;" title="Toggle on/off with Shift+3 while in reader mode"><input type="checkbox" id="chkAudio3" checked> [3]</label>
-            </div>
-
-            <div style="width:1px; height:35px; background:#ccc; flex-shrink: 0; margin: 0 5px;"></div>
-
-            <!-- RIGHT: Scroll, Clear, File -->
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; flex-shrink: 0;">
-              <div style="font-size:0.89em; display:flex; flex-direction:column; align-items:center; gap:2px; padding-right: 2px;">
-                <span style="font-weight:bold; color:var(--accent);" data-i18n="auto_scroll">Auto-Scroll</span>
-                <input type="checkbox" id="autoScrollChk" checked style="accent-color: var(--accent); width: 14px; height: 14px; margin: 0;">
-              </div>
-
-              <div style="width:1px; height:30px; background:#ccc; margin-right: 2px;"></div>
-
-              <button id="mainUndoBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="restoreMainText()" title="Undo">
-                <span style="font-size: 1.5em; color: var(--accent);">↩</span>
-              </button>
-              
-              <button class="btn-sm danger" style="display:flex; flex-direction:column; align-items:center; gap:2px; font-size:0.89em;" onclick="clearMainText()" title="Clear">
-                <span style="font-size: 1.5em;">🗑️</span>
-              </button>
-
-              <input type="file" id="fileLoader" style="display:none" accept=".txt">
-              <button class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="document.getElementById('fileLoader').click()" title="Import unformatted text for 1 voice&#10;OR&#10;Previously formatted saved text">
-                <span style="font-size: 1.5em; color: #ffc107;">🗁</span>
-              </button>
-              
-              <button class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="downloadText()" title="Save as TXT">
-                <span style="font-size: 1.5em; color: #6f42c1;">🗀</span>
-              </button>
-            </div>
-        </div>
-
-        <!-- Grid/Vertical Buttons -->
-        <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
-            <button id="modeGridBtn" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; border-radius: 20px; padding: 4px 12px; border: none; cursor: pointer; transition: opacity 0.2s; font-size: 0.8em;" title="For multilingual texts that are entirely separate.&#10;--------------------------------------------&#10;| English article | same article in Spanish |&#10;--------------------------------------------">☷ Grid</button>
-            <button id="modeVerticalBtn" class="btn-sm" style="background-color: transparent; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; border-radius: 20px; padding: 4px 12px; cursor: pointer; transition: opacity 0.2s; font-size: 0.8em;" title="For texts that alternate.&#10;Example:&#10;English line...&#10;Spanish line...&#10;&#10;Or transcripts:&#10;Speaker 1: ...&#10;Speaker 2: ...">⚌ Vertical</button>
-        </div>
-
-      </div>
-
-      <!-- The Shared List -->
+      <!-- The Shared Voice List -->
       <datalist id="allVoices"></datalist>
 
-      <!-- VOICE SELECTIONS (2 Rows, 3 Columns matching grid) -->
-      <div id="voicesContainer" style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr auto; gap: 8px 8px; align-items: center; padding: 0;">
-         
-         <!-- ROW 1 -->
-         <!-- Col 1: Voice Label -->
-         <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; color: var(--text-color); display: flex; align-items: center; justify-content: flex-end; overflow: visible;">
-             <span style="font-size:1.0em; margin-right:0px;"> Voice
-         </div>
-         
-         <!-- Col 2: Voice 1 -->
-         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
-             <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">1:</span>
-             <div class="combo-wrapper" id="wrap1" style="flex: 1; position: relative; min-width: 0;">
-                 <input type="text" id="voice1" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
-                 <button class="combo-arrow" tabindex="-1" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%);">▼</button>
-                 <div class="combo-dropdown" id="list1" style="width: max-content; min-width: 100%; max-width: 300px; font-size: 0.85em;"></div>
-             </div>
-         </div>
+      <!-- ROW 1: Three Voice Columns -->
+      <div id="voicesContainer" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
 
-         <!-- Col 3: Voice 2 -->
-         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
-             <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">2:</span>
-             <div class="combo-wrapper" id="wrap2" style="flex: 1; position: relative; min-width: 0;">
-                 <input type="text" id="voice2" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
-                 <button class="combo-arrow" tabindex="-1" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%);">▼</button>
-                 <div class="combo-dropdown" id="list2" style="width: max-content; min-width: 100%; max-width: 300px; font-size: 0.85em;"></div>
-             </div>
-         </div>
+        <!-- Track 1 -->
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 1</div>
+          <div style="display:flex; align-items:center; gap:4px; min-width:0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
+            <div class="combo-wrapper" id="wrap1" style="flex:1; position:relative; min-width:0;">
+              <input type="text" id="voice1" class="combo-input" placeholder="Select voice..." autocomplete="off" style="width:100%; text-overflow:ellipsis; padding-right:20px; font-size:0.85em; box-sizing:border-box;">
+              <button class="combo-arrow" tabindex="-1" style="position:absolute; right:2px; top:50%; transform:translateY(-50%);">▼</button>
+              <div class="combo-dropdown" id="list1" style="width:max-content; min-width:100%; max-width:300px; font-size:0.85em;"></div>
+            </div>
+          </div>
+          <div class="mini-speed-row" title="Voice Speed" style="display:flex; align-items:center; gap:4px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:6px; padding:3px 8px; box-sizing:border-box;">
+            <i class="speedometer-icon"></i>
+            <input id="rate1" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; accent-color:var(--accent);">
+            <span id="rateVal1" style="font-size:0.85em; font-weight:bold; min-width:2.5em; text-align:right;">1.0x</span>
+          </div>
+        </div>
 
-         <!-- Col 4: Voice 3 -->
-         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
-             <span style="font-weight: bold; font-size: 0.85em; white-space: nowrap;">3:</span>
-             <div class="combo-wrapper" id="wrap3" style="flex: 1; position: relative; min-width: 0;">
-                 <input type="text" id="voice3" class="combo-input" placeholder="Select..." autocomplete="off" style="width: 100%; text-overflow: ellipsis; padding-right: 20px; font-size: 0.85em; box-sizing: border-box;">
-                 <button class="combo-arrow" tabindex="-1" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%);">▼</button>
-                 <div class="combo-dropdown" id="list3" style="width: max-content; min-width: 100%; max-width: 300px; font-size: 0.85em;"></div>
-             </div>
-         </div>
+        <!-- Track 2 -->
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 2 {…}</div>
+          <div style="display:flex; align-items:center; gap:4px; min-width:0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
+            <div class="combo-wrapper" id="wrap2" style="flex:1; position:relative; min-width:0;">
+              <input type="text" id="voice2" class="combo-input" placeholder="Select voice..." autocomplete="off" style="width:100%; text-overflow:ellipsis; padding-right:20px; font-size:0.85em; box-sizing:border-box;">
+              <button class="combo-arrow" tabindex="-1" style="position:absolute; right:2px; top:50%; transform:translateY(-50%);">▼</button>
+              <div class="combo-dropdown" id="list2" style="width:max-content; min-width:100%; max-width:300px; font-size:0.85em;"></div>
+            </div>
+          </div>
+          <div class="mini-speed-row" title="Voice Speed" style="display:flex; align-items:center; gap:4px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:6px; padding:3px 8px; box-sizing:border-box;">
+            <i class="speedometer-icon"></i>
+            <input id="rate2" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; accent-color:var(--accent);">
+            <span id="rateVal2" style="font-size:0.85em; font-weight:bold; min-width:2.5em; text-align:right;">1.0x</span>
+          </div>
+        </div>
 
-         <!-- Col 5: Spacer -->
-         <div style="width: 20px;"></div>
-
-
-         <!-- ROW 2 -->
-         <!-- Col 1: Speedometer Icon -->
-         <div style="display: flex; align-items: center; justify-content: flex-end; overflow: visible; padding-right: 0px;">
-             <span style="font-size: 1.5em;" title="Voice Speed"><i class="speedometer-icon"></i></span>
-         </div>
-         
-         <!-- Col 2: Speed 1 -->
-         <div class="mini-speed-row" title="Voice Speed" style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; box-sizing: border-box;">
-             <input id="rate1" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%; max-width: 135px; accent-color: var(--accent);">
-             <span id="rateVal1" style="font-size: 1em; font-weight: bold;">1.0x</span> 
-         </div>
-
-         <!-- Col 3: Speed 2 -->
-         <div class="mini-speed-row" title="Voice Speed" style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; box-sizing: border-box;">
-             <input id="rate2" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%; max-width: 135px; accent-color: var(--accent);">
-             <span id="rateVal2" style="font-size: 1em; font-weight: bold;">1.0x</span> 
-         </div>
-
-         <!-- Col 4: Speed 3 -->
-         <div class="mini-speed-row" title="Voice Speed" style="display: flex; align-items: center; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; box-sizing: border-box;">
-             <input id="rate3" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%; max-width: 135px; accent-color: var(--accent);">
-             <span id="rateVal3" style="font-size: 1em; font-weight: bold;">1.0x</span> 
-         </div>
-
-         <!-- Col 5: Spacer -->
-         <div></div>
+        <!-- Track 3 -->
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 3 […]</div>
+          <div style="display:flex; align-items:center; gap:4px; min-width:0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
+            <div class="combo-wrapper" id="wrap3" style="flex:1; position:relative; min-width:0;">
+              <input type="text" id="voice3" class="combo-input" placeholder="Select voice..." autocomplete="off" style="width:100%; text-overflow:ellipsis; padding-right:20px; font-size:0.85em; box-sizing:border-box;">
+              <button class="combo-arrow" tabindex="-1" style="position:absolute; right:2px; top:50%; transform:translateY(-50%);">▼</button>
+              <div class="combo-dropdown" id="list3" style="width:max-content; min-width:100%; max-width:300px; font-size:0.85em;"></div>
+            </div>
+          </div>
+          <div class="mini-speed-row" title="Voice Speed" style="display:flex; align-items:center; gap:4px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:6px; padding:3px 8px; box-sizing:border-box;">
+            <i class="speedometer-icon"></i>
+            <input id="rate3" type="range" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1; accent-color:var(--accent);">
+            <span id="rateVal3" style="font-size:0.85em; font-weight:bold; min-width:2.5em; text-align:right;">1.0x</span>
+          </div>
+        </div>
 
       </div>
+
+      <!-- DIVIDER -->
+      <div style="height:1px; background:var(--border-color);"></div>
+
+      <!-- ROW 2: Mode + File Actions + Playback Toggle -->
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+
+        <!-- Left: Mode buttons -->
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button id="modeGridBtn" class="btn-sm" style="background-color:var(--accent); color:var(--bg-color); font-weight:bold; border-radius:20px; padding:4px 12px; border:none; cursor:pointer; transition:opacity 0.2s; font-size:0.8em;" title="For multilingual texts that are entirely separate.&#10;--------------------------------------------&#10;| English article | same article in Spanish |&#10;--------------------------------------------">☷ Grid</button>
+          <button id="modeVerticalBtn" class="btn-sm" style="background-color:transparent; border:1px solid var(--accent); color:var(--accent); font-weight:bold; border-radius:20px; padding:4px 12px; cursor:pointer; transition:opacity 0.2s; font-size:0.8em;" title="For texts that alternate.&#10;Example:&#10;English line...&#10;Spanish line...&#10;&#10;Or transcripts:&#10;Speaker 1: ...&#10;Speaker 2: ...">⚌ Vertical</button>
+        </div>
+
+        <!-- Middle: File actions + auto-scroll -->
+        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+          <label style="display:flex; align-items:center; gap:4px; font-size:0.82em; font-weight:bold; cursor:pointer; margin:0; color:var(--accent);" title="Auto-scroll to the current sentence while reading">
+            <input type="checkbox" id="autoScrollChk" checked style="accent-color:var(--accent); width:13px; height:13px; margin:0; cursor:pointer;">
+            <span data-i18n="auto_scroll">Auto-Scroll</span>
+          </label>
+          <div style="width:1px; height:26px; background:var(--border-color);"></div>
+          <button id="mainUndoBtn" class="btn-sm" style="color:var(--accent); font-size:1.25em; padding:2px 6px;" onclick="restoreMainText()" title="Undo">↩</button>
+          <button class="btn-sm danger" style="font-size:1.25em; padding:2px 6px;" onclick="clearMainText()" title="Clear all text">🗑️</button>
+          <input type="file" id="fileLoader" style="display:none" accept=".txt">
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import unformatted text for 1 voice&#10;OR&#10;Previously formatted saved text">🗁</button>
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Save as TXT">🗀</button>
+        </div>
+
+        <!-- Right: Playback Options toggle -->
+        <button id="playbackToggleBtn" onclick="togglePlaybackOptions()" style="background:transparent; border:1px solid var(--border-color); color:var(--muted); font-size:0.8em; padding:5px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s; white-space:nowrap; flex-shrink:0;" title="Show/Hide tracks, mute audio, shadowing pause">
+          <span>⚙</span><span>Playback Options</span><span id="playbackArrow">▾</span>
+        </button>
+
+      </div>
+
+      <!-- ROW 3: Playback Options panel (hidden by default) -->
+      <div id="playbackOptions" style="display:none; padding:12px; background:rgba(0,0,0,0.02); border-radius:8px; border:1px dashed var(--border-color); margin-top:-4px;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px; font-size:0.89em;">
+
+          <!-- Show / Audio grid -->
+          <div id="showAudioGrid" style="display:grid; grid-template-columns:auto auto auto auto; gap:3px 10px; align-items:center;">
+            <span style="font-weight:bold;" data-i18n="show">👁️ Show:</span>
+            <label style="margin:0; cursor:pointer;" title="Hide/show text for voice 1. (Shortcut key '1' to toggle on/off in reader mode)"><input type="checkbox" id="chkShow1" checked> 1</label>
+            <label style="margin:0; cursor:pointer;" title="Hide/show text for voice 2. (Shortcut key '2' to toggle on/off in reader mode)"><input type="checkbox" id="chkShow2" checked> {2}</label>
+            <label style="margin:0; cursor:pointer;" title="Hide/show text for voice 2. (Shortcut key '3' to toggle on/off in reader mode)"><input type="checkbox" id="chkShow3" checked> [3]</label>
+            <span style="font-weight:bold;" data-i18n="audio">🎧 Audio:</span>
+            <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 1. (Shortcut key 'shift+1' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio1" checked> 1</label>
+            <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 2. (Shortcut key 'shift+2' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio2" checked> {2}</label>
+            <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 3. (Shortcut key 'shift+3' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio3" checked> [3]</label>
+          </div>
+
+          <div style="width:1px; height:40px; background:var(--border-color); flex-shrink:0;"></div>
+
+          <!-- Shadow slider -->
+          <div style="display:flex; align-items:center; gap:6px;" title="Adds a silence gap (0s–6s) after every sentence. Great for repeating aloud!">
+            <span style="cursor:help; font-size:1.2em;">⏱️</span>
+            <span style="color:var(--muted); font-size:0.9em;">Pause after sentence:</span>
+            <input id="shadowSlider" type="range" min="0" max="6.0" step="0.5" value="0" style="width:70px; accent-color:var(--accent);">
+            <span id="shadowVal" style="color:var(--accent); font-weight:bold; display:inline-block; min-width:1.5em;">0s</span>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
     <textarea id="textInput" spellcheck="false" style="display:none;"></textarea>
@@ -270,10 +254,11 @@
                 </div>
             </label>
             <div style="display: flex; align-items: center; gap: 8px;">
-                <button class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: help;" onclick="window.findMisalignment()"
-                        data-i18n-title="align_btn_help"
-                        title="Identifies possible misalignments when the number of lines don't match.">
-                    <span data-i18n="align_btn">⚖️ Check Alignment</span>
+                <button id="btnCheckAlignment" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: default; display: inline-flex; align-items: center; gap: 4px;" onclick="if(this.dataset.clickable==='true') window.findMisalignment()"
+                        data-i18n-title="align_btn_help_ok"
+                        title="No misalignment. Click to check if 🔴"
+                        data-clickable="false">
+                    <span data-i18n="align_btn">Alignment 🟢</span>
                 </button>
                 <span id="misalignmentResult" style="font-weight: bold; font-size: 0.95em;"></span>
             </div>
@@ -284,10 +269,14 @@
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
                 <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(0)" title="Clear this column">🗑️</button>
                 <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(0, this)" oncontextmenu="openBulkTextModal(event, 0)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+                <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle0" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
+                </label>
             </div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
                 <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(1)" title="Clear this column">🗑️</button>
                 <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(1, this)" oncontextmenu="openBulkTextModal(event, 1)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+                <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle1" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
+                </label>
             </div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
                 <button id="generateIpaBtn" class="btn-sm" disabled style="display: flex; opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; background-color: var(--accent); color: var(--bg-color); align-items: center; gap: 4px; font-weight: bold; border-radius: 4px; padding: 2px 6px; border: none; font-size: 0.89em; margin-right: 4px;" onclick="generateIpa()" title="✨ IPA Generator (Available when English, Russian, or Arabic is selected for Voice 2)">
@@ -295,6 +284,8 @@
                 </button>
                 <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(2)" title="Clear this column">🗑️</button>
                 <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(2, this)" oncontextmenu="openBulkTextModal(event, 2)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+                <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle2" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
+                </label>
             </div>
             <div style="display: flex; justify-content: center; align-items: center; width: 20px;">
                 <button class="btn-sm" style="font-size: 1.1em; opacity: 0.8; padding: 0; background: transparent; border: none; cursor: pointer; color: var(--accent);" onclick="window.scrollToGridBottom()" data-i18n-title="scroll_to_bottom" title="Click to go to the bottom of the grid">⏬</button>
@@ -595,12 +586,6 @@
 
   </div> <!-- Close vocab card -->
 
-  <!-- NATIVE KO-FI FLOATING BUTTON -->
-  <a href="https://ko-fi.com/kitkatkat" target="_blank" class="kofi-native-btn" style="position:fixed; bottom:25px; right:25px; background-color:#00b9fe; color:#fff; padding:12px 20px; border-radius:30px; font-weight:bold; font-size:15px; text-decoration:none; box-shadow:0 4px 15px rgba(0,0,0,0.2); z-index:9999; display:flex; align-items:center; gap:8px; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.2)';">
-    <img src="https://storage.ko-fi.com/cdn/cup-border.png" style="width:22px; height:22px;" alt="Ko-fi">
-    <span data-i18n="kofi_float">Built by Kit & Cole. Support us</span>
-  </a>
-
 <div id="processingOverlay" class="modal-overlay" style="z-index:3000; pointer-events:auto;">
   <div class="modal-box" style="text-align:center; max-width:350px;">
     <div style="font-size:2em; margin-bottom:10px;">⏳</div>
@@ -643,9 +628,69 @@
   
   window.ingglishTranslate = translate;
 </script>
-<script>if(!/Edg\//.test(navigator.userAgent)){var t=document.getElementById("edgeTip");if(t)t.style.display="block";}</script>
+<script>
+  (function() {
+    var isEdge = /Edg\//.test(navigator.userAgent);
+    if (!isEdge) {
+      // Small greyed tip in header
+      var tip = document.getElementById("edgeTip");
+      if (tip) tip.style.display = "block";
+
+      // Dismissible banner — only if not already dismissed
+      if (!localStorage.getItem("edgeBannerDismissed")) {
+        var banner = document.getElementById("edgeBanner");
+        if (banner) banner.style.display = "flex";
+
+        // Set the deep-link to reopen this exact page in Edge
+        var deepLink = document.getElementById("edgeDeepLink");
+        if (deepLink) deepLink.href = "microsoft-edge:" + window.location.href;
+      }
+    }
+  })();
+
+  function dismissEdgeBanner() {
+    var banner = document.getElementById("edgeBanner");
+    if (banner) banner.style.display = "none";
+    localStorage.setItem("edgeBannerDismissed", "true");
+  }
+</script>
 <script src="app.js"></script>
 <script src="onboarding.js"></script>
 <script src="reader_onboarding.js"></script>
+<script src="vertical_onboarding.js"></script>
+  <!-- AI EXPLANATION MODAL -->
+  <div id="aiModal" style="display:none; position:fixed; z-index:9999; background: var(--bg-color); color: var(--text-color); border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 340px; max-width: 90vw; flex-direction: column; font-family: sans-serif;">
+     <div style="background: var(--accent); color: var(--bg-color); padding: 8px 12px; display: flex; justify-content: space-between; align-items: flex-start; border-radius: 5px 5px 0 0; font-weight: bold;">
+         <div style="display:flex; flex-direction:column; gap:2px;">
+             <span id="aiModalWord" style="font-size:1.15em;">Word</span>
+             <span id="aiModalTranslation" style="font-size:0.9em; font-weight:normal; opacity: 0.9;">Loading...</span>
+         </div>
+         <div style="display:flex; align-items:center; gap: 10px;">
+             <span style="cursor:pointer; font-size:1.1em; opacity: 0.8; line-height:1;" title="Change Explanation Language" onclick="setAiLanguage()">⚙️</span>
+             <span style="cursor:pointer; font-size:1.4em; line-height:1;" onclick="document.getElementById('aiModal').style.display='none'">×</span>
+         </div>
+     </div>
+     <div style="padding: 10px 12px 0 12px; font-size: 0.9em; display:flex; gap: 15px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+         <span id="aiTabExplain" style="cursor:pointer; font-weight:bold; border-bottom: 2px solid var(--accent); padding-bottom: 6px;" onclick="switchAiTab('explain')">Explain</span>
+         <span id="aiTabExamples" style="cursor:pointer; opacity: 0.7; padding-bottom: 6px;" onclick="switchAiTab('examples')">Examples</span>
+     </div>
+     <div id="aiModalContent" style="padding: 15px; font-size: 0.95em; line-height: 1.4; max-height: 350px; overflow-y: auto;">
+         Loading context and explanation...
+     </div>
+  </div>
+
+<script>
+  function togglePlaybackOptions() {
+    var panel = document.getElementById('playbackOptions');
+    var arrow = document.getElementById('playbackArrow');
+    var btn   = document.getElementById('playbackToggleBtn');
+    var open  = panel.style.display === 'none';
+    panel.style.display  = open ? 'block' : 'none';
+    arrow.textContent    = open ? '▴' : '▾';
+    btn.style.borderColor = open ? 'var(--accent)' : 'var(--border-color)';
+    btn.style.color       = open ? 'var(--accent)' : 'var(--muted)';
+  }
+</script>
+
   </body>
   </html>
