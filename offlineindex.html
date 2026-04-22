@@ -10,33 +10,121 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── RESOURCES DRAWER ── */
+    body {
+      padding-right: 50px;
+      overflow-x: hidden;
+    }
+    .header, #edgeBanner, #readerSection, #notebookSection {
+      transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body.drawer-open .header,
+    body.drawer-open #edgeBanner,
+    body.drawer-open #readerSection,
+    body.drawer-open #notebookSection {
+      transform: translateX(-330px);
+    }
+    #resourcesDrawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 50px;
+      height: 100vh;
+      background: var(--card-bg);
+      border-left: 2px solid var(--accent);
+      box-shadow: -6px 0 32px rgba(0,0,0,0.18);
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-x: hidden;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    #resourcesDrawer.open { width: 380px; overflow-y: auto; }
+    #resourcesDrawer:not(.open) .drawer-header h2,
+    #resourcesDrawer:not(.open) .drawer-disclosure,
+    #resourcesDrawer:not(.open) .res-list,
+    #resourcesDrawer:not(.open) .summary-arrow,
+    #resourcesDrawer:not(.open) .summary-text { display: none; }
+    #resourcesDrawer:not(.open) details summary { justify-content: center; padding: 13px 0; font-size: 1.3rem; }
+    #resourcesDrawer:not(.open) .drawer-header { justify-content: center; padding: 16px 0; border-bottom: none; }
+    #resourcesDrawer:not(.open) .drawer-close::before { content: "⭐"; font-size: 1.1rem; }
+    #resourcesDrawer.open .drawer-close::before { content: "×"; font-size: 1.5rem; line-height: 1; }
+    #resourcesDrawer .drawer-close {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #resourcesDrawer .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    #resourcesDrawer .drawer-header h2 { font-size: 1rem; font-weight: 800; color: var(--accent); margin: 0; font-family: 'Playfair Display', serif; }
+    #resourcesDrawer .drawer-close:hover { color: var(--text-color); background: var(--border-color); }
+    #resourcesDrawer .drawer-body { flex: 1; padding: 12px 0 24px; }
+    #resourcesDrawer.open .drawer-body { overflow-y: auto; }
+    #resourcesDrawer .drawer-body::-webkit-scrollbar { width: 5px; }
+    #resourcesDrawer .drawer-body::-webkit-scrollbar-track { background: transparent; }
+    #resourcesDrawer .drawer-body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    #resourcesDrawer details { border-bottom: 1px solid var(--border-color); }
+    #resourcesDrawer details:last-child { border-bottom: none; }
+    #resourcesDrawer details summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--text-color);
+      user-select: none;
+      transition: background 0.15s;
+    }
+    #resourcesDrawer details summary:hover { background: rgba(0,0,0,0.03); }
+    [data-theme="dark"] #resourcesDrawer details summary:hover { background: rgba(255,255,255,0.04); }
+    #resourcesDrawer details summary .summary-arrow { font-size: 0.7rem; color: var(--muted); transition: transform 0.2s; }
+    #resourcesDrawer details[open] summary .summary-arrow { transform: rotate(180deg); }
+    #resourcesDrawer details summary::-webkit-details-marker { display: none; }
+    #resourcesDrawer .res-list { padding: 4px 18px 14px; display: flex; flex-direction: column; gap: 10px; white-space: normal; }
+    #resourcesDrawer .res-item { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); transition: border-color 0.15s; }
+    #resourcesDrawer .res-item:hover { border-color: var(--accent); }
+    #resourcesDrawer .res-item .res-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+    #resourcesDrawer .res-item .res-name { font-weight: 700; font-size: 0.88rem; color: var(--accent); }
+    #resourcesDrawer .res-item .res-tag { font-size: 0.68rem; background: var(--border-color); color: var(--muted); padding: 1px 6px; border-radius: 4px; }
+    #resourcesDrawer .res-item .res-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 6px; }
+    #resourcesDrawer .res-item a { font-size: 0.8rem; color: var(--accent); font-weight: 700; text-decoration: none; }
+    #resourcesDrawer .res-item a:hover { text-decoration: underline; }
+    #resourcesDrawer .drawer-disclosure { font-size: 0.73rem; color: var(--muted); font-style: italic; padding: 10px 18px 0; line-height: 1.5; white-space: normal; }
+    @media (max-width: 800px) {
+      body { padding-right: 0 !important; }
+      body.drawer-open { padding-right: 0 !important; }
+      body.drawer-open .header,
+      body.drawer-open #edgeBanner,
+      body.drawer-open #readerSection,
+      body.drawer-open #notebookSection { transform: none; }
+      #resourcesDrawer { width: 380px; right: -400px; transition: right 0.32s cubic-bezier(0.4, 0, 0.2, 1); }
+      #resourcesDrawer.open { right: 0; width: 380px; }
+    }
+    @media (max-width: 500px) { #resourcesDrawer { width: 100vw; max-width: 100vw; } #resourcesDrawer.open { width: 100vw; } }
+  </style>
 </head>
-<body>
+<body class="drawer-open">
 
-  <!-- QUICK NAVIGATION SIDEBAR -->
-  <div class="quick-nav">
-    <button class="quick-nav-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" type="button">
-      <span class="icon">📖</span>
-      <span data-i18n="nav_reader">Reader</span>
-    </button>
-    <button class="quick-nav-btn" onclick="document.getElementById('notebookSection').scrollIntoView({behavior: 'smooth'})" type="button">
-      <span class="icon">📓</span>
-      <span data-i18n="nav_notebook">Notebook</span>
-    </button>
-    <button class="quick-nav-btn" onclick="window.open('cards.html', '_blank')" type="button">
-      <span class="icon">🗂️</span>
-      <span data-i18n="nav_flashcards">Flashcards</span>
-    </button>
-    <div style="width: 80%; height: 1px; background: var(--border-color); margin: 5px auto;"></div>
-    <button class="quick-nav-btn" onclick="window.open('https://translate.google.com/?sl=auto', '_blank')" type="button" style="opacity: 0.8;">
-      <span class="icon" style="font-size: 1.2em;">🌐</span>
-      <span style="font-size: 0.8em;" data-i18n="google_translate">Google</span>
-    </button>
-    <button class="quick-nav-btn" onclick="window.open('https://www.deepl.com/en/translator', '_blank')" type="button" style="opacity: 0.8;">
-      <span class="icon" style="font-size: 1.2em;">🟦</span>
-      <span style="font-size: 0.8em;" data-i18n="deepl">DeepL</span>
-    </button>
-  </div>
+
 
   <div class="header" style="flex-wrap: wrap; gap: 10px;">
     <div>
@@ -595,50 +683,154 @@
   </div>
 </div>
 
-<!-- RECOMMENDED RESOURCES -->
-<div style="max-width: 900px; margin: 30px auto; padding: 0 20px;">
-  <div style="border: 2px solid var(--accent); border-radius: 12px; background: var(--card-bg); padding: 20px;">
-    <details>
-      <summary style="font-weight: 800; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;">
-        <span>⭐ Kit's Recommended Resources</span>
-        <span style="font-size: 0.8em; opacity: 0.7; font-weight: normal;">(Click to expand) ▼</span>
-      </summary>
-      
-      <div style="font-size: 0.85em; margin-top: 15px; opacity: 0.8; font-style: italic; color: var(--text-color);">
-        CodeSwitchReader is reader-supported. When you buy through links on our site, I may earn an affiliate commission at no extra cost to you. Thank you for your support!
-      </div>
+<!-- RESOURCES DRAWER -->
+<div id="resourcesDrawer" class="open" role="complementary" aria-label="Kit's Recommended Resources">
 
-      <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-        <div style="border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-weight: bold; color: var(--accent);">🍎 Italki</div>
-            <span style="font-size: 0.7em; background: var(--border-color); color: var(--text-color); padding: 2px 6px; border-radius: 4px; opacity: 0.7;">Affiliate</span>
-          </div>
-          <div style="font-size: 0.85em; margin: 8px 0; line-height: 1.5;">Find native teachers for 1-on-1 lessons. Choose between certified professional teachers and community tutors from all around the globe. I was a Japanese student on there for 4 years until I became a teacher!</div>
-          <a href="https://www.italki.com/affshare?ref=af1723278" target="_blank" rel="noopener" style="font-size: 0.85em; text-decoration: none; color: var(--accent); font-weight: bold;">Find a Teacher →</a>
+  <div class="drawer-header">
+    <h2>⭐ Kit's Recommended Resources</h2>
+    <button class="drawer-close" onclick="toggleResourcesDrawer()" title="Open/Close Sidebar"></button>
+  </div>
+
+  <div class="drawer-body">
+
+    <!-- TOOLS -->
+    <details open>
+      <summary>🛠️ <span class="summary-text">Quick Tools</span> <span class="summary-arrow">▼</span></summary>
+      <div class="res-list">
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">🗂️ Flashcards</span></div>
+          <a href="#" onclick="window.open('cards.html', '_blank')">Open Flashcards →</a>
         </div>
-
-        <div style="border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-weight: bold; color: var(--accent);">🛡️ NordVPN</div>
-            <span style="font-size: 0.7em; background: var(--border-color); color: var(--text-color); padding: 2px 6px; border-radius: 4px; opacity: 0.7;">Affiliate</span>
-          </div>
-          <div style="font-size: 0.85em; margin: 8px 0; line-height: 1.5;">A must-have for language learners! I personally use this all the time for Netflix. Often, the English site only offers English subtitles even when the show's audio is in its original language. By using a VPN to switch my region, I can unlock the original language subtitles for perfect context while watching!</div>
-          <a href="https://go.nordvpn.net/aff_c?offer_id=15&aff_id=146011&url_id=902" target="_blank" rel="noopener" style="font-size: 0.85em; text-decoration: none; color: var(--accent); font-weight: bold;">Get NordVPN →</a>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">🌐 Google Translate</span></div>
+          <a href="#" onclick="window.open('https://translate.google.com/?sl=auto', '_blank')">Open Translate →</a>
         </div>
-
-        <div style="border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-weight: bold; color: var(--accent);">🔑 NordPass</div>
-            <span style="font-size: 0.7em; background: var(--border-color); color: var(--text-color); padding: 2px 6px; border-radius: 4px; opacity: 0.7;">Affiliate</span>
-          </div>
-          <div style="font-size: 0.85em; margin: 8px 0; line-height: 1.5;">A secure, easy-to-use password manager to keep all your language learning app accounts (and everything else) safe without needing to remember a dozen different passwords.</div>
-          <a href="https://go.nordpass.io/aff_c?offer_id=488&aff_id=146011&url_id=9356" target="_blank" rel="noopener" style="font-size: 0.85em; text-decoration: none; color: var(--accent); font-weight: bold;">Get NordPass →</a>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">🟦 DeepL</span></div>
+          <a href="#" onclick="window.open('https://www.deepl.com/en/translator', '_blank')">Open DeepL →</a>
         </div>
       </div>
     </details>
-  </div>
-</div>
+
+    <!-- BILINGUAL TEXT SITES -->
+    <details>
+      <summary>📖 <span class="summary-text">Bilingual Text Sites</span> <span class="summary-arrow">▼</span></summary>
+      <div class="res-list">
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Bilinguis</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Side-by-side public domain classics in 17 languages — Spanish, French, Japanese, Chinese, Russian, German and more. Great for copy-pasting into Grid Mode.</div>
+          <a href="https://bilinguis.com" target="_blank" rel="noopener">Visit Bilinguis →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Bilinguator</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Huge library spanning 69 languages. Download in TXT, EPUB, FB2, or PDF — or read online. Goes well beyond the popular languages.</div>
+          <a href="https://bilinguator.com/en/" target="_blank" rel="noopener">Visit Bilinguator →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">ParallelText.io</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">13 languages in a clean split-screen interface. Click a phrase to hear it aloud. Works great for European languages.</div>
+          <a href="https://paralleltext.io" target="_blank" rel="noopener">Visit ParallelText →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Storyberries</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Children's picture books in many language pairs — Spanish, French, Arabic, Chinese, Ukrainian and more. Simple stories, easy to copy.</div>
+          <a href="https://www.storyberries.com" target="_blank" rel="noopener">Visit Storyberries →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">The Experiment Sites</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Classic fairy tales with bilingual text and slow native-speaker audio. French, Spanish, Italian, and German versions available.</div>
+          <a href="https://www.thefrenchexperiment.com/stories" target="_blank" rel="noopener">French</a> ·
+          <a href="https://www.thespanishexperiment.com/stories" target="_blank" rel="noopener">Spanish</a> ·
+          <a href="https://www.theitalianexperiment.com/stories" target="_blank" rel="noopener">Italian</a> ·
+          <a href="https://www.thegermanproject.com/stories" target="_blank" rel="noopener">German</a>
+        </div>
+      </div>
+    </details>
+
+    <!-- PODCASTS WITH TRANSCRIPTS -->
+    <details>
+      <summary>🎙️ <span class="summary-text">Podcasts with Transcripts</span> <span class="summary-arrow">▼</span></summary>
+      <div class="res-list">
+        <p style="font-size:0.78rem; color:var(--muted); font-style:italic; padding: 0 0 6px;">Tip: Copy a transcript and use ⚌ Vertical Mode with Auto-detect Speakers to split dialogue automatically!</p>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Duolingo Spanish Podcast</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">True-life stories narrated in both English and Spanish. Full transcripts on the website — great for Vertical Mode.</div>
+          <a href="https://podcast.duolingo.com" target="_blank" rel="noopener">Visit →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Un Día En Español (Babbel)</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Each story comes in a Spanish-only and a mixed Spanish/English version. Transcripts available on the website.</div>
+          <a href="https://www.babbel.com/en/magazine/un-dia-en-espanol-podcast" target="_blank" rel="noopener">Visit →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">MaoMi Chinese 毛米中文</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Intermediate Mandarin podcast with free transcripts that include English translations and Pinyin word-for-word.</div>
+          <a href="https://www.maomichinese.com" target="_blank" rel="noopener">Visit →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Slow Chinese 慢速中文</span><span class="res-tag">Free · CC</span></div>
+          <div class="res-desc">Cultural topics spoken slowly in Mandarin. Full Chinese transcripts on the website, CC-licensed so you can copy freely.</div>
+          <a href="http://www.slow-chinese.com" target="_blank" rel="noopener">Visit →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Portuguese With Carla</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Intermediate Brazilian Portuguese with free downloadable transcripts and vocab lists for every episode.</div>
+          <a href="https://www.portuguesewithcarla.com/podcast" target="_blank" rel="noopener">Visit →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">News in Slow</span><span class="res-tag">Freemium</span></div>
+          <div class="res-desc">Slow, clear news podcasts for learners. Transcripts behind a subscription, but free episodes are a great starting point. Available in Spanish, French, Italian, and German.</div>
+          <a href="https://www.newsinslowspanish.com" target="_blank" rel="noopener">Spanish</a> ·
+          <a href="https://www.newsinslowfrench.com" target="_blank" rel="noopener">French</a> ·
+          <a href="https://www.newsinslowitalian.com" target="_blank" rel="noopener">Italian</a> ·
+          <a href="https://www.newsinslowgerman.com" target="_blank" rel="noopener">German</a>
+        </div>
+      </div>
+    </details>
+
+    <!-- PUBLIC DOMAIN SOURCES -->
+    <details>
+      <summary>📚 <span class="summary-text">Public Domain Sources</span> <span class="summary-arrow">▼</span></summary>
+      <div class="res-list">
+        <p style="font-size:0.78rem; color:var(--muted); font-style:italic; padding: 0 0 6px;">Find a book in your target language and pair it with a translation yourself — a great challenge for advanced learners!</p>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Project Gutenberg</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Over 70,000 free ebooks across dozens of languages. Search for a title you already know and find a version in your target language.</div>
+          <a href="https://www.gutenberg.org" target="_blank" rel="noopener">Visit Gutenberg →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">Wikisource</span><span class="res-tag">Free</span></div>
+          <div class="res-desc">Free library of source texts in 70+ languages — literature, speeches, historical documents. Switch language in the top menu to find the same text in another language.</div>
+          <a href="https://wikisource.org" target="_blank" rel="noopener">Visit Wikisource →</a>
+        </div>
+      </div>
+    </details>
+
+    <!-- KIT'S AFFILIATIONS -->
+    <details open>
+      <summary>💼 <span class="summary-text">Kit's Affiliations</span> <span class="summary-arrow">▼</span></summary>
+      <div class="drawer-disclosure">CodeSwitchReader is reader-supported. When you buy through links below, I may earn a small commission at no extra cost to you. Thank you for supporting the app! 💛</div>
+      <div class="res-list" style="margin-top:10px;">
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">🍎 Italki</span><span class="res-tag">Affiliate</span></div>
+          <div class="res-desc">Find native teachers for 1-on-1 lessons. I was a Japanese student on Italki for 4 years before becoming a teacher myself!</div>
+          <a href="https://www.italki.com/affshare?ref=af1723278" target="_blank" rel="noopener">Find a Teacher →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">🛡️ NordVPN</span><span class="res-tag">Affiliate</span></div>
+          <div class="res-desc">I use this personally for Netflix — switching region unlocks original-language subtitles for shows that only show English by default.</div>
+          <a href="https://go.nordvpn.net/aff_c?offer_id=15&aff_id=146011&url_id=902" target="_blank" rel="noopener">Get NordVPN →</a>
+        </div>
+        <div class="res-item">
+          <div class="res-title"><span class="res-name">🔑 NordPass</span><span class="res-tag">Affiliate</span></div>
+          <div class="res-desc">Secure password manager — handy for keeping all your language learning accounts organised without remembering a dozen passwords.</div>
+          <a href="https://go.nordpass.io/aff_c?offer_id=488&aff_id=146011&url_id=9356" target="_blank" rel="noopener">Get NordPass →</a>
+        </div>
+      </div>
+    </details>
+
+  </div><!-- /drawer-body -->
+</div><!-- /resourcesDrawer -->
 
 <div id="toast">Copied to clipboard!</div>
 
@@ -676,6 +868,53 @@
     if (banner) banner.style.display = "none";
     localStorage.setItem("edgeBannerDismissed", "true");
   }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Restore sidebar state
+    var savedSidebar = localStorage.getItem('sidebarOpen');
+    var drawer = document.getElementById('resourcesDrawer');
+    if (savedSidebar === 'closed') {
+      drawer.classList.remove('open');
+      document.body.classList.remove('drawer-open');
+    } else if (savedSidebar === 'open') {
+      drawer.classList.add('open');
+      document.body.classList.add('drawer-open');
+    }
+
+    // Restore details states
+    var details = document.querySelectorAll('#resourcesDrawer details');
+    details.forEach(function(d, index) {
+      var key = 'drawer_details_' + index;
+      var saved = localStorage.getItem(key);
+      if (saved === 'open') d.open = true;
+      else if (saved === 'closed') d.open = false;
+      d.addEventListener('toggle', function() {
+        localStorage.setItem(key, d.open ? 'open' : 'closed');
+      });
+    });
+  });
+
+  function toggleResourcesDrawer() {
+    var drawer = document.getElementById('resourcesDrawer');
+    var isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+      drawer.classList.remove('open');
+      document.body.classList.remove('drawer-open');
+      localStorage.setItem('sidebarOpen', 'closed');
+    } else {
+      drawer.classList.add('open');
+      document.body.classList.add('drawer-open');
+      localStorage.setItem('sidebarOpen', 'open');
+    }
+  }
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var drawer = document.getElementById('resourcesDrawer');
+      if (drawer && drawer.classList.contains('open')) toggleResourcesDrawer();
+    }
+  });
 </script>
 <script src="app.js"></script>
 <script src="onboarding.js"></script>
@@ -716,4 +955,4 @@
 </script>
 
   </body>
-  </html>
+</html>
