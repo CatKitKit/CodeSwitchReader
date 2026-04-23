@@ -259,8 +259,8 @@
           <button id="mainUndoBtn" class="btn-sm" style="color:var(--accent); font-size:1.25em; padding:2px 6px;" onclick="restoreMainText()" title="Undo">↩</button>
           <button class="btn-sm danger" style="font-size:1.25em; padding:2px 6px;" onclick="clearMainText()" title="Clear all text">🗑️</button>
           <input type="file" id="fileLoader" style="display:none" accept=".txt">
-          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import unformatted text for 1 voice&#10;OR&#10;Previously formatted saved text">🗁</button>
-          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Save as TXT">🗀</button>
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import txt for 1 voice.&#10;or&#10;Import previously aligned text.">🗁</button>
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Export aligned txt for next time.">🗀</button>
         </div>
 
         <!-- Right: Playback Options toggle -->
@@ -674,6 +674,30 @@
 
   </div> <!-- Close vocab card -->
 
+  <!-- ALIGNER MODAL -->
+  <div id="alignerModal" class="modal-overlay" onclick="this.style.display='none'">
+     <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 600px; width: 90%;">
+        <span class="modal-close" onclick="document.getElementById('alignerModal').style.display='none'">×</span>
+        <h3 style="margin-top:0; color: var(--accent);">🪄 Auto-Align Ebooks <span style="font-size: 0.6em; color: var(--muted); font-weight: normal;">(txt and epub)</span></h3>
+        <p style="font-size: 0.89em; opacity: 0.8; margin-bottom: 5px;">Auto-Aligner takes the same ebook of 2 different languages, matching them up sentence-by-sentence the best it can, making it into an easy-to-read bilingual version. Simply hit 'Play' as soon as they are imported into the reader! Don't worry about any settings!</p>
+        <p style="font-size: 0.75em; opacity: 0.6; margin-top: 0; margin-bottom: 15px; font-style: italic;">* Text might misalign due to structural differences of the languages.</p>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center; justify-content: center; width: 100%; box-sizing: border-box;">
+            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--accent);">
+                <label style="font-weight: bold; margin-bottom: 10px; text-align: center;">Text 1</label>
+                <input type="file" id="alignerSourceFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="font-size: 1.5em; font-weight: bold; color: var(--accent);">+</div>
+            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--accent);">
+                <label style="font-weight: bold; margin-bottom: 10px; text-align: center;">Text 2</label>
+                <input type="file" id="alignerTargetFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box;">
+            </div>
+        </div>
+
+        <button class="action-btn" style="width: 100%; background: var(--accent);" onclick="startAutoAlignment()">🚀 Align & Import to Grid</button>
+     </div>
+  </div>
+
 <div id="processingOverlay" class="modal-overlay" style="z-index:3000; pointer-events:auto;">
   <div class="modal-box" style="text-align:center; max-width:350px;">
     <div style="font-size:2em; margin-bottom:10px;">⏳</div>
@@ -697,17 +721,18 @@
     <details open>
       <summary>🛠️ <span class="summary-text">Quick Tools</span> <span class="summary-arrow">▼</span></summary>
       <div class="res-list">
-        <div class="res-item">
-          <div class="res-title"><span class="res-name">🗂️ Flashcards</span></div>
-          <a href="#" onclick="window.open('cards.html', '_blank')">Open Flashcards →</a>
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('cards.html', '_blank')">
+          <div class="res-title" style="margin-bottom: 0;"><span class="res-name">🗂️ Flashcards</span></div>
         </div>
-        <div class="res-item">
-          <div class="res-title"><span class="res-name">🌐 Google Translate</span></div>
-          <a href="#" onclick="window.open('https://translate.google.com/?sl=auto', '_blank')">Open Translate →</a>
+        <div class="res-item" style="cursor: pointer;" onclick="document.getElementById('alignerModal').style.display='flex'">
+          <div class="res-title"><span class="res-name">🪄 Auto-Align Ebooks</span><span class="res-tag">New</span></div>
+          <div class="res-desc" style="margin-bottom: 0;">Automatically pair two separate language text or epub files side-by-side.</div>
         </div>
-        <div class="res-item">
-          <div class="res-title"><span class="res-name">🟦 DeepL</span></div>
-          <a href="#" onclick="window.open('https://www.deepl.com/en/translator', '_blank')">Open DeepL →</a>
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://translate.google.com/?sl=auto', '_blank')">
+          <div class="res-title" style="margin-bottom: 0;"><span class="res-name">🌐 Google Translate</span></div>
+        </div>
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.deepl.com/en/translator', '_blank')">
+          <div class="res-title" style="margin-bottom: 0;"><span class="res-name">🟦 DeepL</span></div>
         </div>
       </div>
     </details>
@@ -716,25 +741,21 @@
     <details>
       <summary>📖 <span class="summary-text">Bilingual Text Sites</span> <span class="summary-arrow">▼</span></summary>
       <div class="res-list">
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://bilinguis.com', '_blank')">
           <div class="res-title"><span class="res-name">Bilinguis</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Side-by-side public domain classics in 17 languages — Spanish, French, Japanese, Chinese, Russian, German and more. Great for copy-pasting into Grid Mode.</div>
-          <a href="https://bilinguis.com" target="_blank" rel="noopener">Visit Bilinguis →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Side-by-side public domain classics in 17 languages — Spanish, French, Japanese, Chinese, Russian, German and more. Great for copy-pasting into Grid Mode.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://bilinguator.com/en/', '_blank')">
           <div class="res-title"><span class="res-name">Bilinguator</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Huge library spanning 69 languages. Download in TXT, EPUB, FB2, or PDF — or read online. Goes well beyond the popular languages.</div>
-          <a href="https://bilinguator.com/en/" target="_blank" rel="noopener">Visit Bilinguator →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Huge library spanning 69 languages. Download in TXT, EPUB, FB2, or PDF — or read online. Goes well beyond the popular languages.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://paralleltext.io', '_blank')">
           <div class="res-title"><span class="res-name">ParallelText.io</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">13 languages in a clean split-screen interface. Click a phrase to hear it aloud. Works great for European languages.</div>
-          <a href="https://paralleltext.io" target="_blank" rel="noopener">Visit ParallelText →</a>
+          <div class="res-desc" style="margin-bottom: 0;">13 languages in a clean split-screen interface. Click a phrase to hear it aloud. Works great for European languages.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.storyberries.com', '_blank')">
           <div class="res-title"><span class="res-name">Storyberries</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Children's picture books in many language pairs — Spanish, French, Arabic, Chinese, Ukrainian and more. Simple stories, easy to copy.</div>
-          <a href="https://www.storyberries.com" target="_blank" rel="noopener">Visit Storyberries →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Children's picture books in many language pairs — Spanish, French, Arabic, Chinese, Ukrainian and more. Simple stories, easy to copy.</div>
         </div>
         <div class="res-item">
           <div class="res-title"><span class="res-name">The Experiment Sites</span><span class="res-tag">Free</span></div>
@@ -752,30 +773,25 @@
       <summary>🎙️ <span class="summary-text">Podcasts with Transcripts</span> <span class="summary-arrow">▼</span></summary>
       <div class="res-list">
         <p style="font-size:0.78rem; color:var(--muted); font-style:italic; padding: 0 0 6px;">Tip: Copy a transcript and use ⚌ Vertical Mode with Auto-detect Speakers to split dialogue automatically!</p>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://podcast.duolingo.com', '_blank')">
           <div class="res-title"><span class="res-name">Duolingo Spanish Podcast</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">True-life stories narrated in both English and Spanish. Full transcripts on the website — great for Vertical Mode.</div>
-          <a href="https://podcast.duolingo.com" target="_blank" rel="noopener">Visit →</a>
+          <div class="res-desc" style="margin-bottom: 0;">True-life stories narrated in both English and Spanish. Full transcripts on the website — great for Vertical Mode.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.babbel.com/en/magazine/un-dia-en-espanol-podcast', '_blank')">
           <div class="res-title"><span class="res-name">Un Día En Español (Babbel)</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Each story comes in a Spanish-only and a mixed Spanish/English version. Transcripts available on the website.</div>
-          <a href="https://www.babbel.com/en/magazine/un-dia-en-espanol-podcast" target="_blank" rel="noopener">Visit →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Each story comes in a Spanish-only and a mixed Spanish/English version. Transcripts available on the website.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.maomichinese.com', '_blank')">
           <div class="res-title"><span class="res-name">MaoMi Chinese 毛米中文</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Intermediate Mandarin podcast with free transcripts that include English translations and Pinyin word-for-word.</div>
-          <a href="https://www.maomichinese.com" target="_blank" rel="noopener">Visit →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Intermediate Mandarin podcast with free transcripts that include English translations and Pinyin word-for-word.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('http://www.slow-chinese.com', '_blank')">
           <div class="res-title"><span class="res-name">Slow Chinese 慢速中文</span><span class="res-tag">Free · CC</span></div>
-          <div class="res-desc">Cultural topics spoken slowly in Mandarin. Full Chinese transcripts on the website, CC-licensed so you can copy freely.</div>
-          <a href="http://www.slow-chinese.com" target="_blank" rel="noopener">Visit →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Cultural topics spoken slowly in Mandarin. Full Chinese transcripts on the website, CC-licensed so you can copy freely.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.portuguesewithcarla.com/podcast', '_blank')">
           <div class="res-title"><span class="res-name">Portuguese With Carla</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Intermediate Brazilian Portuguese with free downloadable transcripts and vocab lists for every episode.</div>
-          <a href="https://www.portuguesewithcarla.com/podcast" target="_blank" rel="noopener">Visit →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Intermediate Brazilian Portuguese with free downloadable transcripts and vocab lists for every episode.</div>
         </div>
         <div class="res-item">
           <div class="res-title"><span class="res-name">News in Slow</span><span class="res-tag">Freemium</span></div>
@@ -793,15 +809,13 @@
       <summary>📚 <span class="summary-text">Public Domain Sources</span> <span class="summary-arrow">▼</span></summary>
       <div class="res-list">
         <p style="font-size:0.78rem; color:var(--muted); font-style:italic; padding: 0 0 6px;">Find a book in your target language and pair it with a translation yourself — a great challenge for advanced learners!</p>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.gutenberg.org', '_blank')">
           <div class="res-title"><span class="res-name">Project Gutenberg</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Over 70,000 free ebooks across dozens of languages. Search for a title you already know and find a version in your target language.</div>
-          <a href="https://www.gutenberg.org" target="_blank" rel="noopener">Visit Gutenberg →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Over 70,000 free ebooks across dozens of languages. Search for a title you already know and find a version in your target language.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://wikisource.org', '_blank')">
           <div class="res-title"><span class="res-name">Wikisource</span><span class="res-tag">Free</span></div>
-          <div class="res-desc">Free library of source texts in 70+ languages — literature, speeches, historical documents. Switch language in the top menu to find the same text in another language.</div>
-          <a href="https://wikisource.org" target="_blank" rel="noopener">Visit Wikisource →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Free library of source texts in 70+ languages — literature, speeches, historical documents. Switch language in the top menu to find the same text in another language.</div>
         </div>
       </div>
     </details>
@@ -811,20 +825,17 @@
       <summary>💼 <span class="summary-text">Kit's Affiliations</span> <span class="summary-arrow">▼</span></summary>
       <div class="drawer-disclosure">CodeSwitchReader is reader-supported. When you buy through links below, I may earn a small commission at no extra cost to you. Thank you for supporting the app! 💛</div>
       <div class="res-list" style="margin-top:10px;">
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://www.italki.com/affshare?ref=af1723278', '_blank')">
           <div class="res-title"><span class="res-name">🍎 Italki</span><span class="res-tag">Affiliate</span></div>
-          <div class="res-desc">Find native teachers for 1-on-1 lessons. I was a Japanese student on Italki for 4 years before becoming a teacher myself!</div>
-          <a href="https://www.italki.com/affshare?ref=af1723278" target="_blank" rel="noopener">Find a Teacher →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Find native teachers for 1-on-1 lessons. I was a Japanese student on Italki for 4 years before becoming a teacher myself!</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://go.nordvpn.net/aff_c?offer_id=15&aff_id=146011&url_id=902', '_blank')">
           <div class="res-title"><span class="res-name">🛡️ NordVPN</span><span class="res-tag">Affiliate</span></div>
-          <div class="res-desc">I use this personally for Netflix — switching region unlocks original-language subtitles for shows that only show English by default.</div>
-          <a href="https://go.nordvpn.net/aff_c?offer_id=15&aff_id=146011&url_id=902" target="_blank" rel="noopener">Get NordVPN →</a>
+          <div class="res-desc" style="margin-bottom: 0;">I use this personally for Netflix — switching region unlocks original-language subtitles for shows that only show English by default.</div>
         </div>
-        <div class="res-item">
+        <div class="res-item" style="cursor: pointer;" onclick="window.open('https://go.nordpass.io/aff_c?offer_id=488&aff_id=146011&url_id=9356', '_blank')">
           <div class="res-title"><span class="res-name">🔑 NordPass</span><span class="res-tag">Affiliate</span></div>
-          <div class="res-desc">Secure password manager — handy for keeping all your language learning accounts organised without remembering a dozen passwords.</div>
-          <a href="https://go.nordpass.io/aff_c?offer_id=488&aff_id=146011&url_id=9356" target="_blank" rel="noopener">Get NordPass →</a>
+          <div class="res-desc" style="margin-bottom: 0;">Secure password manager — handy for keeping all your language learning accounts organised without remembering a dozen passwords.</div>
         </div>
       </div>
     </details>
@@ -916,6 +927,7 @@
     }
   });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="app.js"></script>
 <script src="onboarding.js"></script>
 <script src="reader_onboarding.js"></script>
