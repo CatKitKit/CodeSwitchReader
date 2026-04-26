@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CodeSwitchReader - Demo</title>
+  <style>
+    body { font-family: 'Playfair Display', 'Segoe UI', Tahoma, Arial, sans-serif; background:#f9f9f6; padding:20px; max-width:800px; margin:0 auto; color:#222; text-align: center; }
+    h1 { margin: 0 0 10px; color: #b05a2f; font-size: 2.2em; font-weight: bold; }
+    .subtitle { font-size: 1.1em; color: #555; margin-bottom: 30px; }
+
+    /* Hidden Controls */
+    .controls-card { display: none; background:#fff; padding:16px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,.08); margin-bottom:14px; text-align: left; }
+    
+    label { font-weight:700; display:block; margin-top:12px; font-size: 0.9em; color: #555; }
+    select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:6px; background:#fff; }
+
+    /* Input Area */
+    textarea { display: none; width:100%; min-height:150px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px; box-sizing:border-box; resize:vertical; font-family: inherit; }
+
+    /* The Reader Display */
+    #readerDisplay {
+      display: block;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      min-height: 200px;
+      line-height: 1.8;
+      font-size: 20px;
+      white-space: pre-wrap;
+      max-height: 500px;
+      overflow-y: auto;
+      border-left: 6px solid #b05a2f;
+      text-align: left;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    /* Highlight Styles */
+    .sentence-container { padding: 5px 0; display: block; margin-bottom: 6px; }
+    .active-sentence { background-color: rgba(176, 90, 47, 0.08); border-radius: 5px; }
+    .active-word { background-color: rgba(176, 90, 47, 0.4); color: #000; border-radius: 3px; box-shadow: 0 0 0 2px rgba(176, 90, 47, 0.4); font-weight: 500; }
+    .play-cue { cursor: pointer; color: #b05a2f; margin-right: 6px; font-size: 0.75em; opacity: 0.45; transition: opacity 0.2s; user-select: none; }
+    .play-cue:hover { opacity: 1; }
+    .word { cursor: pointer; border-radius: 2px; padding: 0 2px; transition: background-color 0.1s; }
+    .word:hover { background-color: rgba(176,90,47,0.1); }
+
+    .btns { display:flex; gap:10px; margin-top:12px; justify-content: center; }
+    button { border:none; border-radius:50px; padding:14px 30px; font-size:16px; font-weight:700; cursor:pointer; color: white; transition: transform 0.1s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    button:active { transform: scale(0.98); }
+    button:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+    .play { background:#b05a2f; display: inline-flex; align-items: center; justify-content: center; gap: 10px; } /* Accent color match */
+    .pause { background:#fff; border: 2px solid #b05a2f; color:#b05a2f; display: none; padding: 10px 25px;}
+    .resume { background:#fff; border: 2px solid #b05a2f; color:#b05a2f; display: none; padding: 10px 25px;}
+    .stop { background:#fff; border: 2px solid #b05a2f; color:#b05a2f; display: none; padding: 10px 25px;}
+
+    .speed { display:flex; gap:10px; align-items:center; margin-top:6px; }
+    input[type="range"] { flex:1; accent-color:#b05a2f; }
+    #rateValue { min-width:52px; font-weight:700; color:#b05a2f; text-align:right; }
+
+    .cta-container { margin-top: 40px; padding-top: 30px; border-top: 1px solid #e0e0e0; }
+    .cta-btn { background-color: transparent; color: #b05a2f; font-size: 1.2em; font-weight: bold; padding: 10px 25px; border: 2px solid #b05a2f; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s, color 0.2s; }
+    .cta-btn:hover { background-color: #b05a2f; color: #fff; }
+  </style>
+</head>
+<body>
+  
+  <div style="background: #fff; border-radius: 12px; padding: 40px 20px; border: 1px solid #e0e0e0; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+      <h1>CodeSwitchReader</h1>
+      <p class="subtitle">Experience seamless bilingual reading and listening.</p>
+
+      <div class="controls-card">
+        <label>🗣 Voice 1 (Normal)</label>
+        <select id="voice1"></select>
+
+        <label>🗣 Voice 2 ({curly})</label>
+        <select id="voice2"></select>
+
+        <label>🗣 Voice 3 ([square])</label>
+        <select id="voice3"></select>
+
+        <label>🚀 Speed</label>
+        <div class="speed">
+          <span>0.5x</span>
+          <input id="rateInput" type="range" min="0.5" max="3.0" step="0.1" value="1.0">
+          <span id="rateValue">1.0x</span>
+        </div>
+      </div>
+
+      <textarea id="textInput" spellcheck="false">
+This is a simplified example when you import an English story translated into Russian.
+{Это упрощенный пример импорта английского рассказа, переведенного на русский язык.}
+Our app will interweave up to 3 languages automatically.
+{Наше приложение автоматически будет сочетать до 3 языков.}
+All you have to do is paste your text or upload the files. 
+{Всё, что вам нужно сделать, — это вставить текст или загрузить файлы.}
+It will alternate between the languages exactly like this.
+{Чередование языков будет происходить именно так.}
+The actual version has more features.
+{В текущей версии доступно больше функций.}
+Such as rewind, fast forward, looping, hiding the text or muting a voice.
+{Например, перемотка назад, перемотка вперёд, повтор, скрытие текста или отключение звука.}
+      </textarea>
+
+      <div class="btns">
+        <button class="play" id="playBtn">▶️ Listen to Demo</button>
+        <button class="pause" id="pauseBtn">⏸ Pause</button>
+        <button class="stop" id="stopBtn">⏹ Stop</button>
+      </div>
+
+      <div id="readerDisplay"></div>
+
+      <div class="cta-container">
+          <p style="margin-bottom: 15px; font-size: 1.1em; opacity: 0.9;">Ready to see more features?</p>
+          <a href="index.html" class="cta-btn">Back to landing page</a>
+      </div>
+  </div>
+
+  <script>
+    const synth = window.speechSynthesis;
+    const v1El = document.getElementById("voice1");
+    const v2El = document.getElementById("voice2");
+    const v3El = document.getElementById("voice3");
+    const rateInput = document.getElementById("rateInput");
+    const textInput = document.getElementById("textInput");
+    const readerDisplay = document.getElementById("readerDisplay");
+    const playBtn = document.getElementById("playBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    let voices = [];
+    let isPaused = false;
+
+    function loadVoices() {
+      voices = synth.getVoices();
+      if(!voices.length) return;
+      
+      [v1El, v2El, v3El].forEach(el => { el.innerHTML = ""; });
+      
+      let v1Index = 0, v2Index = 0;
+      
+      voices.forEach((v, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = `${v.name} (${v.lang})`;
+        opt.dataset.name = v.name;
+        v1El.appendChild(opt.cloneNode(true));
+        v2El.appendChild(opt.cloneNode(true));
+        v3El.appendChild(opt.cloneNode(true));
+        
+        // Auto-select English for V1
+        if (v.lang.startsWith('en') && v1Index === 0) v1Index = idx;
+        // Auto-select Russian for V2
+        if (v.lang.startsWith('ru') && v2Index === 0) v2Index = idx;
+      });
+      
+      v1El.value = v1Index;
+      v2El.value = v2Index;
+    }
+    
+    loadVoices();
+    if("onvoiceschanged" in synth) synth.onvoiceschanged = loadVoices;
+
+    function setPauseUi(p) {
+      isPaused = p;
+      pauseBtn.textContent = p ? "▶️ Resume" : "⏸ Pause";
+      pauseBtn.className = p ? "resume" : "pause";
+      pauseBtn.style.display = "inline-block";
+    }
+
+    function stop() {
+      synth.cancel();
+      setPauseUi(false);
+      playBtn.style.display = "inline-flex";
+      pauseBtn.style.display = "none";
+      stopBtn.style.display = "none";
+      document.querySelectorAll(".active-sentence").forEach(e=>e.classList.remove("active-sentence"));
+      document.querySelectorAll(".active-word").forEach(e=>e.classList.remove("active-word"));
+    }
+
+    function togglePause() {
+        if(isPaused) { synth.resume(); setTimeout(()=>synth.resume(),30); setPauseUi(false); }
+        else if(synth.speaking) { synth.pause(); setTimeout(()=>synth.pause(),30); setPauseUi(true); }
+    }
+
+    function buildWordSpans(text, trackIndex) {
+        const tokens = text.split(/(\s+)/);
+        const spans = [];
+        const container = document.createElement("span");
+
+        let currentCharIndex = 0;
+
+        tokens.forEach(token => {
+            const span = document.createElement("span");
+            span.textContent = token;
+            if (token.trim().length > 0) {
+                span.dataset.start = currentCharIndex;
+                span.dataset.end = currentCharIndex + token.length;
+                span.className = "word";
+                
+                // Word click to listen
+                span.onclick = (e) => {
+                    e.stopPropagation();
+                    synth.cancel();
+                    const utter = new SpeechSynthesisUtterance(token);
+                    
+                    // Fetch the CURRENT selected voice for this specific track
+                    const vIndices = [v1El.value, v2El.value, v3El.value];
+                    const vIdx = vIndices[trackIndex];
+                    const voice = voices[vIdx];
+                    
+                    if(voice) { utter.voice = voice; utter.lang = voice.lang; }
+                    utter.rate = parseFloat(rateInput.value);
+                    synth.speak(utter);
+                    
+                    // Visual feedback
+                    document.querySelectorAll(".active-word").forEach(el=>el.classList.remove("active-word"));
+                    span.classList.add("active-word");
+                    setTimeout(() => span.classList.remove("active-word"), 500);
+                };
+            }
+            container.appendChild(span);
+            spans.push({ node: span, start: currentCharIndex, end: currentCharIndex + token.length, isWord: token.trim().length > 0 });
+            currentCharIndex += token.length;
+        });
+
+        return { container, spans };
+    }
+
+    function renderText() {
+      const rawText = textInput.value;
+      if(!rawText.trim()) return;
+      readerDisplay.innerHTML = "";
+
+      const parts = rawText.split(/(\{.*?\}|\[.*?\])/g);
+      let segmentIndex = 0;
+      
+      parts.forEach(part => {
+        if(!part.trim()) return;
+
+        let trackIndex = 0;
+        let cleanText = part.trim();
+
+        if(cleanText.startsWith("{")) { trackIndex = 1; cleanText = cleanText.slice(1,-1).trim(); }
+        else if(cleanText.startsWith("[")) { trackIndex = 2; cleanText = cleanText.slice(1,-1).trim(); }
+
+        const { container } = buildWordSpans(cleanText, trackIndex);
+        container.className = "sentence-container";
+        container.dataset.part = part.trim();
+        container.dataset.index = segmentIndex;
+        
+        // Add Triangle Jump Cue
+        const playCue = document.createElement("span");
+        playCue.textContent = "▶ ";
+        playCue.className = "play-cue";
+        const currentIndex = segmentIndex;
+        playCue.onclick = (e) => { 
+            e.stopPropagation(); 
+            play(currentIndex); 
+        };
+        container.prepend(playCue);
+
+        readerDisplay.appendChild(container);
+        segmentIndex++;
+      });
+    }
+
+    function play(startIndex = 0) {
+      if(voices.length === 0) loadVoices(); 
+      
+      // If pressing play button while paused from standard playback
+      if(isPaused && startIndex === 0 && document.querySelectorAll('.active-sentence').length > 0) { 
+          togglePause(); 
+          return; 
+      }
+      
+      synth.cancel();
+      setPauseUi(false);
+
+      const containers = Array.from(readerDisplay.querySelectorAll('.sentence-container'));
+      if(containers.length === 0) return;
+
+      playBtn.style.display = "none";
+      pauseBtn.style.display = "inline-block";
+      stopBtn.style.display = "inline-block";
+
+      const speed = parseFloat(rateInput.value);
+      const vIndices = [v1El.value, v2El.value, v3El.value];
+
+      for (let i = startIndex; i < containers.length; i++) {
+        const container = containers[i];
+        const part = container.dataset.part;
+        let vIdx = vIndices[0];
+        let cleanText = part;
+
+        if(part.startsWith("{")) { vIdx = vIndices[1]; cleanText = part.slice(1,-1).trim(); }
+        else if(part.startsWith("[")) { vIdx = vIndices[2]; cleanText = part.slice(1,-1).trim(); }
+
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        const voice = voices[vIdx];
+        if(voice) { utter.voice = voice; utter.lang = voice.lang; }
+        utter.rate = speed;
+
+        const wordNodes = container.querySelectorAll('.word');
+        const spans = Array.from(wordNodes).map(node => {
+            return { node, start: parseInt(node.dataset.start), end: parseInt(node.dataset.end), isWord: true };
+        });
+
+        utter.onstart = () => {
+             document.querySelectorAll(".active-sentence").forEach(e=>e.classList.remove("active-sentence"));
+             container.classList.add("active-sentence");
+             container.scrollIntoView({behavior:"smooth", block:"center"});
+        };
+
+        utter.onend = () => {
+             container.classList.remove("active-sentence");
+             spans.forEach(s => s.node.classList.remove("active-word"));
+             setTimeout(()=>{ if(!synth.speaking) stop(); }, 50);
+        };
+
+        utter.onboundary = (event) => {
+            if (event.name === 'word') {
+                const charIndex = event.charIndex;
+                const match = spans.find(s => s.isWord && charIndex >= s.start && charIndex < s.end);
+                if (match) {
+                    spans.forEach(s => s.node.classList.remove("active-word"));
+                    match.node.classList.add("active-word");
+                }
+            }
+        };
+
+        synth.speak(utter);
+      }
+    }
+
+    playBtn.onclick = () => play(0);
+    pauseBtn.onclick = togglePause;
+    stopBtn.onclick = stop;
+    
+    // Render text immediately on load
+    renderText();
+  </script>
+</body>
+</html>

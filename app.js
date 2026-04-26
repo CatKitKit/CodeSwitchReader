@@ -3141,11 +3141,262 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
       const prefix = prefixDict[lang] || prefixDict.en;
 
       if (top2) {
-          resultSpan.textContent = `${prefix}${top1}, ${top2} 🔍`;
+          resultSpan.innerHTML = `${prefix}${top1}, ${top2} <span style="cursor:pointer; display:inline-block; transition:transform 0.2s; user-select:none;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.autoAlignGridCols()" title="Auto-Align 🪄">🪄</span>`;
       } else {
-          resultSpan.textContent = `${prefix}${top1} 🔍`;
+          resultSpan.innerHTML = `${prefix}${top1} <span style="cursor:pointer; display:inline-block; transition:transform 0.2s; user-select:none;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.autoAlignGridCols()" title="Auto-Align 🪄">🪄</span>`;
       }
       resultSpan.style.color = "#dc3545";
+  };
+
+  window.autoAlignGridCols = () => {
+      if (!els.gridEditor) return;
+      const rows = Array.from(els.gridEditor.querySelectorAll('.grid-row'));
+      if (rows.length === 0) return;
+
+      const totalLengths = [0, 0, 0];
+      rows.forEach(row => {
+          const cells = row.querySelectorAll('.grid-cell');
+          for (let c = 0; c < 3; c++) {
+              if (cells[c]) totalLengths[c] += cells[c].innerText.trim().length;
+          }
+      });
+
+      const activeCols = [];
+      if (totalLengths[0] > 0) activeCols.push(0);
+      if (totalLengths[1] > 0) activeCols.push(1);
+      if (totalLengths[2] > 0) activeCols.push(2);
+
+      if (activeCols.length !== 2) {
+          showToast('Auto-Align currently requires exactly 2 active voices. 🧲');
+          return;
+      }
+
+      const sourceText = rows.map(row => {
+          const cells = row.querySelectorAll('.grid-cell');
+          return cells[activeCols[0]] ? cells[activeCols[0]].innerText.trim() : '';
+      }).join('\n\n').replace(/\n\n+/g, '\n\n');
+
+      const targetText = rows.map(row => {
+          const cells = row.querySelectorAll('.grid-cell');
+          return cells[activeCols[1]] ? cells[activeCols[1]].innerText.trim() : '';
+      }).join('\n\n').replace(/\n\n+/g, '\n\n');
+
+      const overlay = document.getElementById('processingOverlay');
+      const prog = document.getElementById('importProgress');
+      if (overlay) overlay.style.display = 'flex';
+      if (prog) prog.textContent = '0%';
+
+      const workerCode = `
+self.onmessage = function(e) {
+    const { sourceText, targetText } = e.data;
+    self.postMessage({ type: 'progress', percent: 10 });
+    try {
+        const sourceParagraphs = sourceText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
+        const targetParagraphs = targetText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
+
+        let alignments = [];
+
+        if (sourceParagraphs.length === targetParagraphs.length && sourceParagraphs.length > 1) {
+            for (let i = 0; i < sourceParagraphs.length; i++) {
+                const percent = 10 + Math.floor((i / sourceParagraphs.length) * 85);
+                self.postMessage({ type: 'progress', percent: percent });
+                
+                const paraAlignments = runBandedAlignment(sourceParagraphs[i], targetParagraphs[i], false);
+                alignments.push(...paraAlignments);
+            }
+            self.postMessage({ type: 'progress', percent: 95 });
+        } else {
+            alignments = runBandedAlignment(sourceText, targetText, true);
+        }
+        
+        self.postMessage({ type: 'complete', alignments: alignments });
+    } catch (err) {
+        self.postMessage({ type: 'error', message: err.message });
+    }
+};
+
+function runBandedAlignment(sourceText, targetText, emitProgress) {
+    const splitRegex = /(?<=[.!?。！？])\\s*/;
+    const sourceSentences = sourceText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
+    const targetSentences = targetText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
+
+    const N = sourceSentences.length;
+    const M = targetSentences.length;
+
+    self.postMessage({ type: 'progress', percent: 20 });
+    if (N === 0 || M === 0) return [];
+
+    const sourceChars = sourceSentences.reduce((sum, s) => sum + s.length, 0) || 1;
+    const targetChars = targetSentences.reduce((sum, s) => sum + s.length, 0) || 1;
+    const C = targetChars / sourceChars;
+    const ratio = M / N; 
+    const BAND_RADIUS = Math.max(50, Math.floor(Math.abs(N - M) + 20)); 
+
+    const dp = Array.from({ length: N + 1 }, () => new Map());
+    dp[0].set(0, { cost: 0, prev: null, type: null });
+
+    const penalties = { '1-1': 0, '0-1': 20, '1-0': 20, '2-1': 15, '1-2': 15, '2-2': 25 };
+
+    function getNumbers(str) {
+        const matches = str.match(/\\b\\d+(?:[,.]\\d+)*\\b/g);
+        return matches ? matches : [];
+    }
+
+    const sourceNumbers = sourceSentences.map(getNumbers);
+    const targetNumbers = targetSentences.map(getNumbers);
+
+    function getCost(sLen, tLen, iArr, jArr) { 
+        let cost = Math.abs(sLen * C - tLen); 
+        
+        let sNums = [];
+        for (let idx of iArr) if (idx >= 0 && idx < N) sNums.push(...sourceNumbers[idx]);
+        
+        let tNums = [];
+        for (let idx of jArr) if (idx >= 0 && idx < M) tNums.push(...targetNumbers[idx]);
+        
+        let matchCount = 0;
+        for (let num of sNums) {
+            const tIdx = tNums.indexOf(num);
+            if (tIdx !== -1) {
+                matchCount++;
+                tNums.splice(tIdx, 1);
+            }
+        }
+        
+        cost -= matchCount * 100;
+        return cost;
+    }
+
+    let progressCounter = 0;
+
+    for (let i = 0; i <= N; i++) {
+        if (emitProgress && progressCounter++ % 1000 === 0) {
+            const percent = 20 + Math.floor((i / N) * 70);
+            self.postMessage({ type: 'progress', percent: percent });
+        }
+
+        const expectedJ = Math.floor(i * ratio);
+        const startJ = Math.max(0, expectedJ - BAND_RADIUS);
+        const endJ = Math.min(M, expectedJ + BAND_RADIUS);
+
+        for (let j = startJ; j <= endJ; j++) {
+            if (i === 0 && j === 0) continue;
+
+            let minCost = Infinity;
+            let bestPrev = null;
+            let bestType = null;
+
+            const evaluate = (prevI, prevJ, type, sLen, tLen, iArr, jArr) => {
+                if (prevI >= 0 && prevJ >= 0) {
+                    const prevRow = dp[prevI];
+                    if (prevRow && prevRow.has(prevJ)) {
+                        const prevCost = prevRow.get(prevJ).cost;
+                        if (prevCost !== Infinity) {
+                            const currentCost = prevCost + getCost(sLen, tLen, iArr, jArr) + penalties[type];
+                            if (currentCost < minCost) {
+                                minCost = currentCost;
+                                bestPrev = [prevI, prevJ];
+                                bestType = type;
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (i >= 1 && j >= 1) evaluate(i - 1, j - 1, '1-1', sourceSentences[i - 1].length, targetSentences[j - 1].length, [i-1], [j-1]);
+            if (i >= 1)           evaluate(i - 1, j,     '1-0', sourceSentences[i - 1].length, 0, [i-1], []);
+            if (j >= 1)           evaluate(i,     j - 1, '0-1', 0, targetSentences[j - 1].length, [], [j-1]);
+            if (i >= 2 && j >= 1) evaluate(i - 2, j - 1, '2-1', sourceSentences[i - 1].length + sourceSentences[i - 2].length, targetSentences[j - 1].length, [i-1, i-2], [j-1]);
+            if (i >= 1 && j >= 2) evaluate(i - 1, j - 2, '1-2', sourceSentences[i - 1].length, targetSentences[j - 1].length + targetSentences[j - 2].length, [i-1], [j-1, j-2]);
+            if (i >= 2 && j >= 2) evaluate(i - 2, j - 2, '2-2', sourceSentences[i - 1].length + sourceSentences[i - 2].length, targetSentences[j - 1].length + targetSentences[j - 2].length, [i-1, i-2], [j-1, j-2]);
+
+            if (minCost !== Infinity) dp[i].set(j, { cost: minCost, prev: bestPrev, type: bestType });
+        }
+    }
+
+    if (emitProgress) self.postMessage({ type: 'progress', percent: 95 });
+
+    const alignments = [];
+    let currI = N;
+    let currJ = M;
+    
+    if (!dp[N].has(M)) {
+        let bestCost = Infinity;
+        for (const [j, cell] of dp[N].entries()) {
+            if (cell.cost < bestCost) { bestCost = cell.cost; currJ = j; }
+        }
+    }
+
+    while (currI > 0 || currJ > 0) {
+        const row = dp[currI];
+        if (!row || !row.has(currJ)) { currI--; currJ--; continue; }
+
+        const cell = row.get(currJ);
+        const type = cell.type;
+        const prev = cell.prev;
+
+        if (!prev) break;
+
+        let sourcePart = [];
+        let targetPart = [];
+
+        if (type === '1-1') {
+            sourcePart.push(sourceSentences[currI - 1]); targetPart.push(targetSentences[currJ - 1]);
+        } else if (type === '1-0') {
+            sourcePart.push(sourceSentences[currI - 1]);
+        } else if (type === '0-1') {
+            targetPart.push(targetSentences[currJ - 1]);
+        } else if (type === '2-1') {
+            sourcePart.push(sourceSentences[currI - 2], sourceSentences[currI - 1]); targetPart.push(targetSentences[currJ - 1]);
+        } else if (type === '1-2') {
+            sourcePart.push(sourceSentences[currI - 1]); targetPart.push(targetSentences[currJ - 2], targetSentences[currJ - 1]);
+        } else if (type === '2-2') {
+            sourcePart.push(sourceSentences[currI - 2], sourceSentences[currI - 1]); targetPart.push(targetSentences[currJ - 2], targetSentences[currJ - 1]);
+        }
+
+        alignments.unshift({ source: sourcePart.join(' '), target: targetPart.join(' ') });
+        currI = prev[0]; currJ = prev[1];
+    }
+    return alignments;
+}
+`;
+
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      const workerUrl = URL.createObjectURL(blob);
+      const worker = new Worker(workerUrl);
+
+      worker.onmessage = function(e) {
+          if (e.data.type === 'progress') {
+              if (prog) prog.textContent = e.data.percent + '%';
+          } else if (e.data.type === 'complete') {
+              if (overlay) overlay.style.display = 'none';
+              
+              captureGridSnapshot();
+              els.gridEditor.innerHTML = '';
+              
+              e.data.alignments.forEach(item => {
+                  const rowData = ['', '', ''];
+                  rowData[activeCols[0]] = item.source || '';
+                  rowData[activeCols[1]] = item.target || '';
+                  els.gridEditor.appendChild(createGridRow(rowData[0], rowData[1], rowData[2]));
+              });
+              
+              captureGridSnapshot();
+              saveSettingsImmediate();
+              window.findMisalignment();
+              
+              worker.terminate();
+              URL.revokeObjectURL(workerUrl);
+              showToast('Auto-Aligned successfully! ✨');
+          } else if (e.data.type === 'error') {
+              if (overlay) overlay.style.display = 'none';
+              showToast('Aligner error: ' + e.data.message);
+              worker.terminate();
+              URL.revokeObjectURL(workerUrl);
+          }
+      };
+
+      worker.postMessage({ sourceText, targetText });
   };
 
   window.clearGridColumn = (colIndex) => {
