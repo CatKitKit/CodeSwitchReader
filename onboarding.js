@@ -83,7 +83,20 @@ Luego se iba al gimnasio.`;
             }
         },
         {
-            title: "Step 5: Adjust Speed ⚡",
+            title: "Step 5: Ebooks Aligner 🪄",
+            text: "Don't want to copy and paste but upload your files instead? Use the <strong>Auto-Align Ebooks</strong> tool right here in the sidebar to magically sync entire books!",
+            target: ".res-item[onclick*='alignerModal']",
+            position: "left",
+            action: "Next",
+            onShow: () => {
+                const drawer = document.getElementById("resourcesDrawer");
+                if (drawer && !drawer.classList.contains("open")) {
+                    drawer.classList.add("open");
+                }
+            }
+        },
+        {
+            title: "Step 6: Adjust Speed ⚡",
             text: "Each voice has its own independent speed slider! You can set your English fast and your Spanish slow. Adjust them here if you want.",
             target: ".mini-speed-row",
             position: "above",
@@ -94,7 +107,7 @@ Luego se iba al gimnasio.`;
             }
         },
         {
-            title: "Step 6: Play! ▶️",
+            title: "Step 7: Play! ▶️",
             text: "You're all set! Click the <strong>Play</strong> button to hear the magic happen. The app will smoothly switch between the two voices.",
             target: "#playBtn",
             action: "Finish Setup",
@@ -209,9 +222,10 @@ Luego se iba al gimnasio.`;
             <div style="clear:both;"></div>
         `;
 
-        updateTooltipPosition();
-
         if (step.onShow) step.onShow();
+
+        updateTooltipPosition();
+        setTimeout(updateTooltipPosition, 350); // recalculate after any sidebar slide-in animations
     }
 
     function updateTooltipPosition() {
@@ -231,15 +245,15 @@ Luego se iba al gimnasio.`;
         let top = rect.bottom + 15;
         let left = rect.left;
 
-        if (stepIndex === 1 || stepIndex === 2) {
+        if (stepIndex === 1 || stepIndex === 2 || step.position === "right") {
             top = rect.top;
             left = rect.right + 20;
-        } else if (stepIndex === 3 || stepIndex === 4) {
+        } else if (stepIndex === 3 || step.position === "above") {
             top = rect.top - tooltipRect.height - 15;
             left = rect.left;
-        } else if (step.position === "above") {
-            top = rect.top - tooltipRect.height - 15;
-            left = rect.left;
+        } else if (step.position === "left") {
+            top = rect.top;
+            left = rect.left - tooltipRect.width - 20;
         }
 
         // Prevent falling off screen
