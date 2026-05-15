@@ -106,7 +106,7 @@
     "auto_split": { en: "✂️ Auto-split sentences to break up long paragraphs", ja: "✂️ 文を自動分割して長い段落を区切る", "zh-CN": "✂️ 自动拆分句子以打断长段落", "zh-TW": "✂️ 自動拆分句子以打斷長段落", es: "✂️ Dividir oraciones automáticamente para romper párrafos largos" },
     "auto_split_help": { en: "Doesn't affect how your text is played if you only have 1 voice.\nTurn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.\nToggle on/off before you paste your text and see what you prefer!", ja: "音声が1つだけの場合は、テキストの再生には影響しません。\nバイリンガル・リーダーがすでに完全に一致する段落/文を提供している場合はオフにしてください。長い段落を区切るのに役立ちます。\nテキストを貼り付ける前にオン/オフを切り替えて、好みの方法を確認してください！", "zh-CN": "如果只有一种语音，则不影响文本播放。\n如果您的双语阅读器已经提供了完全匹配的段落/句子，请将其关闭。有助于打断长段落。\n在粘贴文本前切换开/关，看看您更喜欢哪种！", "zh-TW": "如果只有一種語音，則不影響文本播放。\n如果您的雙語閱讀器已經提供了完全匹配的段落/句子，請將其關閉。有助於打斷長段落。\n在粘貼文本前切換開/關，看看您更喜歡哪種！", es: "No afecta cómo se reproduce tu texto si solo tienes 1 voz.\nDesactívalo si tu lector bilingüe ya te da párrafos/oraciones que coinciden perfectamente. Puede ayudar a dividir párrafos largos.\n¡Alterna entre activado/desactivado antes de pegar tu texto y mira qué prefieres!" },
     "zen_mode_title": { en: "Focus / Full Page Mode", ja: "フォーカス / フルページモード", "zh-CN": "专注 / 全屏模式", "zh-TW": "專注 / 全屏模式", es: "Modo Enfoque / Pantalla Completa" },
-    "v1_placeholder_first": { en: "Voice 1...\n💡\nStart by pasting your ENTIRE text for each voice into the boxes.\n\nHit ▶️ play!\n\nAs long as each voice has the same amount of lines, they will read side-by-side perfectly!", ja: "音声 1...\n💡\n各音声のすべてのテキストをボックスに貼り付けることから始めます。\n\n▶️ 再生を押してください！\n\n各音声の行数が同じであれば、完全に並んで読み上げられます！", "zh-CN": "语音 1...\n💡\n首先将每种语音的完整文本粘贴到框中。\n\n点击 ▶️ 播放！\n\n只要每种语音的行数相同，它们就会完美地并排朗读！", "zh-TW": "語音 1...\n💡\n首先將每種語音的完整文本粘貼到框中。\n\n點擊 ▶️ 播放！\n\n只要每種語音的行數相同，它們就會完美地並排朗讀！", es: "Voz 1...\n💡\nComienza pegando TODO tu texto para cada voz en los cuadros.\n\n¡Presiona ▶️ reproducir!\n\n¡Mientras cada voz tenga la misma cantidad de líneas, se leerán una al lado de la otra perfectamente!" },
+    "v1_placeholder_first": { en: "Voice 1...\n💡\nPaste your ENTIRE text for each voice into the boxes (or upload with ≔ above).\n\nHit ▶️ play!\n\nAs long as each voice has the same amount of lines, they will read side-by-side perfectly!", ja: "音声 1...\n💡\n各音声のすべてのテキストをボックスに貼り付けることから始めます。\n\n▶️ 再生を押してください！\n\n各音声の行数が同じであれば、完全に並んで読み上げられます！", "zh-CN": "语音 1...\n💡\n首先将每种语音的完整文本粘贴到框中。\n\n点击 ▶️ 播放！\n\n只要每种语音的行数相同，它们就会完美地并排朗读！", "zh-TW": "語音 1...\n💡\n首先將每種語音的完整文本粘貼到框中。\n\n點擊 ▶️ 播放！\n\n只要每種語音的行數相同，它們就會完美地並排朗讀！", es: "Voz 1...\n💡\nComienza pegando TODO tu texto para cada voz en los cuadros.\n\n¡Presiona ▶️ reproducir!\n\n¡Mientras cada voz tenga la misma cantidad de líneas, se leerán una al lado de la otra perfectamente!" },
     "v1_placeholder": { en: "Voice 1...", ja: "音声 1...", "zh-CN": "语音 1...", "zh-TW": "語音 1...", es: "Voz 1..." },
     "v2_placeholder": { en: "Voice 2...", ja: "音声 2...", "zh-CN": "语音 2...", "zh-TW": "語音 2...", es: "Voz 2..." },
     "v3_placeholder": { en: "Voice 3...", ja: "音声 3...", "zh-CN": "语音 3...", "zh-TW": "語音 3...", es: "Voz 3..." }
@@ -2641,9 +2641,8 @@ if (seg._activeWordNode) {
       }
 
       document.getElementById('alignerModal').style.display = 'none';
-      
-      const overlay = document.getElementById('processingOverlay');
-      const msg = document.getElementById('processingMessage');
+
+      const overlay = document.getElementById('processingOverlay');      const msg = document.getElementById('processingMessage');
       const prog = document.getElementById('processingProgress');
       
       msg.textContent = "Reading and Aligning Dual Ebooks...";
