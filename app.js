@@ -1010,18 +1010,18 @@
   function normalizeWord(w) { return (w || "").trim().replace(/^[\s“”"‘’'(){}\[\]<>¿¡.,!?;:。！？]+/, "").replace(/[\s“”"‘’'(){}\[\]<>¿¡.,!?;:。！？]+$/, ""); }
   function addToVocab(wordRaw, sourceTrackIdx = null) {
     const w = normalizeWord(wordRaw); if (!w) return;
-    state.vocab.push((wordRaw.trim().indexOf(" ") > 0) ? wordRaw.trim() : w);
+    const textToSave = (wordRaw.trim().indexOf(" ") > 0) ? wordRaw.trim() : w;
+    let deckToSelect = "English";
     
     // Auto-detect deck language based on the track it came from
     if (sourceTrackIdx !== null) {
         const trackInput = [els.v1, els.v2, els.v3][sourceTrackIdx];
         const targetName = trackInput ? trackInput.value : "";
         let voice = voices.find(v => `${v.name} (${v.lang})` === targetName);
-        
+
         if (voice && voice.lang) {
             const langCode = voice.lang.toLowerCase();
-            let deckToSelect = "";
-            
+
             if (langCode.startsWith("ja")) deckToSelect = "Japanese";
             else if (langCode.startsWith("zh") || langCode.startsWith("yue")) {
                 if (langCode.includes("yue") || langCode.includes("hk") || langCode.includes("mo") || langCode.includes("macau")) {
@@ -1036,17 +1036,13 @@
             else if (langCode.startsWith("ko")) deckToSelect = "Korean";
             else if (langCode.startsWith("it")) deckToSelect = "Italian";
             else if (langCode.startsWith("en")) deckToSelect = "English";
-            
-            if (deckToSelect) {
-                const deckSelect = document.getElementById("deckSelect");
-                if (deckSelect && deckSelect.value !== deckToSelect) {
-                    deckSelect.value = deckToSelect;
-                }
-            }
+            else deckToSelect = voice.lang.split('-')[0].toUpperCase();
         }
     }
-    
-    saveSettings(); renderVocab();
+
+    state.vocab.push({ text: textToSave, deck: deckToSelect });
+    saveSettings();
+    renderVocab();
   }
   function removeFromVocab(index) { state.vocab.splice(index, 1); saveSettings(); renderVocab(); }
   let lastVocabBackup = [];
@@ -1054,7 +1050,7 @@
     if (!state.vocab.length) return; lastVocabBackup = [...state.vocab]; state.vocab = []; saveSettings(); renderVocab();
   }
   window.restoreVocab = () => { if (!lastVocabBackup.length) return; state.vocab = [...lastVocabBackup]; saveSettings(); renderVocab(); };
-  async function copyVocabList() { try { await navigator.clipboard.writeText(state.vocab.join("\n")); showToast("📋 Copied all words!"); } catch(e) { showToast("❌ Copy failed — try again"); } }
+  async function copyVocabList() { try { await navigator.clipboard.writeText(state.vocab.map(v => typeof v === 'string' ? v : v.text).join("\n")); showToast("📋 Copied all words!"); } catch(e) { showToast("❌ Copy failed — try again"); } }
 
   async function exportVocabCsv() {
     if (!state.vocab.length) { alert("Notebook is empty."); return; }
@@ -1064,7 +1060,8 @@
     for (let i = 0; i < state.vocab.length; i += mode) {
         let row = [];
         for (let k = 0; k < mode; k++) {
-            let val = state.vocab[i + k] || "";
+            let valObj = state.vocab[i + k] || "";
+            let val = typeof valObj === 'string' ? valObj : (valObj.text || "");
             if (val === "   ") val = "";
             row.push(`"${val.replace(/"/g, '""')}"`);
         }
@@ -1101,24 +1098,25 @@
     URL.revokeObjectURL(url);
   }
 
-  window.updateDeckAliases = function() {
-      const deckSelect = document.getElementById("deckSelect");
-      if (!deckSelect) return;
-      Array.from(deckSelect.options).forEach(opt => {
-          const alias = localStorage.getItem(`cole_deck_alias_${opt.value}`);
-          const baseText = opt.getAttribute("data-base-text") || opt.textContent;
-          if (!opt.hasAttribute("data-base-text")) opt.setAttribute("data-base-text", baseText);
-          opt.textContent = alias ? `${baseText} (${alias})` : baseText;
-      });
+  const forceTwoColumns = () => {
+      // Visually lock to 2 columns for deck interaction, without changing the CSV dropdown
+      els.vocab.className = "group-2";
   };
-  // Initialize aliases shortly after script load
-  setTimeout(window.updateDeckAliases, 500);
+  const restoreSelectedColumns = () => {
+      // Restore visually back to the actual CSV dropdown selection
+      els.vocab.className = `group-2`;
+  };
+
+  document.getElementById("sendToDeckBtn").addEventListener("mouseenter", forceTwoColumns);
+  document.getElementById("sendToDeckBtn").addEventListener("mouseleave", restoreSelectedColumns);
 
   window.sendToIndexedDBDeck = function() {
     if (!state.vocab.length) { alert("Notebook is empty."); return; }
-    const deckName = document.getElementById("deckSelect").value;
     const mode = 2; // Fixed to 2 columns for built-in flashcards
     
+    // Ensure all items are objects before saving
+    state.vocab = state.vocab.map(item => typeof item === 'string' ? { text: item, deck: "English" } : item);
+
     const request = indexedDB.open("coleFlashcardsDB", 1);
     
     request.onupgradeneeded = function(event) {
@@ -1135,13 +1133,22 @@
         const store = transaction.objectStore("cards");
         
         let count = 0;
+        let decksSent = new Set();
+        
         for (let i = 0; i < state.vocab.length; i += mode) {
+            const itemObj = state.vocab[i] || "";
+            const wordText = typeof itemObj === 'string' ? itemObj : itemObj.text;
+            if (!wordText) continue;
+
+            const deckName = (typeof itemObj !== 'string' && itemObj.deck) ? itemObj.deck : "English";
+            decksSent.add(deckName);
+
             const card = {
                 deck: deckName,
-                col1: state.vocab[i] || "",
-                col2: mode >= 2 ? (state.vocab[i+1] || "") : "",
-                col3: mode >= 3 ? (state.vocab[i+2] || "") : "",
-                col4: mode >= 4 ? (state.vocab[i+3] || "") : "",
+                col1: wordText,
+                col2: mode >= 2 ? (typeof state.vocab[i+1] === 'string' ? state.vocab[i+1] : (state.vocab[i+1]?.text || "")) : "",
+                col3: mode >= 3 ? (typeof state.vocab[i+2] === 'string' ? state.vocab[i+2] : (state.vocab[i+2]?.text || "")) : "",
+                col4: mode >= 4 ? (typeof state.vocab[i+3] === 'string' ? state.vocab[i+3] : (state.vocab[i+3]?.text || "")) : "",
                 queuePos: 0, // 0 = new
                 isNew: true,
                 createdAt: Date.now()
@@ -1151,7 +1158,7 @@
         }
         
         transaction.oncomplete = function() {
-            showToast(`Sent ${count} cards to ${deckName}!`);
+            showToast(`Sent ${count} cards to ${Array.from(decksSent).join(', ')}!`);
             clearVocab();
         };
         transaction.onerror = function() {
@@ -1176,8 +1183,10 @@
     const item = getVocabItem(e);
     if (!item) return;
     const index = Number(item.dataset.index);
-    const word = state.vocab[index];
-    if (word === undefined) return;
+    const itemObj = state.vocab[index];
+    if (itemObj === undefined) return;
+    
+    const word = typeof itemObj === 'string' ? itemObj : itemObj.text;
 
     if (e.ctrlKey) {
       const u = new SpeechSynthesisUtterance(word);
@@ -1261,9 +1270,12 @@
         return;
     }
 
-    state.vocab.forEach((word, index) => {
+    state.vocab.forEach((itemObj, index) => {
+      const word = typeof itemObj === 'string' ? itemObj : itemObj.text;
+      const deckName = typeof itemObj === 'string' ? "" : ` (${itemObj.deck || "English"})`;
+        
       const item = document.createElement("div"); item.className = "vocab-item";
-      item.title = word;
+      item.title = word + deckName;
       item.draggable = true;
       item.dataset.index = index;
 
@@ -2532,22 +2544,6 @@ if (seg._activeWordNode) {
       }
   });
 
-  const forceTwoColumns = () => {
-      // Visually lock to 2 columns for deck interaction, without changing the CSV dropdown
-      els.vocab.className = "group-2";
-  };
-  const restoreSelectedColumns = () => {
-      // Restore visually back to the actual CSV dropdown selection
-      els.vocab.className = `group-2`;
-  };
-
-  document.getElementById("sendToDeckBtn").addEventListener("mouseenter", forceTwoColumns);
-  document.getElementById("deckSelect").addEventListener("change", forceTwoColumns);
-  document.getElementById("deckSelect").addEventListener("mouseenter", forceTwoColumns);
-
-  // Restore when hovering back to the CSV section
-  document.getElementById("csvExportBlock").addEventListener("mouseenter", restoreSelectedColumns);
-
     const shadowSlider = document.getElementById("shadowSlider");
     shadowSlider.addEventListener("input", () => { document.getElementById("shadowVal").textContent = shadowSlider.value + "s"; saveSettings(); });
 
@@ -2995,6 +2991,11 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
           }
           btn.title = dictTitle[lang] || dictTitle.en;
           btn.setAttribute("data-i18n-title", "align_btn_help");
+
+          // Auto-trigger the misalignment calculation so the user sees it immediately
+          if (window.findMisalignment) {
+              window.findMisalignment();
+          }
       } else {
           btn.dataset.clickable = "false";
           btn.style.cursor = "default";
@@ -3165,47 +3166,57 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
       if (totalLengths[1] > 0) activeCols.push(1);
       if (totalLengths[2] > 0) activeCols.push(2);
 
-      if (activeCols.length !== 2) {
-          showToast('Auto-Align currently requires exactly 2 active voices. 🧲');
+      if (activeCols.length < 2) {
+          showToast('Auto-Align currently requires at least 2 active voices. 🧲');
           return;
       }
 
-      const sourceText = rows.map(row => {
-          const cells = row.querySelectorAll('.grid-cell');
-          return cells[activeCols[0]] ? cells[activeCols[0]].innerText.trim() : '';
-      }).join('\n\n').replace(/\n\n+/g, '\n\n');
-
-      const targetText = rows.map(row => {
-          const cells = row.querySelectorAll('.grid-cell');
-          return cells[activeCols[1]] ? cells[activeCols[1]].innerText.trim() : '';
-      }).join('\n\n').replace(/\n\n+/g, '\n\n');
+      const textsToAlign = activeCols.map(colIdx => {
+          return rows.map(row => {
+              const cells = row.querySelectorAll('.grid-cell');
+              return cells[colIdx] ? cells[colIdx].innerText.trim() : '';
+          }).join('\n\n').replace(/\n\n+/g, '\n\n');
+      });
 
       const overlay = document.getElementById('processingOverlay');
-      const prog = document.getElementById('importProgress');
+      const prog = document.getElementById('processingProgress');
       if (overlay) overlay.style.display = 'flex';
       if (prog) prog.textContent = '0%';
 
       const workerCode = `
 self.onmessage = function(e) {
-    const { sourceText, targetText } = e.data;
+    const { texts } = e.data;
     self.postMessage({ type: 'progress', percent: 10 });
     try {
+        const sourceText = texts[0];
+        const targetText = texts[1];
+        
+        let alignments = [];
         const sourceParagraphs = sourceText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
         const targetParagraphs = targetText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
 
-        let alignments = [];
-
         if (sourceParagraphs.length === targetParagraphs.length && sourceParagraphs.length > 1) {
             for (let i = 0; i < sourceParagraphs.length; i++) {
-                const percent = 10 + Math.floor((i / sourceParagraphs.length) * 85);
+                const percent = 10 + Math.floor((i / sourceParagraphs.length) * (texts.length === 3 ? 40 : 85));
                 self.postMessage({ type: 'progress', percent: percent });
                 
                 const paraAlignments = runBandedAlignment(sourceParagraphs[i], targetParagraphs[i], false);
                 alignments.push(...paraAlignments);
             }
-            self.postMessage({ type: 'progress', percent: 95 });
+            if (texts.length === 2) self.postMessage({ type: 'progress', percent: 95 });
         } else {
-            alignments = runBandedAlignment(sourceText, targetText, true);
+            alignments = runBandedAlignment(sourceText, targetText, texts.length === 2);
+        }
+        
+        if (texts.length === 3) {
+            self.postMessage({ type: 'progress', percent: 60 });
+            const fixedCol2 = alignments.map(a => a.target);
+            const alignedCol3 = runFixedAlignment(fixedCol2, texts[2]);
+            
+            for (let i = 0; i < alignments.length; i++) {
+                alignments[i].col3 = alignedCol3[i] || '';
+            }
+            self.postMessage({ type: 'progress', percent: 95 });
         }
         
         self.postMessage({ type: 'complete', alignments: alignments });
@@ -3213,6 +3224,85 @@ self.onmessage = function(e) {
         self.postMessage({ type: 'error', message: err.message });
     }
 };
+
+function runFixedAlignment(fixedRows, targetText) {
+    const splitRegex = /(?<=[.!?。！？])\\s*/;
+    const targetSentences = targetText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
+
+    const N = fixedRows.length;
+    const M = targetSentences.length;
+
+    if (N === 0) return [];
+    if (M === 0) return fixedRows.map(() => '');
+
+    const sourceChars = fixedRows.reduce((sum, s) => sum + s.length, 0) || 1;
+    const targetChars = targetSentences.reduce((sum, s) => sum + s.length, 0) || 1;
+    const C = targetChars / sourceChars;
+
+    const dp = Array.from({ length: N + 1 }, () => new Float32Array(M + 1).fill(Infinity));
+    const bp = Array.from({ length: N + 1 }, () => new Int32Array(M + 1).fill(-1));
+
+    dp[0][0] = 0;
+
+    for (let i = 1; i <= N; i++) {
+        const sLen = fixedRows[i - 1].length;
+        const expectedJ = Math.floor((i / N) * M);
+        const startJ = Math.max(0, expectedJ - 100);
+        const endJ = Math.min(M, expectedJ + 100);
+
+        for (let j = startJ; j <= endJ; j++) {
+            for (let k = 0; k <= Math.min(6, j); k++) {
+                const prevJ = j - k;
+                if (prevJ < 0 || dp[i - 1][prevJ] === Infinity) continue;
+
+                let tLen = 0;
+                for (let x = 1; x <= k; x++) tLen += targetSentences[j - x].length;
+
+                let cost = Math.abs(sLen * C - tLen);
+                if (k === 0) cost += 20;
+                else if (k === 1) cost += 0;
+                else if (k === 2) cost += 15;
+                else if (k === 3) cost += 30;
+                else cost += 40 + k * 10;
+
+                const totalCost = dp[i - 1][prevJ] + cost;
+                if (totalCost < dp[i][j]) {
+                    dp[i][j] = totalCost;
+                    bp[i][j] = k;
+                }
+            }
+        }
+    }
+
+    const alignedTarget = new Array(N);
+    let currJ = M;
+    if (dp[N][M] === Infinity) {
+        let bestCost = Infinity;
+        for (let j = 0; j <= M; j++) {
+            if (dp[N][j] < bestCost) { bestCost = dp[N][j]; currJ = j; }
+        }
+    }
+
+    for (let i = N; i > 0; i--) {
+        const k = bp[i][currJ];
+        if (k === -1) {
+            alignedTarget[i - 1] = '';
+        } else {
+            let parts = [];
+            for (let x = k; x >= 1; x--) parts.push(targetSentences[currJ - x]);
+            alignedTarget[i - 1] = parts.join(' ');
+            currJ -= k;
+        }
+    }
+    
+    if (currJ > 0) {
+        let leftover = [];
+        for (let x = currJ - 1; x >= 0; x--) leftover.push(targetSentences[x]);
+        alignedTarget[0] = leftover.join(' ') + (alignedTarget[0] ? ' ' + alignedTarget[0] : '');
+    }
+
+    return alignedTarget;
+}
 
 function runBandedAlignment(sourceText, targetText, emitProgress) {
     const splitRegex = /(?<=[.!?。！？])\\s*/;
@@ -3377,6 +3467,9 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
                   const rowData = ['', '', ''];
                   rowData[activeCols[0]] = item.source || '';
                   rowData[activeCols[1]] = item.target || '';
+                  if (activeCols.length === 3) {
+                      rowData[activeCols[2]] = item.col3 || '';
+                  }
                   els.gridEditor.appendChild(createGridRow(rowData[0], rowData[1], rowData[2]));
               });
               
@@ -3395,7 +3488,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
           }
       };
 
-      worker.postMessage({ sourceText, targetText });
+      worker.postMessage({ texts: textsToAlign });
   };
 
   window.clearGridColumn = (colIndex) => {

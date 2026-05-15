@@ -640,30 +640,6 @@
               
               <!-- Deck & Flashcard block -->
               <div style="display:flex; gap:12px; align-items:center; background: rgba(0,0,0,0.02); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-color);">
-                  <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
-                      <span style="font-size: 0.85em; font-weight: bold;">Deck Language</span>
-                      <div style="display:flex; align-items:center; border:1px solid #ccc; border-radius:6px; padding:0 5px; background:var(--card-bg);">
-                          <select id="deckSelect" onclick="if(window.updateDeckAliases) window.updateDeckAliases()" style="border:none; background:none; font-size:0.85em; font-weight:bold; cursor:pointer; color:var(--accent); width:auto; padding:0;">
-                              <option value="Japanese">🇯🇵 Japanese</option>
-                              <option value="Mandarin">🇨🇳 Mandarin</option>
-                              <option value="Cantonese">🇭🇰 Cantonese</option>
-                              <option value="Spanish">🇪🇸 Spanish</option>
-                              <option value="French">🇫🇷 French</option>
-                              <option value="German">🇩🇪 German</option>
-                              <option value="Korean">🇰🇷 Korean</option>
-                              <option value="Italian">🇮🇹 Italian</option>
-                              <option value="English">🌐 English</option>
-                              <option value="Custom 1">Custom 1</option>
-                              <option value="Custom 2">Custom 2</option>
-                              <option value="Custom 3">Custom 3</option>
-                              <option value="Custom 4">Custom 4</option>
-                              <option value="Custom 5">Custom 5</option>
-                              <option value="Custom 6">Custom 6</option>
-                          </select>
-                      </div>
-                  </div>
-
-                  <div style="width:1px; height:30px; background:#ccc;"></div>
 
                   <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start; justify-content:center;">
                       <button class="btn-sm" id="sendToDeckBtn" type="button" style="color:var(--accent);" onclick="sendToIndexedDBDeck()">📤 Send to Deck</button>
@@ -690,7 +666,7 @@
 
 
   <!-- ALIGNER MODAL -->
-  <div id="alignerModal" class="modal-overlay" onclick="this.style.display='none'">
+  <div id="alignerModal" class="modal-overlay" style="display:none" onclick="this.style.display='none'">
      <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 600px; width: 90%;">
         <span class="modal-close" onclick="document.getElementById('alignerModal').style.display='none'">×</span>
         <h3 style="margin-top:0; color: var(--accent);">🪄 Auto-Align Ebooks <span style="font-size: 0.6em; color: var(--muted); font-weight: normal;">(txt and epub)</span></h3>
