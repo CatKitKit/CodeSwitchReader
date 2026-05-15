@@ -156,23 +156,32 @@
 
   <div id="readerSection" class="card" style="border: 1px solid var(--border-color); padding: 20px; position: relative;">
 
-    <!-- Top Right Buttons -->
-    <div style="position:absolute; top:15px; right:15px; display:flex; gap:8px; z-index:10; align-items:center;">
-        <a href="https://ko-fi.com/kitkatkat" target="_blank" style="background-color:rgba(0, 185, 254, 0.1); color:#00b9fe; padding:4px 10px; border-radius:20px; font-weight:bold; font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px; border:1px solid rgba(0, 185, 254, 0.3); transition:all 0.2s;" onmouseover="this.style.backgroundColor='#00b9fe'; this.style.color='#fff';" onmouseout="this.style.backgroundColor='rgba(0, 185, 254, 0.1)'; this.style.color='#00b9fe';">
-          <img src="https://storage.ko-fi.com/cdn/cup-border.png" style="width:14px; height:14px;" alt="Ko-fi">
-          <span data-i18n="kofi_float">Built by Kit & Cole. Support us</span>
-        </a>
-        <button class="mini-btn"
-                style="width:32px; height:32px; font-size:16px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
-                title="Advanced Language Settings (JP · CN · HK)"
-                onclick="document.getElementById('advSettingsModal').style.display='flex'">
-          ⚙️
-        </button>
-        <button class="mini-btn"
-                style="width:32px; height:32px; font-size:16px; font-weight:bold; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
-                onclick="document.getElementById('syntaxHelpModal').style.display='flex'">
-          ?
-        </button>
+    <!-- Top Bar: Mode Buttons (Left) & Misc (Right) -->
+    <div style="position:absolute; top:15px; left:15px; right:15px; display:flex; justify-content:space-between; z-index:10; align-items:center;">
+        <!-- Left: Mode buttons -->
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button id="modeGridBtn" class="btn-sm" style="background-color:var(--accent); color:var(--bg-color); font-weight:bold; border-radius:20px; padding:4px 12px; border:none; cursor:pointer; transition:opacity 0.2s; font-size:0.8em;" title="For multilingual texts that are entirely separate.&#10;--------------------------------------------&#10;| English article | same article in Spanish |&#10;--------------------------------------------">☷ Grid</button>
+          <button id="modeVerticalBtn" class="btn-sm" style="background-color:transparent; border:1px solid var(--accent); color:var(--accent); font-weight:bold; border-radius:20px; padding:4px 12px; cursor:pointer; transition:opacity 0.2s; font-size:0.8em;" title="For texts that alternate.&#10;Example:&#10;English line...&#10;Spanish line...&#10;&#10;Or transcripts:&#10;Speaker 1: ...&#10;Speaker 2: ...">⚌ Vertical</button>
+        </div>
+
+        <!-- Right: Misc Buttons -->
+        <div style="display:flex; gap:8px; align-items:center;">
+            <a href="https://ko-fi.com/kitkatkat" target="_blank" style="background-color:rgba(0, 185, 254, 0.1); color:#00b9fe; padding:4px 10px; border-radius:20px; font-weight:bold; font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px; border:1px solid rgba(0, 185, 254, 0.3); transition:all 0.2s;" onmouseover="this.style.backgroundColor='#00b9fe'; this.style.color='#fff';" onmouseout="this.style.backgroundColor='rgba(0, 185, 254, 0.1)'; this.style.color='#00b9fe';">
+              <img src="https://storage.ko-fi.com/cdn/cup-border.png" style="width:14px; height:14px;" alt="Ko-fi">
+              <span data-i18n="kofi_float">Built by Kit & Cole. Support us</span>
+            </a>
+            <button class="mini-btn"
+                    style="width:32px; height:32px; font-size:16px; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
+                    title="Advanced Language Settings (JP · CN · HK)"
+                    onclick="document.getElementById('advSettingsModal').style.display='flex'">
+              ⚙️
+            </button>
+            <button class="mini-btn"
+                    style="width:32px; height:32px; font-size:16px; font-weight:bold; border-radius:50%; box-shadow:0 2px 5px rgba(0,0,0,0.1);"
+                    onclick="document.getElementById('syntaxHelpModal').style.display='flex'">
+              ?
+            </button>
+        </div>
     </div>
 
     <!-- COMPACT TOOLS DASHBOARD -->
@@ -240,14 +249,11 @@
       <!-- DIVIDER -->
       <div style="height:1px; background:var(--border-color);"></div>
 
-      <!-- ROW 2: Mode + File Actions + Playback Toggle -->
+      <!-- ROW 2: File Actions + Playback Toggle -->
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
 
-        <!-- Left: Mode buttons -->
-        <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button id="modeGridBtn" class="btn-sm" style="background-color:var(--accent); color:var(--bg-color); font-weight:bold; border-radius:20px; padding:4px 12px; border:none; cursor:pointer; transition:opacity 0.2s; font-size:0.8em;" title="For multilingual texts that are entirely separate.&#10;--------------------------------------------&#10;| English article | same article in Spanish |&#10;--------------------------------------------">☷ Grid</button>
-          <button id="modeVerticalBtn" class="btn-sm" style="background-color:transparent; border:1px solid var(--accent); color:var(--accent); font-weight:bold; border-radius:20px; padding:4px 12px; cursor:pointer; transition:opacity 0.2s; font-size:0.8em;" title="For texts that alternate.&#10;Example:&#10;English line...&#10;Spanish line...&#10;&#10;Or transcripts:&#10;Speaker 1: ...&#10;Speaker 2: ...">⚌ Vertical</button>
-        </div>
+        <!-- Left: (Empty, kept flex-start anchor) -->
+        <div style="display:flex; gap:6px; flex-shrink:0;"></div>
 
         <!-- Middle: File actions + auto-scroll -->
         <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
@@ -262,6 +268,15 @@
           <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import txt for 1 voice.&#10;or&#10;Import previously aligned text.">🗁</button>
           <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Export aligned txt for next time.">🗀</button>
           <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:var(--accent);" onclick="document.getElementById('alignerModal').style.display='flex'" title="Upload 2 Text/EPUB files to auto align">≔</button>
+          <div style="display: flex; align-items: center; gap: 4px;">
+              <button id="btnCheckAlignment" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: default; display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em;" onclick="if(this.dataset.clickable==='true') window.findMisalignment()"
+                      data-i18n-title="align_btn_help_ok"
+                      title="No misalignment. Click to check if 🔴"
+                      data-clickable="false">
+                  <span data-i18n="align_btn">Alignment 🟢</span>
+              </button>
+              <span id="misalignmentResult" style="font-weight: bold; font-size: 0.85em;"></span>
+          </div>
         </div>
 
         <!-- Right: Playback Options toggle -->
@@ -296,6 +311,16 @@
             <input id="shadowSlider" type="range" min="0" max="6.0" step="0.5" value="0" style="width:70px; accent-color:var(--accent);">
             <span id="shadowVal" style="color:var(--accent); font-weight:bold; display:inline-block; min-width:1.5em;">0s</span>
           </div>
+
+          <div style="width:1px; height:40px; background:var(--border-color); flex-shrink:0;"></div>
+
+          <!-- Auto-split sentences -->
+          <label style="margin: 0; cursor: help; display: flex; align-items: center; gap: 6px; font-weight: bold; color: var(--text-color); font-size:0.9em;"
+                 data-i18n-title="auto_split_help"
+                 title="Doesn't affect how your text is played if you only have 1 voice.&#10;Turn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.&#10;Toggle on/off before you paste your text and see what you prefer!&#10;&#10;Note: The larger the text, the longer it takes to process when you hit Play. Chrome users may experience ~10s wait per 2000 words.">
+              <input type="checkbox" id="autoSplitPasteChk" checked style="accent-color: var(--accent); width: 14px; height: 14px; margin:0; cursor: pointer;">
+              <span style="color: var(--accent);" data-i18n="auto_split">✂️ Auto-split sentences</span>
+          </label>
 
         </div>
       </div>
@@ -333,26 +358,6 @@
     </div>
 
       <div id="gridEditorWrapper">
-        <div style="margin-bottom:10px; font-size: 0.89em; padding: 10px; background: rgba(176,90,47,0.04); border: 1px dashed var(--accent); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <label style="margin: 0; cursor: help; display: flex; align-items: center; gap: 8px; font-weight: bold; color: var(--text-color);"
-                   data-i18n-title="auto_split_help"
-                   title="Doesn't affect how your text is played if you only have 1 voice.&#10;Turn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.&#10;Toggle on/off before you paste your text and see what you prefer!&#10;&#10;Note: The larger the text, the longer it takes to process when you hit Play. Chrome users may experience ~10s wait per 2000 words.">
-                <input type="checkbox" id="autoSplitPasteChk" checked style="accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="color: var(--accent);" data-i18n="auto_split">✂️ Auto-split sentences to break up long paragraphs</div>
-                </div>
-            </label>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button id="btnCheckAlignment" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: default; display: inline-flex; align-items: center; gap: 4px;" onclick="if(this.dataset.clickable==='true') window.findMisalignment()"
-                        data-i18n-title="align_btn_help_ok"
-                        title="No misalignment. Click to check if 🔴"
-                        data-clickable="false">
-                    <span data-i18n="align_btn">Alignment 🟢</span>
-                </button>
-                <span id="misalignmentResult" style="font-weight: bold; font-size: 0.95em;"></span>
-            </div>
-        </div>
-
         <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr auto; gap: 8px; align-items: center; padding: 0 10px 5px 10px; font-size: 0.85em; font-weight: bold; color: var(--accent);">
             <div></div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
