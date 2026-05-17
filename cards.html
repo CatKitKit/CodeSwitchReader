@@ -801,11 +801,11 @@
               div.innerHTML = `
                   <div class="review-text">
                       <div class="review-col1 editable-field" id="col1-container-${card.id}">
-                          <span style="flex: 0 1 auto;">${card.col1 || ""}</span>
+                          <span style="flex: 0 1 auto;">${applyRubyToHTML(card.col1 || "", currentDeck)}</span>
                           <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col1')">🪄</span>
                       </div>
                       <div class="review-col2 editable-field" id="col2-container-${card.id}">
-                          <span style="flex: 0 1 auto;">${card.col2 || ""}</span>
+                          <span style="flex: 0 1 auto;">${applyRubyToHTML(card.col2 || "", currentDeck)}</span>
                           <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col2')">🪄</span>
                       </div>
                       ${hintHTML}
@@ -906,7 +906,7 @@
               }
           } else {
               parent.innerHTML = `
-                  <span style="flex: 0 1 auto;">${originalText}</span>
+                  <span style="flex: 0 1 auto;">${applyRubyToHTML(originalText, currentDeck)}</span>
                   <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')">🪄</span>
               `;
           }
@@ -930,7 +930,7 @@
                   const parent = document.getElementById(`${field}-container-${id}`);
                   if (parent) {
                       parent.innerHTML = `
-                          <span style="flex: 0 1 auto;">${newText}</span>
+                          <span style="flex: 0 1 auto;">${applyRubyToHTML(newText, currentDeck)}</span>
                           <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')">🪄</span>
                       `;
                   }
