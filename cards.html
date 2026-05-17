@@ -197,6 +197,26 @@
   <!-- Dashboard -->
   <div id="dashboard" class="card">
     <h2>Your Decks</h2>
+    
+    <div style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.03); border: 1px solid var(--border-color); border-radius: 10px; text-align: left; font-size: 0.9rem;">
+        <h3 style="margin-top:0; font-size:1rem; border-bottom:1px solid var(--border-color); padding-bottom:5px;">⚙️ Dictionary Settings</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="chkKuromoji" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                <span>Enable <b>Kuromoji</b> (Japanese Furigana)</span>
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="chkPinyin" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                <span>Enable <b>pinyin-pro</b> (Mandarin Pinyin)</span>
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="chkJyutping" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                <span>Enable <b>ToJyutping</b> (Cantonese Jyutping)</span>
+            </label>
+        </div>
+        <div id="dictLoadStatus" style="margin-top: 10px; color: var(--accent); font-weight: bold; font-size: 0.85rem;"></div>
+    </div>
+
     <div id="deckList" class="deck-list">Loading...</div>
     <div style="font-size: 0.85rem; color: #888; margin-top: 25px; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 15px;">
         ⚠️ <b>Note:</b> All data is auto-saved and stored locally in your browser. Cards and progress will be erased if you clear your browser data or cache. <br>Be sure to <b>Backup</b> occasionally, especially after a long study session! <br><span style="font-size: 0.8rem; opacity: 0.8;">(Importing a backup is not necessary each time; only needed when data is lost or moving to a new device)</span>
@@ -211,7 +231,9 @@
             <span id="deckTitle" style="font-weight: bold;">Deck Name</span>
             <span id="cardCount" style="color: #888; font-size: 0.85rem;">0 cards</span>
         </div>
-        <div style="width: 70px;"></div>
+        <div style="width: 70px; text-align: right;">
+            <span id="dictStatus" style="font-size: 0.7em; opacity: 0.5;"></span>
+        </div>
     </div>
 
     <div class="voice-settings">
@@ -309,36 +331,99 @@
   // --- Dictionary Logic ---
   let jpTokenizer = null;
   
-  let readerSettings = {};
+  let readerSettings = { useKuromoji: false, usePinyin: false, useJyutping: false };
   try {
       const raw = localStorage.getItem("coleLanguageLab_v10_grid_beta");
-      if (raw) readerSettings = JSON.parse(raw);
+      if (raw) readerSettings = Object.assign(readerSettings, JSON.parse(raw));
   } catch(e) {}
 
-  if (readerSettings.useKuromoji && !window.kuromoji) {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js";
-      script.onload = () => {
-          window.kuromoji.builder({ dicPath: "dict/" }).build((err, tokenizer) => {
-              if (!err) { jpTokenizer = tokenizer; if (currentCard) nextCard(); }
-          });
-      };
-      document.head.appendChild(script);
+  document.getElementById("chkKuromoji").checked = !!readerSettings.useKuromoji;
+  document.getElementById("chkPinyin").checked = !!readerSettings.usePinyin;
+  document.getElementById("chkJyutping").checked = !!readerSettings.useJyutping;
+
+  document.getElementById("chkKuromoji").addEventListener("change", (e) => {
+      readerSettings.useKuromoji = e.target.checked;
+      saveReaderSettings();
+      if (e.target.checked) loadKuromoji();
+      else jpTokenizer = null;
+  });
+  document.getElementById("chkPinyin").addEventListener("change", (e) => {
+      readerSettings.usePinyin = e.target.checked;
+      saveReaderSettings();
+      if (e.target.checked) loadPinyin();
+  });
+  document.getElementById("chkJyutping").addEventListener("change", (e) => {
+      readerSettings.useJyutping = e.target.checked;
+      saveReaderSettings();
+      if (e.target.checked) loadJyutping();
+  });
+
+  function saveReaderSettings() {
+      try {
+          const raw = localStorage.getItem("coleLanguageLab_v10_grid_beta");
+          let state = raw ? JSON.parse(raw) : {};
+          state.useKuromoji = readerSettings.useKuromoji;
+          state.usePinyin = readerSettings.usePinyin;
+          state.useJyutping = readerSettings.useJyutping;
+          localStorage.setItem("coleLanguageLab_v10_grid_beta", JSON.stringify(state));
+      } catch(e) {}
   }
 
-  if (readerSettings.usePinyin && !window.pinyinPro) {
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/pinyin-pro";
-      script.onload = () => { if (currentCard) nextCard(); };
-      document.head.appendChild(script);
+  function loadKuromoji() {
+      if (!window.kuromoji) {
+          const status = document.getElementById("dictLoadStatus");
+          status.innerText = "⏳ Loading Kuromoji...";
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js";
+          script.onload = () => {
+              window.kuromoji.builder({ dicPath: "dict/" }).build((err, tokenizer) => {
+                  if (!err) { 
+                      jpTokenizer = tokenizer; 
+                      status.innerText = "✅ Kuromoji Ready"; 
+                      setTimeout(()=>status.innerText="", 3000);
+                      if (currentCard) renderCurrentCard(); 
+                  } else {
+                      status.innerText = "❌ Kuromoji Failed";
+                  }
+              });
+          };
+          document.head.appendChild(script);
+      }
   }
 
-  if (readerSettings.useJyutping && !window.ToJyutping) {
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/to-jyutping@3.1.1/dist/index.js";
-      script.onload = () => { if (currentCard) nextCard(); };
-      document.head.appendChild(script);
+  function loadPinyin() {
+      if (!window.pinyinPro) {
+          const status = document.getElementById("dictLoadStatus");
+          status.innerText = "⏳ Loading Pinyin...";
+          const script = document.createElement("script");
+          script.src = "https://unpkg.com/pinyin-pro";
+          script.onload = () => { 
+              status.innerText = "✅ Pinyin Ready"; 
+              setTimeout(()=>status.innerText="", 3000);
+              if (currentCard) renderCurrentCard(); 
+          };
+          document.head.appendChild(script);
+      }
   }
+
+  function loadJyutping() {
+      if (!window.ToJyutping) {
+          const status = document.getElementById("dictLoadStatus");
+          status.innerText = "⏳ Loading Jyutping...";
+          const script = document.createElement("script");
+          script.src = "https://unpkg.com/to-jyutping@3.1.1/dist/index.js";
+          script.onload = () => { 
+              status.innerText = "✅ Jyutping Ready"; 
+              setTimeout(()=>status.innerText="", 3000);
+              if (currentCard) renderCurrentCard(); 
+          };
+          document.head.appendChild(script);
+      }
+  }
+
+  if (readerSettings.useKuromoji) loadKuromoji();
+  if (readerSettings.usePinyin) loadPinyin();
+  if (readerSettings.useJyutping) loadJyutping();
 
   function katakanaToHiragana(kata) {
       return kata.replace(/[\u30a1-\u30f6]/g, function(match) {
@@ -349,8 +434,10 @@
   function applyRuby(text, deckName) {
       if (!text) return text;
       const d = (deckName || "").toLowerCase();
+      console.log(`[applyRuby] text: "${text}", deck: "${d}"`);
       
       if (d.includes("japan") && jpTokenizer) {
+          console.log(`[applyRuby] Using jpTokenizer`);
           const tokens = jpTokenizer.tokenize(text);
           let resultHTML = "";
           
@@ -390,10 +477,12 @@
                   resultHTML += surface;
               }
           }
+          console.log(`[applyRuby] Return: ${resultHTML}`);
           return resultHTML;
       }
       
       if ((d.includes("cantonese") || d.includes("jyutping")) && window.ToJyutping && window.ToJyutping.getJyutpingText) {
+          console.log(`[applyRuby] Using ToJyutping`);
           if (!/[\u4e00-\u9fff]/.test(text)) return text;
           const jyutpings = window.ToJyutping.getJyutpingText(text);
           const chars = Array.from(text);
@@ -408,13 +497,16 @@
                       resultHTML += chars[i];
                   }
               }
+              console.log(`[applyRuby] Return: ${resultHTML}`);
               return resultHTML;
           } else {
+              console.log(`[applyRuby] Return: <ruby>${text}<rt>${jyutpings}</rt></ruby>`);
               return `<ruby>${text}<rt>${jyutpings}</rt></ruby>`;
           }
       }
       
       if ((d.includes("mandarin") || d.includes("chinese")) && window.pinyinPro && window.pinyinPro.pinyin) {
+           console.log(`[applyRuby] Using pinyinPro`);
            if (!/[\u4e00-\u9fff]/.test(text)) return text;
            const result = window.pinyinPro.pinyin(text, { type: 'all' });
            if (result && Array.isArray(result)) {
@@ -426,10 +518,12 @@
                        resultHTML += item.origin;
                    }
                });
+               console.log(`[applyRuby] Return: ${resultHTML}`);
                return resultHTML;
            }
       }
       
+      console.log(`[applyRuby] No ruby logic matched. Return unchanged.`);
       return text;
   }
 
@@ -937,6 +1031,12 @@
           document.getElementById("frontText").innerHTML = "🎉 Deck finished! (Wait, how?)";
           return;
       }
+
+      renderCurrentCard();
+  }
+
+  function renderCurrentCard() {
+      if (!currentCard) return;
 
       document.getElementById("flashcardContent").classList.remove("revealed");
       document.getElementById("answerArea").style.display = "none";
