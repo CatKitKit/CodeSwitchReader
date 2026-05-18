@@ -220,6 +220,9 @@
       padding: 1px 6px;
       border-radius: 3px;
       transition: background 0.2s;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     /* Track 0 (main text) subtle dimming */

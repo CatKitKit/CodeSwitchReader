@@ -108,7 +108,9 @@
     "zen_mode_title": { en: "Focus / Full Page Mode", ja: "フォーカス / フルページモード", "zh-CN": "专注 / 全屏模式", "zh-TW": "專注 / 全屏模式", es: "Modo Enfoque / Pantalla Completa" },
     "v1_placeholder_first": { en: "Voice 1...\n💡\nPaste your ENTIRE text for each voice into the boxes (or upload with ≔ above).\n\nHit ▶️ play!\n\nAs long as each voice has the same amount of lines, they will read side-by-side perfectly!", ja: "音声 1...\n💡\n各音声のすべてのテキストをボックスに貼り付けることから始めます。\n\n▶️ 再生を押してください！\n\n各音声の行数が同じであれば、完全に並んで読み上げられます！", "zh-CN": "语音 1...\n💡\n首先将每种语音的完整文本粘贴到框中。\n\n点击 ▶️ 播放！\n\n只要每种语音的行数相同，它们就会完美地并排朗读！", "zh-TW": "語音 1...\n💡\n首先將每種語音的完整文本粘貼到框中。\n\n點擊 ▶️ 播放！\n\n只要每種語音的行數相同，它們就會完美地並排朗讀！", es: "Voz 1...\n💡\nComienza pegando TODO tu texto para cada voz en los cuadros.\n\n¡Presiona ▶️ reproducir!\n\n¡Mientras cada voz tenga la misma cantidad de líneas, se leerán una al lado de la otra perfectamente!" },
     "v1_placeholder": { en: "Voice 1...", ja: "音声 1...", "zh-CN": "语音 1...", "zh-TW": "語音 1...", es: "Voz 1..." },
+    "v2_placeholder_first": { en: "Paste the entire text here for Voice 2...", ja: "音声 2用に、ここへ全文を貼り付けてください...", "zh-CN": "将全部内容粘贴到此处，用于语音 2...", "zh-TW": "将全部内容粘贴到此处，用于语音 2...", es: "Pega aquí todo el texto para la Voz 2..." },
     "v2_placeholder": { en: "Voice 2...", ja: "音声 2...", "zh-CN": "语音 2...", "zh-TW": "語音 2...", es: "Voz 2..." },
+    "v3_placeholder_first": { en: "Paste the entire text here for Voice 3...", ja: "音声 3用に、ここへ全文を貼り付けてください...", "zh-CN": "将全部内容粘贴到此处，用于语音 3...", "zh-TW": "将全部内容粘贴到此处，用于语音 3...", es: "Pega aquí todo el texto para la Voz 3..." },
     "v3_placeholder": { en: "Voice 3...", ja: "音声 3...", "zh-CN": "语音 3...", "zh-TW": "語音 3...", es: "Voz 3..." }
   };
 
@@ -158,8 +160,16 @@
                 const regHolder = i18nDict["v1_placeholder"][lang] || i18nDict["v1_placeholder"]["en"];
                 cells[0].dataset.placeholder = rowIndex === 0 ? firstHolder : regHolder;
             }
-            if (cells[1]) cells[1].dataset.placeholder = i18nDict["v2_placeholder"][lang] || i18nDict["v2_placeholder"]["en"];
-            if (cells[2]) cells[2].dataset.placeholder = i18nDict["v3_placeholder"][lang] || i18nDict["v3_placeholder"]["en"];
+            if (cells[1]) {
+                const firstHolder2 = i18nDict["v2_placeholder_first"][lang] || i18nDict["v2_placeholder_first"]["en"];
+                const regHolder2 = i18nDict["v2_placeholder"][lang] || i18nDict["v2_placeholder"]["en"];
+                cells[1].dataset.placeholder = rowIndex === 0 ? firstHolder2 : regHolder2;
+            }
+            if (cells[2]) {
+                const firstHolder3 = i18nDict["v3_placeholder_first"][lang] || i18nDict["v3_placeholder_first"]["en"];
+                const regHolder3 = i18nDict["v3_placeholder"][lang] || i18nDict["v3_placeholder"]["en"];
+                cells[2].dataset.placeholder = rowIndex === 0 ? firstHolder3 : regHolder3;
+            }
         });
     }
   }
@@ -180,7 +190,8 @@
     useKuromoji: false,
     usePinyin: false,
     useJyutping: false,
-    autoSplit: true
+    autoSplit: true,
+    ipaCache: {}
   };
 
   let voices = [];
@@ -479,7 +490,7 @@
                   btn.style.opacity = "1";
                   btn.style.filter = "none";
                   btn.style.cursor = "pointer";
-                  btn.title = "Generate IPA for English, Russian or Arabic text from voice 2.\nThe server might take a minute to wake up for the first generation. \n⚠️ Note: Machine-generated IPA is a guide, not a perfect transcription. Pronunciation and stress may vary";
+                  btn.title = "Generate IPA for English, Russian or Arabic text from voice 2.\nThe IPA will be displayed as annotations in the Reader.\nThe server might take a minute to wake up for the first generation. \n⚠️ Note: Machine-generated IPA is a guide, not a perfect transcription.";
               } else {
                   btn.style.display = "flex";
                   btn.disabled = true;
@@ -586,8 +597,16 @@
             const regHolder = i18nDict["v1_placeholder"][currentLang] || i18nDict["v1_placeholder"]["en"];
             cell.dataset.placeholder = isFirstRow ? firstHolder : regHolder;
         }
-        if (colIndex === 1) cell.dataset.placeholder = i18nDict["v2_placeholder"][currentLang] || i18nDict["v2_placeholder"]["en"];
-        if (colIndex === 2) cell.dataset.placeholder = i18nDict["v3_placeholder"][currentLang] || i18nDict["v3_placeholder"]["en"];
+        if (colIndex === 1) {
+            const firstHolder2 = i18nDict["v2_placeholder_first"][currentLang] || i18nDict["v2_placeholder_first"]["en"];
+            const regHolder2 = i18nDict["v2_placeholder"][currentLang] || i18nDict["v2_placeholder"]["en"];
+            cell.dataset.placeholder = isFirstRow ? firstHolder2 : regHolder2;
+        }
+        if (colIndex === 2) {
+            const firstHolder3 = i18nDict["v3_placeholder_first"][currentLang] || i18nDict["v3_placeholder_first"]["en"];
+            const regHolder3 = i18nDict["v3_placeholder"][currentLang] || i18nDict["v3_placeholder"]["en"];
+            cell.dataset.placeholder = isFirstRow ? firstHolder3 : regHolder3;
+        }
         
         const shiftActions = document.createElement("div");
         shiftActions.className = "cell-shift-actions";
@@ -1474,7 +1493,7 @@ function looksLikeNoSpaceLanguage(text) {
   return !/\s/.test(text) && /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
 }
 
-function buildWordSpans(text, localeHint = "en") {
+function buildWordSpans(text, localeHint = "en", trackIndex = -1) {
   const container = document.createElement("span");
   container.className = "sentence-container";
 
@@ -1604,6 +1623,18 @@ function buildWordSpans(text, localeHint = "en") {
 
   const seg = getWordSegmenter(localeHint);
 
+  let ipaTokens = [];
+  let isIpaEnabled = false;
+  if (trackIndex >= 0 && trackIndex <= 2) {
+      isIpaEnabled = document.getElementById(`chkIpa${trackIndex + 1}`)?.checked;
+  }
+
+  if (state.ipaCache && state.ipaCache[text] && isIpaEnabled) {
+      // Clean common punctuation from the IPA string to isolate just the phonetic words
+      const cleanIpa = state.ipaCache[text].replace(/[.,!?;:"'()\[\]{}¿¡]/g, '');
+      ipaTokens = cleanIpa.trim().split(/\s+/);
+  }
+
   if (seg) {
     // Best path: real word segmentation (works for ja/zh in Chrome)
     for (const part of seg.segment(text)) {
@@ -1634,6 +1665,15 @@ function buildWordSpans(text, localeHint = "en") {
           } else {
               span.textContent = s;
           }
+      } else if (part.isWordLike && ipaTokens.length > 0) {
+          // Apply IPA Ruby tags for English, Russian, Arabic, etc.
+          const reading = ipaTokens.shift();
+          const ruby = document.createElement("ruby");
+          ruby.textContent = s;
+          const rt = document.createElement("rt");
+          rt.textContent = reading;
+          ruby.appendChild(rt);
+          span.appendChild(ruby);
       } else {
           span.textContent = s;
       }
@@ -1842,7 +1882,7 @@ function buildWordSpans(text, localeHint = "en") {
          for (let i = processed; i < end; i++) {
              const data = segmentsToRender[i];
              const localeHint = voices[data.voiceIndex]?.lang || "en";
-             const { container, spans } = buildWordSpans(data.text, localeHint);
+             const { container, spans } = buildWordSpans(data.text, localeHint, data.typeIndex);
              const absoluteIndex = i;
 
              container.dataset.track = data.typeIndex;
@@ -2073,6 +2113,11 @@ if (seg._activeWordNode) {
     }
 
     els.display.style.display = "block";
+
+    // Auto-generate IPA if toggles are checked
+    if (window.generateIpa) {
+        window.generateIpa(true).catch(e => console.error("Auto-IPA generation failed:", e));
+    }
 
     const isLargeText = raw.length >= 5000;
 
@@ -3539,105 +3584,100 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
       textarea.setSelectionRange(0, 99999);
   };
 
-  window.generateIpa = async () => {
+  window.generateIpa = async (isAuto = false) => {
       if (!els.gridEditor) return;
-      
-      const btn = document.getElementById("generateIpaBtn");
-      const originalText = btn.innerHTML;
-      
-      // Determine which column to pull from
-      let sourceCol = 0;
-      let targetLang = "ru"; // Default
 
-      if (voices.length > 0) {
-          const v2Voice = voices.find(v => `${v.name} (${v.lang})` === els.v2.value);
-          const isRu2 = v2Voice && v2Voice.lang.toLowerCase().startsWith("ru");
-          const isAr2 = v2Voice && v2Voice.lang.toLowerCase().startsWith("ar");
-          const isEn2 = v2Voice && v2Voice.lang.toLowerCase().startsWith("en");
+      const ipaToggles = [
+          document.getElementById('chkIpa1'),
+          document.getElementById('chkIpa2'),
+          document.getElementById('chkIpa3')
+      ];
 
-          if (isRu2) { sourceCol = 1; targetLang = "ru"; }
-          else if (isAr2) { sourceCol = 1; targetLang = "ar"; }
-          else if (isEn2) { sourceCol = 1; targetLang = "en"; }
-      }
+      const voiceInputs = [els.v1, els.v2, els.v3];
 
-      const rows = Array.from(els.gridEditor.querySelectorAll(".grid-row"));
-      const texts = rows.map(row => {
-          const cells = row.querySelectorAll(".grid-cell");
-          return cells[sourceCol] ? cells[sourceCol].textContent.trim() : "";
-      });
-      
-      const hasContent = texts.some(t => t.length > 0);
-      if (!hasContent) {
-          alert(`Please paste some text into Voice ${sourceCol + 1} first!`);
-          return;
-      }
+      for (let i = 0; i < 3; i++) {
+          if (!ipaToggles[i] || !ipaToggles[i].checked) continue;
 
-      // Set loading state
-      btn.innerHTML = "⏳ Generating...";
-      btn.disabled = true;
-      btn.style.opacity = "0.7";
-
-      try {
-          if (targetLang === 'en' && window.ingglishTranslate) {
-              // Generate English IPA completely offline via the CDN library
-              const ipaRows = await Promise.all(texts.map(async (text) => {
-                  if (!text.trim()) return "";
-                  try {
-                      return await window.ingglishTranslate(text, { format: 'ipa' });
-                  } catch (e) {
-                      console.error("Ingglish translation error on:", text, e);
-                      return text;
-                  }
-              }));
-              
-              rows.forEach((row, index) => {
-                  const cells = row.querySelectorAll(".grid-cell");
-                  if (cells[2] && ipaRows[index] !== undefined) {
-                      cells[2].textContent = ipaRows[index];
-                  }
-              });
-              saveSettings();
-              showToast("✨ IPA Generated Locally!");
-          } else {
-              // Arabic and Russian still use the Python API
-              const response = await fetch("https://codeswitchreader-api-539648342659.europe-west1.run.app/generate-ipa", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ text: texts.join("\n"), lang: targetLang })
-              });
-
-              if (!response.ok) {
-                  throw new Error(`Server responded with status ${response.status}`);
-              }
-
-              const data = await response.json();
-              
-              if (data.error) {
-                  throw new Error(data.error);
-              }
-
-              if (data.ipa) {
-                  const ipaRows = data.ipa.split("\n");
-                  rows.forEach((row, index) => {
-                      const cells = row.querySelectorAll(".grid-cell");
-                      if (cells[2] && ipaRows[index] !== undefined) {
-                          cells[2].textContent = ipaRows[index];
-                      }
-                  });
-                  saveSettings(); // Save the grid state
-                  showToast("✨ IPA Generated Successfully!");
-              }
+          // Determine language of the current track
+          let targetLang = "";
+          const vVoice = voices.find(v => `${v.name} (${v.lang})` === voiceInputs[i].value);
+          if (vVoice) {
+              const langStr = vVoice.lang.toLowerCase();
+              if (langStr.startsWith("ru")) targetLang = "ru";
+              else if (langStr.startsWith("ar")) targetLang = "ar";
+              else if (langStr.startsWith("en")) targetLang = "en";
           }
 
-      } catch (err) {
-          console.error("API Error:", err);
-          alert("Failed to connect to the IPA server. Check console for details.");
-      } finally {
-          // Restore button state
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-          btn.style.opacity = "1";
+          if (!targetLang) continue; // Skip unsupported languages silently
+
+          // Collect texts from this column
+          const rows = Array.from(els.gridEditor.querySelectorAll(".grid-row"));
+          const texts = [];
+          rows.forEach(row => {
+              const cells = row.querySelectorAll(".grid-cell");
+              const rawText = cells[i] ? cells[i].textContent.trim() : "";
+              if (rawText) {
+                  // Chunk the text so IPA cache keys perfectly match playback segments
+                  const chunks = autoChunkText(rawText);
+                  texts.push(...chunks);
+              }
+          });
+
+          const hasContent = texts.some(t => t.length > 0);
+          if (!hasContent) continue;
+
+          // Only skip if all texts are already cached
+          if (!state.ipaCache) state.ipaCache = {};
+          const allCached = texts.every(t => state.ipaCache[t]);
+          if (allCached) continue;
+
+          try {
+              if (targetLang === 'en' && window.ingglishTranslate) {
+                  const ipaRows = await Promise.all(texts.map(async (text) => {
+                      if (!text.trim() || state.ipaCache[text]) return state.ipaCache[text] || "";
+                      try {
+                          return await window.ingglishTranslate(text, { format: 'ipa' });
+                      } catch (e) {
+                          console.error("Ingglish translation error on:", text, e);
+                          return text;
+                      }
+                  }));
+
+                  texts.forEach((text, index) => {
+                      if (text && ipaRows[index]) {
+                          state.ipaCache[text] = ipaRows[index];
+                      }
+                  });
+              } else {
+                  // Python API path for RU / AR
+                  // Only send texts we don't have
+                  const textsToFetch = texts.filter(t => !state.ipaCache[t]);
+                  if (textsToFetch.length > 0) {
+                      const response = await fetch("https://codeswitchreader-api-539648342659.europe-west1.run.app/generate-ipa", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ text: textsToFetch.join("\n"), lang: targetLang })
+                      });
+
+                      if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
+                      const data = await response.json();
+                      if (data.error) throw new Error(data.error);
+
+                      if (data.ipa) {
+                          const ipaRows = data.ipa.split("\n");
+                          textsToFetch.forEach((text, index) => {
+                              if (text && ipaRows[index]) {
+                                  state.ipaCache[text] = ipaRows[index];
+                              }
+                          });
+                      }
+                  }
+              }
+          } catch (e) {
+              console.error(`IPA Generation Error for Track ${i+1}:`, e);
+          }
       }
+      saveSettings();
   };
 
     window.downloadText = async () => {

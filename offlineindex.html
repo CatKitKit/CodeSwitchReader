@@ -281,7 +281,7 @@
 
         <!-- Right: Playback Options toggle -->
         <button id="playbackToggleBtn" onclick="togglePlaybackOptions()" style="background:transparent; border:1px solid var(--border-color); color:var(--muted); font-size:0.8em; padding:5px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s; white-space:nowrap; flex-shrink:0;" title="Show/Hide tracks, mute audio, shadowing pause">
-          <span>⚙</span><span>Playback Options</span><span id="playbackArrow">▾</span>
+          <span>⚙</span><span>IPA & Playback Options</span><span id="playbackArrow">▾</span>
         </button>
 
       </div>
@@ -300,6 +300,10 @@
             <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 1. (Shortcut key 'shift+1' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio1" checked> 1</label>
             <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 2. (Shortcut key 'shift+2' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio2" checked> {2}</label>
             <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 3. (Shortcut key 'shift+3' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio3" checked> [3]</label>
+            <span style="font-weight:bold;" title="Available for English, Russian, or Arabic">✨ IPA:</span>
+            <label style="margin:0; cursor:pointer;" title="Generate IPA for voice 1 if English, Russian, or Arabic is selected"><input type="checkbox" id="chkIpa1"> 1</label>
+            <label style="margin:0; cursor:pointer;" title="Generate IPA for voice 2 if English, Russian, or Arabic is selected"><input type="checkbox" id="chkIpa2"> {2}</label>
+            <label style="margin:0; cursor:pointer;" title="Generate IPA for voice 3 if English, Russian, or Arabic is selected"><input type="checkbox" id="chkIpa3"> [3]</label>
           </div>
 
           <div style="width:1px; height:40px; background:var(--border-color); flex-shrink:0;"></div>
@@ -373,9 +377,6 @@
                 </label>
             </div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
-                <button id="generateIpaBtn" class="btn-sm" disabled style="display: flex; opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; background-color: var(--accent); color: var(--bg-color); align-items: center; gap: 4px; font-weight: bold; border-radius: 4px; padding: 2px 6px; border: none; font-size: 0.89em; margin-right: 4px;" onclick="generateIpa()" title="✨ IPA Generator (Available when English, Russian, or Arabic is selected for Voice 2)">
-                    ✨ IPA
-                </button>
                 <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(2)" title="Clear this column">🗑️</button>
                 <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(2, this)" oncontextmenu="openBulkTextModal(event, 2)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
                 <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle2" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
@@ -856,9 +857,17 @@
 
 <div id="toast">Copied to clipboard!</div>
 
+<script type="importmap">
+{
+  "imports": {
+    "ingglish": "https://esm.sh/ingglish",
+    "@ingglish/ipa": "https://esm.sh/@ingglish/ipa"
+  }
+}
+</script>
 <script type="module">
-  import { translate } from 'https://cdn.jsdelivr.net/npm/ingglish/+esm';
-  import { registerIPA } from 'https://cdn.jsdelivr.net/npm/@ingglish/ipa/+esm';
+  import { translate } from 'ingglish';
+  import { registerIPA } from '@ingglish/ipa';
   
   // Explicitly register the IPA format module so Ingglish knows how to convert to IPA
   registerIPA();
