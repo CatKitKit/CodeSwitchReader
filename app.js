@@ -1623,17 +1623,20 @@ function buildWordSpans(text, localeHint = "en", trackIndex = -1) {
 
   const seg = getWordSegmenter(localeHint);
 
-  let ipaTokens = [];
   let isIpaEnabled = false;
+  let targetIpaLang = "";
   if (trackIndex >= 0 && trackIndex <= 2) {
       isIpaEnabled = document.getElementById(`chkIpa${trackIndex + 1}`)?.checked;
+      const loc = localeHint.toLowerCase();
+      if (loc.startsWith("ru")) targetIpaLang = "ru";
+      else if (loc.startsWith("ar")) targetIpaLang = "ar";
+      else if (loc.startsWith("en")) targetIpaLang = "en";
   }
 
-  if (state.ipaCache && state.ipaCache[text] && isIpaEnabled) {
-      // Clean common punctuation from the IPA string to isolate just the phonetic words
-      const cleanIpa = state.ipaCache[text].replace(/[.,!?;:"'()\[\]{}¿¡]/g, '');
-      ipaTokens = cleanIpa.trim().split(/\s+/);
-  }
+  let scriptRegex = null;
+  if (targetIpaLang === 'ru') scriptRegex = /[\u0400-\u04FF]/;
+  else if (targetIpaLang === 'ar') scriptRegex = /[\u0600-\u06FF]/;
+  else if (targetIpaLang === 'en') scriptRegex = /[A-Za-z]/;
 
   if (seg) {
     // Best path: real word segmentation (works for ja/zh in Chrome)
@@ -1665,15 +1668,19 @@ function buildWordSpans(text, localeHint = "en", trackIndex = -1) {
           } else {
               span.textContent = s;
           }
-      } else if (part.isWordLike && ipaTokens.length > 0) {
+      } else if (isIpaEnabled && targetIpaLang && scriptRegex && part.isWordLike && scriptRegex.test(s) && state.ipaCache && state.ipaCache[s]) {
           // Apply IPA Ruby tags for English, Russian, Arabic, etc.
-          const reading = ipaTokens.shift();
-          const ruby = document.createElement("ruby");
-          ruby.textContent = s;
-          const rt = document.createElement("rt");
-          rt.textContent = reading;
-          ruby.appendChild(rt);
-          span.appendChild(ruby);
+          let reading = state.ipaCache[s].replace(/[.,!?;:"'()\[\]{}¿¡]/g, '').trim();
+          if (reading && reading.toLowerCase() !== s.toLowerCase()) {
+              const ruby = document.createElement("ruby");
+              ruby.textContent = s;
+              const rt = document.createElement("rt");
+              rt.textContent = reading;
+              ruby.appendChild(rt);
+              span.appendChild(ruby);
+          } else {
+              span.textContent = s;
+          }
       } else {
           span.textContent = s;
       }
@@ -3610,67 +3617,61 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
 
           if (!targetLang) continue; // Skip unsupported languages silently
 
-          // Collect texts from this column
+          // Collect words from this column
           const rows = Array.from(els.gridEditor.querySelectorAll(".grid-row"));
-          const texts = [];
+          const wordsToFetch = new Set();
+          
+          let scriptRegex = null;
+          if (targetLang === 'ru') scriptRegex = /[\u0400-\u04FF]/;
+          else if (targetLang === 'ar') scriptRegex = /[\u0600-\u06FF]/;
+          else if (targetLang === 'en') scriptRegex = /[A-Za-z]/;
+          
+          const segIpa = getWordSegmenter(vVoice.lang);
+          if (!state.ipaCache) state.ipaCache = {};
+          
           rows.forEach(row => {
               const cells = row.querySelectorAll(".grid-cell");
               const rawText = cells[i] ? cells[i].textContent.trim() : "";
-              if (rawText) {
-                  // Chunk the text so IPA cache keys perfectly match playback segments
-                  const chunks = autoChunkText(rawText);
-                  texts.push(...chunks);
+              if (rawText && segIpa && scriptRegex) {
+                  for (const part of segIpa.segment(rawText)) {
+                      if (part.isWordLike && scriptRegex.test(part.segment)) {
+                          if (!state.ipaCache[part.segment]) {
+                              wordsToFetch.add(part.segment);
+                          }
+                      }
+                  }
               }
           });
 
-          const hasContent = texts.some(t => t.length > 0);
-          if (!hasContent) continue;
-
-          // Only skip if all texts are already cached
-          if (!state.ipaCache) state.ipaCache = {};
-          const allCached = texts.every(t => state.ipaCache[t]);
-          if (allCached) continue;
+          const texts = Array.from(wordsToFetch);
+          if (texts.length === 0) continue;
 
           try {
               if (targetLang === 'en' && window.ingglishTranslate) {
                   const ipaRows = await Promise.all(texts.map(async (text) => {
-                      if (!text.trim() || state.ipaCache[text]) return state.ipaCache[text] || "";
-                      try {
-                          return await window.ingglishTranslate(text, { format: 'ipa' });
-                      } catch (e) {
-                          console.error("Ingglish translation error on:", text, e);
-                          return text;
-                      }
+                      try { return await window.ingglishTranslate(text, { format: 'ipa' }); } 
+                      catch (e) { return text; }
                   }));
-
                   texts.forEach((text, index) => {
-                      if (text && ipaRows[index]) {
-                          state.ipaCache[text] = ipaRows[index];
-                      }
+                      if (text && ipaRows[index]) state.ipaCache[text] = ipaRows[index];
                   });
               } else {
                   // Python API path for RU / AR
-                  // Only send texts we don't have
-                  const textsToFetch = texts.filter(t => !state.ipaCache[t]);
-                  if (textsToFetch.length > 0) {
-                      const response = await fetch("https://codeswitchreader-api-539648342659.europe-west1.run.app/generate-ipa", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ text: textsToFetch.join("\n"), lang: targetLang })
+                  const response = await fetch("https://codeswitchreader-api-539648342659.europe-west1.run.app/generate-ipa", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ text: texts.join("\n"), lang: targetLang })
+                  });
+
+                  if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
+                  const data = await response.json();
+                  if (data.error) throw new Error(data.error);
+
+                  if (data.ipa) {
+                      const ipaRows = data.ipa.split("\n");
+                      texts.forEach((text, index) => {
+                          if (text && ipaRows[index]) state.ipaCache[text] = ipaRows[index].trim();
                       });
-
-                      if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
-                      const data = await response.json();
-                      if (data.error) throw new Error(data.error);
-
-                      if (data.ipa) {
-                          const ipaRows = data.ipa.split("\n");
-                          textsToFetch.forEach((text, index) => {
-                              if (text && ipaRows[index]) {
-                                  state.ipaCache[text] = ipaRows[index];
-                              }
-                          });
-                      }
                   }
               }
           } catch (e) {
@@ -3812,7 +3813,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         
         const promptText = `Please provide a concise 150-300 word summary of the following text to serve as global context. Do not include any pleasantries or conversational filler, just the summary itself. Keep in mind that it could be an auto caption transcript that involves multiple people and incorrect capturing. Infer the best as you can. \n\nText:\n${text}`;
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -3830,6 +3831,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         }
     }
 
+    let aiExplanationCache = {};
     let currentAiData = { explain: '', examples: '' };
 
     window.switchAiTab = function(tabName) {
@@ -3855,12 +3857,10 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         }
     };
 
-    function injectRubyTags(htmlString, targetLang) {
-        // Create a temporary DOM element to parse the HTML safely
+    async function injectRubyTagsAsync(htmlString, targetLang, trackIdx) {
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = htmlString;
         
-        // We only want to process text nodes, not tags or attributes
         const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
         const nodesToProcess = [];
         let node;
@@ -3871,16 +3871,74 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         }
         
         const loc = (targetLang || "en").toLowerCase();
+        let targetIpaLang = "";
+        if (loc.startsWith("ru")) targetIpaLang = "ru";
+        else if (loc.startsWith("ar")) targetIpaLang = "ar";
+        else if (loc.startsWith("en")) targetIpaLang = "en";
+
+        let isIpaEnabled = false;
+        if (trackIdx !== undefined && trackIdx >= 0 && trackIdx <= 2) {
+            const chk = document.getElementById(`chkIpa${trackIdx + 1}`);
+            if (chk) isIpaEnabled = chk.checked;
+        }
+
         const isChinese = loc.startsWith("zh") || loc.startsWith("yue") || loc.includes("-hk") || loc.includes("-mo") || loc.includes("macau");
         const isCantonese = loc.startsWith("yue") || loc.includes("-hk") || loc.includes("-mo") || loc.includes("macau");
         const isJapanese = loc.startsWith("ja");
         
-        // If neither Japanese nor Chinese dictionaries are loaded or appropriate, just return the original HTML
-        if (!((isJapanese && jpTokenizer) || (isChinese && (window.pinyinPro || window.ToJyutping)))) {
+        if (!((isJapanese && jpTokenizer) || (isChinese && (window.pinyinPro || window.ToJyutping)) || (isIpaEnabled && targetIpaLang))) {
             return htmlString;
         }
 
-        nodesToProcess.forEach(textNode => {
+        const seg = getWordSegmenter(loc);
+        let scriptRegex = null;
+        if (targetIpaLang === 'ru') scriptRegex = /[\u0400-\u04FF]/;
+        else if (targetIpaLang === 'ar') scriptRegex = /[\u0600-\u06FF]/;
+        else if (targetIpaLang === 'en') scriptRegex = /[A-Za-z]/;
+
+        // Pre-fetch IPA for specific target words if IPA is enabled
+        if (isIpaEnabled && targetIpaLang && scriptRegex && seg) {
+            if (!state.ipaCache) state.ipaCache = {};
+            const wordsToFetch = new Set();
+            
+            nodesToProcess.forEach(textNode => {
+                for (const part of seg.segment(textNode.nodeValue)) {
+                    if (part.isWordLike && scriptRegex.test(part.segment)) {
+                        if (!state.ipaCache[part.segment]) {
+                            wordsToFetch.add(part.segment);
+                        }
+                    }
+                }
+            });
+
+            const wordsArray = Array.from(wordsToFetch);
+            if (wordsArray.length > 0) {
+                if (targetIpaLang === 'en' && window.ingglishTranslate) {
+                    const ipaRows = await Promise.all(wordsArray.map(async (w) => {
+                        try { return await window.ingglishTranslate(w, { format: 'ipa' }); } 
+                        catch (e) { return w; }
+                    }));
+                    wordsArray.forEach((w, i) => { if (ipaRows[i]) state.ipaCache[w] = ipaRows[i]; });
+                } else if (targetIpaLang === 'ru' || targetIpaLang === 'ar') {
+                    try {
+                        const response = await fetch("https://codeswitchreader-api-539648342659.europe-west1.run.app/generate-ipa", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ text: wordsArray.join("\n"), lang: targetIpaLang })
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.ipa) {
+                                const ipaRows = data.ipa.split("\n");
+                                wordsArray.forEach((w, i) => { if (ipaRows[i]) state.ipaCache[w] = ipaRows[i].trim(); });
+                            }
+                        }
+                    } catch(e) { console.error("IPA API err", e); }
+                }
+            }
+        }
+
+        nodesToProcess.forEach((textNode) => {
             const text = textNode.nodeValue;
             const fragment = document.createDocumentFragment();
             
@@ -3889,7 +3947,6 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
                 tokens.forEach(token => {
                     const s = token.surface_form;
                     if (token.reading && token.reading !== "*" && s.match(/[\u4e00-\u9faf]/)) {
-                        // Very simple Katakana to Hiragana conversion for Furigana
                         const hiragana = token.reading.replace(/[\u30a1-\u30f6]/g, function(match) {
                             return String.fromCharCode(match.charCodeAt(0) - 0x60);
                         });
@@ -3897,7 +3954,6 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
                         ruby.textContent = s;
                         const rt = document.createElement("rt");
                         rt.textContent = hiragana;
-                        // Match the main app's styling for rt, but tweaked for the popup
                         rt.style.color = "var(--accent)";
                         rt.style.fontSize = "0.7em";
                         ruby.appendChild(rt);
@@ -3906,32 +3962,38 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
                         fragment.appendChild(document.createTextNode(s));
                     }
                 });
-            } else if (isChinese) {
-                const seg = getWordSegmenter(loc);
+            } else if (isChinese || (isIpaEnabled && targetIpaLang && scriptRegex)) {
                 if (seg) {
                     const segments = seg.segment(text);
                     for (const part of segments) {
                         const s = part.segment;
-                        if (part.isWordLike && /[\u4e00-\u9fa5]/.test(s)) {
-                            let reading = null;
+                        let reading = null;
+                        
+                        if (isIpaEnabled && targetIpaLang && part.isWordLike && scriptRegex.test(s)) {
+                            let ipa = state.ipaCache[s];
+                            if (ipa) {
+                                ipa = ipa.replace(/[.,!?;:"'()\[\]{}¿¡]/g, '').trim();
+                                if (ipa.toLowerCase() !== s.toLowerCase()) {
+                                    reading = ipa;
+                                }
+                            }
+                        } else if (isChinese && part.isWordLike && /[\u4e00-\u9fa5]/.test(s)) {
                             if (isCantonese && els.chkJyutping.checked && window.ToJyutping) {
                                 reading = window.ToJyutping.getJyutpingText(s);
                             } else if (!isCantonese && els.chkPinyin.checked && window.pinyinPro) {
                                 reading = window.pinyinPro.pinyin(s, { type: 'string' });
                             }
-                            
-                            if (reading) {
-                                const ruby = document.createElement("ruby");
-                                ruby.textContent = s;
-                                const rt = document.createElement("rt");
-                                rt.textContent = reading;
-                                rt.style.color = "var(--accent)";
-                                rt.style.fontSize = "0.7em";
-                                ruby.appendChild(rt);
-                                fragment.appendChild(ruby);
-                            } else {
-                                fragment.appendChild(document.createTextNode(s));
-                            }
+                        }
+                        
+                        if (reading) {
+                            const ruby = document.createElement("ruby");
+                            ruby.textContent = s;
+                            const rt = document.createElement("rt");
+                            rt.textContent = reading;
+                            rt.style.color = "var(--accent)";
+                            rt.style.fontSize = "0.7em";
+                            ruby.appendChild(rt);
+                            fragment.appendChild(ruby);
                         } else {
                             fragment.appendChild(document.createTextNode(s));
                         }
@@ -3979,12 +4041,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         } else {
             titleWord.textContent = word;
         }
-        
-        titleTrans.textContent = "Loading translation...";
-        contentDiv.innerHTML = `<span style="opacity:0.7;">Reading context...</span>`;
-        currentAiData = { explain: 'Loading...', examples: 'Loading...' };
-        switchAiTab('explain');
-        
+
         const rect = wordNode.getBoundingClientRect();
         let top = rect.bottom + window.scrollY + 10;
         let left = rect.left + window.scrollX - 20;
@@ -3997,10 +4054,32 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         
         modal.style.top = `${top - window.scrollY}px`;
         modal.style.left = `${left}px`;
-        
-        let localSentences = [];
+
         const trackSegments = segments.filter(s => s.typeIndex === trackIdx);
         const currentIndex = trackSegments.findIndex(s => s.container === container);
+        const cacheKey = `${trackIdx}_${currentIndex}_${word}`;
+
+        if (aiExplanationCache[cacheKey]) {
+            const cached = aiExplanationCache[cacheKey];
+            titleTrans.textContent = cached.titleTrans;
+            contentDiv.innerHTML = ""; // Clear button
+            currentAiData = { explain: cached.explain, examples: cached.examples };
+            switchAiTab('explain');
+            return;
+        }
+        
+        titleTrans.textContent = "AI Context Ready";
+        contentDiv.innerHTML = `<div style="text-align: center; padding: 20px 0;"><button id="btnFetchAi" class="btn" style="background: var(--accent); color: var(--bg-color); border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'DM Sans', sans-serif;">Explain Context & See Examples</button></div>`;
+        currentAiData = { explain: contentDiv.innerHTML, examples: '<div style="text-align: center; opacity: 0.7; padding: 20px 0;">Please fetch the explanation first.</div>' };
+        switchAiTab('explain');
+
+        document.getElementById('btnFetchAi').onclick = async () => {
+            titleTrans.textContent = "Loading translation...";
+            contentDiv.innerHTML = `<span style="opacity:0.7;">Reading context...</span>`;
+            currentAiData = { explain: 'Loading...', examples: 'Loading...' };
+            switchAiTab('explain');
+
+            let localSentences = [];
         
         let isFullTextSummary = (aiSummaries[trackIdx] && aiTexts[trackIdx] && aiSummaries[trackIdx] === aiTexts[trackIdx]);
         let summaryText = aiSummaries[trackIdx] || "(No background summary available. Please infer from local context only.)";
@@ -4059,7 +4138,7 @@ Format the response exactly like this JSON object:
 }`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -4091,8 +4170,8 @@ Format the response exactly like this JSON object:
                     const langHint = voice ? voice.lang : "en";
 
                     titleTrans.textContent = parsed.translation;
-                    currentAiData.explain = injectRubyTags(parsed.explainHtml || "No explanation.", langHint);
-                    currentAiData.examples = injectRubyTags(parsed.examplesHtml || "No examples.", langHint);
+                    currentAiData.explain = await injectRubyTagsAsync(parsed.explainHtml || "No explanation.", langHint, trackIdx);
+                    currentAiData.examples = await injectRubyTagsAsync(parsed.examplesHtml || "No examples.", langHint, trackIdx);
                 } else {
                     // Fallback: The model just gave us raw text instead of JSON
                     console.warn("Gemma refused to output valid JSON. Falling back to raw text renderer.");
@@ -4110,11 +4189,18 @@ Format the response exactly like this JSON object:
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\*(.*?)\*/g, '<em>$1</em>');
                         
-                    currentAiData.explain = `<div style="font-family: monospace; white-space: pre-wrap;">${injectRubyTags(rawHtml, langHint)}</div>`;
+                    currentAiData.explain = `<div style="font-family: monospace; white-space: pre-wrap;">${await injectRubyTagsAsync(rawHtml, langHint, trackIdx)}</div>`;
                     currentAiData.examples = "<em>(Examples were not formatted correctly by the model. Please check the Explain tab.)</em>";
                 }
                 
                 switchAiTab(document.getElementById('aiTabExplain').style.opacity === '1' ? 'explain' : 'examples');
+                
+                // Save to cache
+                aiExplanationCache[cacheKey] = {
+                    titleTrans: titleTrans.textContent,
+                    explain: currentAiData.explain,
+                    examples: currentAiData.examples
+                };
             } else {
                 contentDiv.innerHTML = `<span style="color:red;">Failed to get AI explanation.</span>`;
             }
@@ -4122,6 +4208,7 @@ Format the response exactly like this JSON object:
             console.error("AI Modal Error", e);
             contentDiv.innerHTML = `<span style="color:red;">Error fetching data. Check your API key and connection.</span>`;
         }
+        }; // End of btnFetchAi.onclick
     };
 
     setTimeout(() => {
