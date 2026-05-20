@@ -19,7 +19,7 @@
             },
             {
                 title: "Tool 1: Track Controls 🎛️",
-                text: "Use the 👁️ icon to <strong>hide the text</strong> for any track.<br><br>Use the 🎧 icon to <strong>mute a voice</strong>.<br><br><em>(These live inside ⚙ Playback Options — we've opened it for you!)</em>",
+                text: "Use the <img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> icon to <strong>hide the text</strong> for any track.<br><br>Use the <img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> icon to <strong>mute a voice</strong>.<br><br><em>(These live inside ⚙ Playback Options — we've opened it for you!)</em>",
                 target: "#showAudioGrid",
                 action: "Next",
                 onShow: () => {

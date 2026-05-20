@@ -134,7 +134,7 @@
       font-size: 1.5rem;
       border: 2px dashed var(--border-color);
       border-radius: 10px;
-      padding: 20px;
+      padding: 50px 20px 20px 20px;
       margin-bottom: 20px;
       position: relative;
     }
@@ -219,7 +219,7 @@
 
     <div id="deckList" class="deck-list">Loading...</div>
     <div style="font-size: 0.85rem; color: #888; margin-top: 25px; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 15px;">
-        ⚠️ <b>Note:</b> All data is auto-saved and stored locally in your browser. Cards and progress will be erased if you clear your browser data or cache. <br>Be sure to <b>Backup</b> occasionally, especially after a long study session! <br><span style="font-size: 0.8rem; opacity: 0.8;">(Importing a backup is not necessary each time; only needed when data is lost or moving to a new device)</span>
+        ⚠️ <b>Note:</b> All data is auto-saved and stored locally in your browser. Cards and progress will be erased if browser data or cache is cleared. <br><b>Backup</b> often! Especially after a long study session! <br><span style="font-size: 0.8rem; opacity: 0.8;">(Importing a backup is not necessary each time; only needed when data is lost or moving to a new device)</span>
     </div>
   </div>
 
@@ -246,8 +246,8 @@
 
     <div class="flashcard" id="flashcardContent" style="position: relative;">
         <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 8px;">
-            <button onclick="hideCurrentCard()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6;" title="Hide this card from study">📴</button>
-            <button onclick="deleteCurrentCard()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6;" title="Delete this card">🗑️</button>
+            <button onclick="hideCurrentCard()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6;" title="Hide this card from study"><img src='svg/eye-off.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
+            <button onclick="deleteCurrentCard()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6;" title="Delete this card"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
         </div>
         <div id="frontText">Front</div>
         
@@ -266,7 +266,7 @@
         <button onclick="playTTS('sentence')" style="background:#e2e6ea;">🔊 Sentence</button>
     </div>
 
-    <button id="revealBtn" class="btn-primary" style="width:100%; padding:20px; font-size:1.2rem;" onclick="revealCard()">👀 Reveal</button>
+    <button id="revealBtn" class="btn-primary" style="width:100%; padding:20px; font-size:1.2rem;" onclick="revealCard()"><img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Reveal</button>
 
     <div id="ratingBtns" style="display:none; flex-direction: column; align-items: center;">
         <div class="rating-buttons" style="width: 100%;">
@@ -652,7 +652,7 @@
                   <div style="display:flex; gap:10px;">
                       <button class="btn-primary" onclick="startStudy('${deckName}')">Study</button>
                       <button class="btn-primary" style="background:#17a2b8;" onclick="startReview('${deckName}')">Review</button>
-                      <button class="btn-hard" style="padding: 10px;" title="Delete Deck" onclick="deleteDeck('${deckName}')">🗑️</button>
+                      <button class="btn-hard" style="padding: 10px;" title="Delete Deck" onclick="deleteDeck('${deckName}')"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
                   </div>
               `;
               list.appendChild(div);
@@ -794,19 +794,19 @@
               div.id = `review-item-${card.id}`;
               
               let hintHTML = card.col3 
-                  ? `<div class="review-hint editable-field" id="col3-container-${card.id}"><span style="flex: 0 1 auto;">💡 ${card.col3}</span><span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col3')">🪄</span></div>` 
-                  : `<div class="review-hint editable-field" id="col3-container-${card.id}"><span style="flex:1; cursor:pointer; opacity: 0.5;" onclick="startEditReview(${card.id}, 'col3')">[ + add hint/note ]</span><span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col3')">🪄</span></div>`;
+                  ? `<div class="review-hint editable-field" id="col3-container-${card.id}"><span style="flex: 0 1 auto;">💡 ${card.col3}</span><span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col3')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span></div>` 
+                  : `<div class="review-hint editable-field" id="col3-container-${card.id}"><span style="flex:1; cursor:pointer; opacity: 0.5;" onclick="startEditReview(${card.id}, 'col3')">[ + add hint/note ]</span><span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col3')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span></div>`;
               
               const isChecked = !card.isHidden ? "checked" : "";
               div.innerHTML = `
                   <div class="review-text">
                       <div class="review-col1 editable-field" id="col1-container-${card.id}">
                           <span style="flex: 0 1 auto;">${applyRubyToHTML(card.col1 || "", currentDeck)}</span>
-                          <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col1')">🪄</span>
+                          <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col1')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                       </div>
                       <div class="review-col2 editable-field" id="col2-container-${card.id}">
                           <span style="flex: 0 1 auto;">${applyRubyToHTML(card.col2 || "", currentDeck)}</span>
-                          <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col2')">🪄</span>
+                          <span class="edit-icon" title="Edit" onclick="startEditReview(${card.id}, 'col2')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                       </div>
                       ${hintHTML}
                   </div>
@@ -900,14 +900,14 @@
       if (parent) {
           if (field === 'col3') {
               if (originalText.trim() === "") {
-                  parent.innerHTML = `<span style="flex:1; cursor:pointer; opacity: 0.5;" onclick="startEditReview(${id}, 'col3')">[ + add hint/note ]</span><span class="edit-icon" title="Edit" onclick="startEditReview(${id}, 'col3')">🪄</span>`;
+                  parent.innerHTML = `<span style="flex:1; cursor:pointer; opacity: 0.5;" onclick="startEditReview(${id}, 'col3')">[ + add hint/note ]</span><span class="edit-icon" title="Edit" onclick="startEditReview(${id}, 'col3')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>`;
               } else {
-                  parent.innerHTML = `<span style="flex: 0 1 auto;">💡 ${originalText}</span><span class="edit-icon" title="Edit" onclick="startEditReview(${id}, 'col3')">🪄</span>`;
+                  parent.innerHTML = `<span style="flex: 0 1 auto;">💡 ${originalText}</span><span class="edit-icon" title="Edit" onclick="startEditReview(${id}, 'col3')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>`;
               }
           } else {
               parent.innerHTML = `
                   <span style="flex: 0 1 auto;">${applyRubyToHTML(originalText, currentDeck)}</span>
-                  <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')">🪄</span>
+                  <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
               `;
           }
       }
@@ -931,7 +931,7 @@
                   if (parent) {
                       parent.innerHTML = `
                           <span style="flex: 0 1 auto;">${applyRubyToHTML(newText, currentDeck)}</span>
-                          <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')">🪄</span>
+                          <span class="edit-icon" title="Edit" onclick="startEditReview(${id}, '${field}')"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                       `;
                   }
               };

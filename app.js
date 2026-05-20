@@ -1,6 +1,6 @@
 (() => {
   function showToast(msg) {
-    const t = document.getElementById("toast"); t.textContent = msg; t.className = "show";
+    const t = document.getElementById("toast"); t.innerHTML = msg; t.className = "show";
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 2500);
   }
 
@@ -41,6 +41,7 @@
     // NEW CONTROLS
     show1: document.getElementById("chkShow1"), show2: document.getElementById("chkShow2"), show3: document.getElementById("chkShow3"),
     audio1: document.getElementById("chkAudio1"), audio2: document.getElementById("chkAudio2"), audio3: document.getElementById("chkAudio3"),
+    ipa1: document.getElementById("chkIpa1"), ipa2: document.getElementById("chkIpa2"), ipa3: document.getElementById("chkIpa3"),
     autoScroll: document.getElementById("autoScrollChk"),
     autoSplit: document.getElementById("autoSplitPasteChk"),
     chkKuromoji: document.getElementById("chkKuromoji"),
@@ -59,9 +60,9 @@
     "v1_label": { en: "<span style=\"font-size:1.3em\">🎤</span>Voice 1", ja: "<span style=\"font-size:1.3em\">🎤</span>音声 1", "zh-CN": "<span style=\"font-size:1.3em\">🎤</span>语音 1", "zh-TW": "<span style=\"font-size:1.3em\">🎤</span>語音 1", es: "<span style=\"font-size:1.3em\">🎤</span>Voz 1" },
     "v2_label": { en: "<span style=\"font-size:1.3em\">🎤</span>Voice 2", ja: "<span style=\"font-size:1.3em\">🎤</span>音声 2", "zh-CN": "<span style=\"font-size:1.3em\">🎤</span>语音 2", "zh-TW": "<span style=\"font-size:1.3em\">🎤</span>語音 2", es: "<span style=\"font-size:1.3em\">🎤</span>Voz 2" },
     "v3_label": { en: "<span style=\"font-size:1.3em\">🎤</span>Voice 3", ja: "<span style=\"font-size:1.3em\">🎤</span>音声 3", "zh-CN": "<span style=\"font-size:1.3em\">🎤</span>语音 3", "zh-TW": "<span style=\"font-size:1.3em\">🎤</span>語音 3", es: "<span style=\"font-size:1.3em\">🎤</span>Voz 3" },
-    "pause_shadowing": { en: "⏱️sentence pause time:", ja: "⏱️文の後に間を入れる：", "zh-CN": "⏱️句子后添加停顿：", "zh-TW": "⏱️句子後添加停頓：", es: "⏱️pausa después de cada frase:" },
-    "show": { en: "👁️ Show:", ja: "👁️ 表示：", "zh-CN": "👁️ 显示：", "zh-TW": "👁️ 顯示：", es: "👁️ Mostrar:" },
-    "audio": { en: "🎧 Audio:", ja: "🎧 音声：", "zh-CN": "🎧 语音：", "zh-TW": "🎧 語音：", es: "🎧 Audio:" },
+    "pause_shadowing": { en: "sentence pause time:", ja: "文の後に間を入れる：", "zh-CN": "句子后添加停顿：", "zh-TW": "句子後添加停頓：", es: "pausa después de cada frase:" },
+    "show": { en: "<img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Show:", ja: "<img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> 表示：", "zh-CN": "<img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> 显示：", "zh-TW": "<img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> 顯示：", es: "<img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Mostrar:" },
+    "audio": { en: "<img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Audio:", ja: "<img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> 音声：", "zh-CN": "<img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> 语音：", "zh-TW": "<img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> 語音：", es: "<img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Audio:" },
     "auto_scroll": { en: "Auto-Scroll", ja: "自動スクロール", "zh-CN": "自动滚动", "zh-TW": "自動滾動", es: "Auto-Desplazamiento" },
     "clear": { en: "Clear", ja: "クリア", "zh-CN": "清除", "zh-TW": "清除", es: "Borrar" },
     "play": { en: "▶ Play", ja: "▶ 再生", "zh-CN": "▶ 播放", "zh-TW": "▶ 播放", es: "▶ Reproducir" },
@@ -103,8 +104,8 @@
     "nav_flashcards": { en: "Flashcards", ja: "単語帳", "zh-CN": "闪卡", "zh-TW": "閃卡", es: "Tarjetas" },
     "google_translate": { en: "Google", ja: "Google 翻訳", "zh-CN": "谷歌", "zh-TW": "Google 翻譯", es: "Traductor" },
     "deepl": { en: "DeepL", ja: "DeepL", "zh-CN": "DeepL", "zh-TW": "DeepL", es: "DeepL" },
-    "auto_split": { en: "✂️ Auto-split sentences to break up long paragraphs", ja: "✂️ 文を自動分割して長い段落を区切る", "zh-CN": "✂️ 自动拆分句子以打断长段落", "zh-TW": "✂️ 自動拆分句子以打斷長段落", es: "✂️ Dividir oraciones automáticamente para romper párrafos largos" },
-    "auto_split_help": { en: "Doesn't affect how your text is played if you only have 1 voice.\nTurn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.\nToggle on/off before you paste your text and see what you prefer!", ja: "音声が1つだけの場合は、テキストの再生には影響しません。\nバイリンガル・リーダーがすでに完全に一致する段落/文を提供している場合はオフにしてください。長い段落を区切るのに役立ちます。\nテキストを貼り付ける前にオン/オフを切り替えて、好みの方法を確認してください！", "zh-CN": "如果只有一种语音，则不影响文本播放。\n如果您的双语阅读器已经提供了完全匹配的段落/句子，请将其关闭。有助于打断长段落。\n在粘贴文本前切换开/关，看看您更喜欢哪种！", "zh-TW": "如果只有一種語音，則不影響文本播放。\n如果您的雙語閱讀器已經提供了完全匹配的段落/句子，請將其關閉。有助於打斷長段落。\n在粘貼文本前切換開/關，看看您更喜歡哪種！", es: "No afecta cómo se reproduce tu texto si solo tienes 1 voz.\nDesactívalo si tu lector bilingüe ya te da párrafos/oraciones que coinciden perfectamente. Puede ayudar a dividir párrafos largos.\n¡Alterna entre activado/desactivado antes de pegar tu texto y mira qué prefieres!" },
+    "auto_split": { en: "✂️ Auto-split sentences", ja: "✂️ 文を自動分割する", "zh-CN": "✂️ 自动拆分句子", "zh-TW": "✂️ 自動拆分句子", es: "✂️ Dividir oraciones auto" },
+    "auto_split_help": { en: "Leave on if unsure.\nDoesn't affect how your text is played if you only have 1 voice.\nTurn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.\nToggle on/off before you paste your text and see what you prefer!", ja: "迷ったらオンにしておいてください。\n音声が1つだけの場合は、テキストの再生には影響しません。\nバイリンガル・リーダーがすでに完全に一致する段落/文を提供している場合はオフにしてください。長い段落を区切るのに役立ちます。\nテキストを貼り付ける前にオン/オフを切り替えて、好みの方法を確認してください！", "zh-CN": "如不确定，请保持开启。\n如果只有一种语音，则不影响文本播放。\n如果您的双语阅读器已经提供了完全匹配的段落/句子，请将其关闭。有助于打断长段落。\n在粘贴文本前切换开/关，看看您更喜欢哪种！", "zh-TW": "「若不確定，請保持開啟。\n如果只有一種語音，則不影響文本播放。\n如果您的雙語閱讀器已經提供了完全匹配的段落/句子，請將其關閉。有助於打斷長段落。\n在粘貼文本前切換開/關，看看您更喜歡哪種！", es: "Déjalo activado si no está seguro.\nNo afecta cómo se reproduce tu texto si solo tienes 1 voz.\nDesactívalo si tu lector bilingüe ya te da párrafos/oraciones que coinciden perfectamente. Puede ayudar a dividir párrafos largos.\n¡Alterna entre activado/desactivado antes de pegar tu texto y mira qué prefieres!" },
     "zen_mode_title": { en: "Focus / Full Page Mode", ja: "フォーカス / フルページモード", "zh-CN": "专注 / 全屏模式", "zh-TW": "專注 / 全屏模式", es: "Modo Enfoque / Pantalla Completa" },
     "v1_placeholder_first": { en: "Voice 1...\n💡\nPaste your ENTIRE text for each voice into the boxes (or upload with ≔ above).\n\nHit ▶️ play!\n\nAs long as each voice has the same amount of lines, they will read side-by-side perfectly!", ja: "音声 1...\n💡\n各音声のすべてのテキストをボックスに貼り付けることから始めます。\n\n▶️ 再生を押してください！\n\n各音声の行数が同じであれば、完全に並んで読み上げられます！", "zh-CN": "语音 1...\n💡\n首先将每种语音的完整文本粘贴到框中。\n\n点击 ▶️ 播放！\n\n只要每种语音的行数相同，它们就会完美地并排朗读！", "zh-TW": "語音 1...\n💡\n首先將每種語音的完整文本粘貼到框中。\n\n點擊 ▶️ 播放！\n\n只要每種語音的行數相同，它們就會完美地並排朗讀！", es: "Voz 1...\n💡\nComienza pegando TODO tu texto para cada voz en los cuadros.\n\n¡Presiona ▶️ reproducir!\n\n¡Mientras cada voz tenga la misma cantidad de líneas, se leerán una al lado de la otra perfectamente!" },
     "v1_placeholder": { en: "Voice 1...", ja: "音声 1...", "zh-CN": "语音 1...", "zh-TW": "語音 1...", es: "Voz 1..." },
@@ -186,6 +187,7 @@
     theme: "light",
     showTracks: [true, true, true], // Visual
     audioTracks: [true, true, true], // Audio
+    ipaTracks: [false, false, false], // IPA
     shadow: "0",
     useKuromoji: false,
     usePinyin: false,
@@ -455,6 +457,7 @@
       // V9: Save both arrays
       state.showTracks = [els.show1.checked, els.show2.checked, els.show3.checked];
       state.audioTracks = [els.audio1.checked, els.audio2.checked, els.audio3.checked];
+      state.ipaTracks = [els.ipa1.checked, els.ipa2.checked, els.ipa3.checked];
       state.shadow = document.getElementById("shadowSlider").value;
       state.useKuromoji = els.chkKuromoji.checked;
       state.usePinyin = els.chkPinyin.checked;
@@ -497,7 +500,7 @@
                   btn.style.opacity = "0.4";
                   btn.style.filter = "grayscale(100%)";
                   btn.style.cursor = "not-allowed";
-                  btn.title = "✨ IPA Generator (Available when English, Russian, or Arabic is selected for Voice 2)";
+                  btn.title="IPA Generator (Available when English, Russian, or Arabic is selected for Voice 2)";
               }
           }
       }
@@ -547,6 +550,9 @@
     }
     if (state.audioTracks) {
         els.audio1.checked = state.audioTracks[0]; els.audio2.checked = state.audioTracks[1]; els.audio3.checked = state.audioTracks[2];
+    }
+    if (state.ipaTracks) {
+        els.ipa1.checked = state.ipaTracks[0]; els.ipa2.checked = state.ipaTracks[1]; els.ipa3.checked = state.ipaTracks[2];
     }
 
     if (state.shadow) {
@@ -872,7 +878,7 @@
       };
       
       const delBtn = document.createElement("button");
-      delBtn.innerHTML = "🗑️";
+      delBtn.innerHTML = "<img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'>";
       delBtn.className = "grid-action-btn grid-delete-btn";
       delBtn.title = "Delete row";
       delBtn.onclick = () => { row.remove(); saveSettings(); if(els.verticalEditor.children.length===0) els.verticalEditor.appendChild(createVerticalRow()); };
@@ -2506,6 +2512,10 @@ if (seg._activeWordNode) {
       updateAudioState();
   }));
 
+  [els.ipa1, els.ipa2, els.ipa3].forEach(c => c.addEventListener("change", () => {
+      saveSettings();
+  }));
+
   els.fileLoader.addEventListener("change", (e) => {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader(); 
@@ -3132,7 +3142,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
       }
 
       if (lineCountsMatch) {
-          const dict = { en: "Looks good! ✨", ja: "問題なし！ ✨", "zh-CN": "看起来不错！ ✨", "zh-TW": "看起來不錯！ ✨", es: "¡Se ve bien! ✨" };
+          const dict = { en: "Looks good!", ja: "問題なし！", "zh-CN": "看起来不错！", "zh-TW": "看起來不錯！", es: "¡Se ve bien!" };
           resultSpan.textContent = dict[lang] || dict.en;
           resultSpan.style.color = "#28a745";
           return;
@@ -3193,9 +3203,9 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
       const prefix = prefixDict[lang] || prefixDict.en;
 
       if (top2) {
-          resultSpan.innerHTML = `${prefix}${top1}, ${top2} <span style="cursor:pointer; display:inline-block; transition:transform 0.2s; user-select:none;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.autoAlignGridCols()" title="Auto-Align 🪄">🪄</span>`;
+          resultSpan.innerHTML = `${prefix}${top1}, ${top2} <span style="cursor:pointer; display:inline-block; transition:transform 0.2s; user-select:none;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.autoAlignGridCols()" title="Auto-Align"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>`;
       } else {
-          resultSpan.innerHTML = `${prefix}${top1} <span style="cursor:pointer; display:inline-block; transition:transform 0.2s; user-select:none;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.autoAlignGridCols()" title="Auto-Align 🪄">🪄</span>`;
+          resultSpan.innerHTML = `${prefix}${top1} <span style="cursor:pointer; display:inline-block; transition:transform 0.2s; user-select:none;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" onclick="window.autoAlignGridCols()" title="Auto-Align"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>`;
       }
       resultSpan.style.color = "#dc3545";
   };
@@ -3531,7 +3541,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
               
               worker.terminate();
               URL.revokeObjectURL(workerUrl);
-              showToast('Auto-Aligned successfully! ✨');
+              showToast(`Auto-Aligned successfully! <img src='svg/sparkle.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'>`);
           } else if (e.data.type === 'error') {
               if (overlay) overlay.style.display = 'none';
               showToast('Aligner error: ' + e.data.message);
@@ -3566,7 +3576,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
           }
       });
       saveSettings();
-      showToast(`🗑️ Voice ${colIndex + 1} cleared (Undo available)`);
+      showToast(`Voice ${colIndex + 1} cleared (Undo available)`);
   };
 
   window.openBulkTextModal = (e, colIndex) => {

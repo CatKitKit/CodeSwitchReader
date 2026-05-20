@@ -212,7 +212,7 @@
 
         <!-- Track 2 -->
         <div style="display:flex; flex-direction:column; gap:5px;">
-          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 2 {…}</div>
+          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 2</div>
           <div style="display:flex; align-items:center; gap:4px; min-width:0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
             <div class="combo-wrapper" id="wrap2" style="flex:1; position:relative; min-width:0;">
               <input type="text" id="voice2" class="combo-input" placeholder="Select voice..." autocomplete="off" style="width:100%; text-overflow:ellipsis; padding-right:20px; font-size:0.85em; box-sizing:border-box;">
@@ -229,7 +229,7 @@
 
         <!-- Track 3 -->
         <div style="display:flex; flex-direction:column; gap:5px;">
-          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 3 […]</div>
+          <div style="font-size:0.72em; font-weight:bold; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;">Track 3</div>
           <div style="display:flex; align-items:center; gap:4px; min-width:0;" title="Type in your choice of voice, or click on the down arrow several times for the full list">
             <div class="combo-wrapper" id="wrap3" style="flex:1; position:relative; min-width:0;">
               <input type="text" id="voice3" class="combo-input" placeholder="Select voice..." autocomplete="off" style="width:100%; text-overflow:ellipsis; padding-right:20px; font-size:0.85em; box-sizing:border-box;">
@@ -262,11 +262,11 @@
             <span data-i18n="auto_scroll">Auto-Scroll</span>
           </label>
           <div style="width:1px; height:26px; background:var(--border-color);"></div>
-          <button id="mainUndoBtn" class="btn-sm" style="color:var(--accent); font-size:1.25em; padding:2px 6px;" onclick="restoreMainText()" title="Undo">↩</button>
-          <button class="btn-sm danger" style="font-size:1.25em; padding:2px 6px;" onclick="clearMainText()" title="Clear all text">🗑️</button>
+          <button id="mainUndoBtn" class="btn-sm" style="color:var(--accent); font-size:1.25em; padding:2px 6px;" onclick="restoreMainText()" title="Undo"><img src='svg/undo-2.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
+          <button class="btn-sm danger" style="font-size:1.25em; padding:2px 6px;" onclick="clearMainText()" title="Clear all text"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
           <input type="file" id="fileLoader" style="display:none" accept=".txt">
-          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import txt for 1 voice.&#10;or&#10;Import previously aligned text.">🗁</button>
-          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Export aligned txt for next time.">🗀</button>
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import txt for 1 voice.&#10;or&#10;Import previously aligned text."><img src='svg/import.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Export aligned txt for next time."><img src='svg/folder-up.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
           <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:var(--accent);" onclick="document.getElementById('alignerModal').style.display='flex'" title="Upload 2 Text/EPUB files to auto align">≔</button>
           <div style="display: flex; align-items: center; gap: 4px;">
               <button id="btnCheckAlignment" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: default; display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em;" onclick="if(this.dataset.clickable==='true') window.findMisalignment()"
@@ -292,15 +292,15 @@
 
           <!-- Show / Audio grid -->
           <div id="showAudioGrid" style="display:grid; grid-template-columns:auto auto auto auto; gap:3px 10px; align-items:center;">
-            <span style="font-weight:bold;" data-i18n="show">👁️ Show:</span>
+            <span style="font-weight:bold;" data-i18n="show"><img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Show:</span>
             <label style="margin:0; cursor:pointer;" title="Hide/show text for voice 1. (Shortcut key '1' to toggle on/off in reader mode)"><input type="checkbox" id="chkShow1" checked> 1</label>
             <label style="margin:0; cursor:pointer;" title="Hide/show text for voice 2. (Shortcut key '2' to toggle on/off in reader mode)"><input type="checkbox" id="chkShow2" checked> {2}</label>
             <label style="margin:0; cursor:pointer;" title="Hide/show text for voice 2. (Shortcut key '3' to toggle on/off in reader mode)"><input type="checkbox" id="chkShow3" checked> [3]</label>
-            <span style="font-weight:bold;" data-i18n="audio">🎧 Audio:</span>
+            <span style="font-weight:bold;" data-i18n="audio"><img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Audio:</span>
             <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 1. (Shortcut key 'shift+1' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio1" checked> 1</label>
             <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 2. (Shortcut key 'shift+2' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio2" checked> {2}</label>
             <label style="margin:0; cursor:pointer;" title="Mute/unmute for voice 3. (Shortcut key 'shift+3' to toggle on/off in reader mode)"><input type="checkbox" id="chkAudio3" checked> [3]</label>
-            <span style="font-weight:bold;" title="Available for English, Russian, or Arabic">✨ IPA:</span>
+            <span style="font-weight:bold;" title="Available for English, Russian, or Arabic"><img src='svg/sparkle.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> IPA:</span>
             <label style="margin:0; cursor:pointer;" title="Generate IPA for voice 1 if English, Russian, or Arabic is selected"><input type="checkbox" id="chkIpa1"> 1</label>
             <label style="margin:0; cursor:pointer;" title="Generate IPA for voice 2 if English, Russian, or Arabic is selected"><input type="checkbox" id="chkIpa2"> {2}</label>
             <label style="margin:0; cursor:pointer;" title="Generate IPA for voice 3 if English, Russian, or Arabic is selected"><input type="checkbox" id="chkIpa3"> [3]</label>
@@ -310,7 +310,7 @@
 
           <!-- Shadow slider -->
           <div style="display:flex; align-items:center; gap:6px;" title="Adds a silence gap (0s–6s) after every sentence. Great for repeating aloud!">
-            <span style="cursor:help; font-size:1.2em;">⏱️</span>
+            <span style="cursor:help; font-size:1.2em;"><img src='svg/clock.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
             <span style="color:var(--muted); font-size:0.9em;">Pause after sentence:</span>
             <input id="shadowSlider" type="range" min="0" max="6.0" step="0.5" value="0" style="width:70px; accent-color:var(--accent);">
             <span id="shadowVal" style="color:var(--accent); font-weight:bold; display:inline-block; min-width:1.5em;">0s</span>
@@ -319,9 +319,9 @@
           <div style="width:1px; height:40px; background:var(--border-color); flex-shrink:0;"></div>
 
           <!-- Auto-split sentences -->
-          <label style="margin: 0; cursor: help; display: flex; align-items: center; gap: 6px; font-weight: bold; color: var(--text-color); font-size:0.9em;"
+          <label style="margin: 0 auto; cursor: help; display: flex; align-items: center; gap: 6px; font-weight: bold; color: var(--text-color); font-size:0.9em;"
                  data-i18n-title="auto_split_help"
-                 title="Doesn't affect how your text is played if you only have 1 voice.&#10;Turn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.&#10;Toggle on/off before you paste your text and see what you prefer!&#10;&#10;Note: The larger the text, the longer it takes to process when you hit Play. Chrome users may experience ~10s wait per 2000 words.">
+                 title="Leave on if unsure.&#10;Doesn't affect how your text is played if you only have 1 voice.&#10;Turn off if your bilingual reader already gives you perfectly matching paragraphs/sentences. Can help with breaking up long paragraphs.&#10;Toggle on/off before you paste your text and see what you prefer!&#10;&#10;Note: The larger the text, the longer it takes to process when you hit Play. Chrome users may experience ~10s wait per 2000 words.">
               <input type="checkbox" id="autoSplitPasteChk" checked style="accent-color: var(--accent); width: 14px; height: 14px; margin:0; cursor: pointer;">
               <span style="color: var(--accent);" data-i18n="auto_split">✂️ Auto-split sentences</span>
           </label>
@@ -365,20 +365,20 @@
         <div style="display: grid; grid-template-columns: 24px 1fr 1fr 1fr auto; gap: 8px; align-items: center; padding: 0 10px 5px 10px; font-size: 0.85em; font-weight: bold; color: var(--accent);">
             <div></div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
-                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(0)" title="Clear this column">🗑️</button>
-                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(0, this)" oncontextmenu="openBulkTextModal(event, 0)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(0)" title="Clear this column"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
+                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(0, this)" oncontextmenu="openBulkTextModal(event, 0)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)"><img src='svg/copy.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
                 <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle0" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
                 </label>
             </div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
-                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(1)" title="Clear this column">🗑️</button>
-                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(1, this)" oncontextmenu="openBulkTextModal(event, 1)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(1)" title="Clear this column"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
+                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(1, this)" oncontextmenu="openBulkTextModal(event, 1)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)"><img src='svg/copy.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
                 <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle1" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
                 </label>
             </div>
             <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px;">
-                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(2)" title="Clear this column">🗑️</button>
-                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(2, this)" oncontextmenu="openBulkTextModal(event, 2)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)">🗐</button>
+                <button class="btn-sm danger" style="font-size: 1.1em; opacity: 0.7;" onclick="clearGridColumn(2)" title="Clear this column"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
+                <button class="btn-sm" style="font-size: 1.2em; opacity: 0.8;" onclick="copyGridColumn(2, this)" oncontextmenu="openBulkTextModal(event, 2)" title="Left-Click: Copy to clipboard&#10;Right-Click: Open Bulk Text for DeepL (Ctrl+C+C)"><img src='svg/copy.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
                 <label style="display:none; align-items:center; gap:2px; font-size:0.85em; cursor:pointer;" title="Enable AI Context for this column">                    <input type="checkbox" id="aiToggle2" style="accent-color: var(--accent); margin:0; cursor:pointer;"> 🤖
                 </label>
             </div>
@@ -389,7 +389,7 @@
 
         <div id="gridEditor">
             <div style="padding: 40px; text-align: center; color: var(--muted); opacity: 0.8; max-width: 600px; margin: 0 auto; user-select: none;">
-                <div style="font-size: 3em; margin-bottom: 10px;">🪄</div>
+                <div style="font-size: 3em; margin-bottom: 10px;"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></div>
                 <h3 style="color: var(--accent); margin-top: 0;">Auto-Align Ebooks</h3>
                 <p style="font-size: 0.9em; line-height: 1.5;">Auto-Aligner takes the same ebook of 2 different languages, matching them up sentence-by-sentence the best it can, making it into an easy-to-read bilingual version. Simply hit 'Play' as soon as they are imported into the reader! Don't worry about any settings!</p>
                 <p style="font-size: 0.8em; margin-top: 15px;">To begin, click the 📤 upload buttons in <strong>Track 1</strong> and <strong>Track 2</strong> headers above to load your texts.</p>
@@ -426,7 +426,7 @@
   <div id="bulkTextModal" class="modal-overlay">
      <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 600px;">
         <span class="modal-close" onclick="document.getElementById('bulkTextModal').style.display='none'">×</span>
-        <h3 style="margin-top:0; color: var(--accent);">🗐 Bulk Text Mode</h3>
+        <h3 style="margin-top:0; color: var(--accent);"><img src='svg/copy.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Bulk Text Mode</h3>
         <p style="font-size: 0.89em; opacity: 0.8; margin-bottom: 10px;">The text below is already highlighted. Just press your DeepL shortcut (e.g., <strong>Ctrl+C+C</strong>) to translate it instantly.</p>
         <textarea id="bulkTextContent" style="width: 100%; box-sizing: border-box; height: 300px; padding: 15px; border-radius: 8px; border: 1px solid var(--accent); background: var(--bg-color); color: var(--text-color); font-size: 15px; font-family: inherit; resize: none;" readonly></textarea>
      </div>
@@ -491,12 +491,12 @@
 
             <p>Hit 📤 <strong>Send to Deck</strong>, open 🗂️ <strong>Study Cards</strong>, and you will see your deck!</p>
 
-            <p><strong>Fill-in-the-blank✨</strong><br>
+            <p><strong>Fill-in-the-blank<img src='svg/sparkle.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></strong><br>
             The app automatically turns your pairs into fill-in-the-blank questions</p>
 
             <div style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: center; margin: 15px 0;">
                 <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">I am a ___.</div>
-                <button class="action-btn" style="background: var(--accent); padding: 8px 15px; margin: 0 auto; width: auto; pointer-events: none;">👀 Reveal</button>
+                <button class="action-btn" style="background: var(--accent); padding: 8px 15px; margin: 0 auto; width: auto; pointer-events: none;"><img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Reveal</button>
             </div>
 
             <p style="margin-bottom: 0;"><strong>Ready?</strong> Choose a deck language, click 📤 <strong>Send to Deck</strong>, and then open 🗂️ <strong>Study Cards</strong>!</p>
@@ -519,15 +519,15 @@
         <h3 style="margin-top:0; border-bottom:2px solid var(--accent); padding-bottom:5px;">⚙ Playback Options</h3>
 
         <div style="margin-bottom:12px;">
-            <strong>👁️ Show / 🎧 Audio (Dual Track)</strong><br>
+            <strong><img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Show / <img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Audio (Dual Track)</strong><br>
             <span style="font-size:0.85em; opacity:0.8;">
-            Uncheck <strong>👁️ Show</strong> to hide text (for listening practice).<br>
-            Uncheck <strong>🎧 Audio</strong> to mute a language (like a subtitle track).
+            Uncheck <strong><img src='svg/eye.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Show</strong> to hide text (for listening practice).<br>
+            Uncheck <strong><img src='svg/headphones.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Audio</strong> to mute a language (like a subtitle track).
             </span>
         </div>
 
         <div style="margin-bottom:12px;">
-            <strong>⏱️ Shadowing Timer</strong><br>
+            <strong><img src='svg/clock.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Shadowing Timer</strong><br>
             <span style="font-size:0.85em; opacity:0.8;">
             Adds a silence gap (0s - 6s) <em>after</em> every sentence. Great for repeating what you just heard aloud!
             </span>
@@ -611,7 +611,7 @@
           <div style="display:flex; gap:12px; align-items:center;">
               <div style="display:flex; align-items:center; gap:8px;">
                   <button id="copyAllBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" type="button" title="Copy All">
-                      <span style="font-size: 1.5em;">🗐</span>
+                      <span style="font-size: 1.5em;"><img src='svg/copy.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                   </button>
               </div>
 
@@ -620,7 +620,7 @@
               <div id="csvExportBlock" style="display:flex; align-items:center;">
                   <button id="exportCsvBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" type="button" title="Export CSV">
                       <span style="font-weight: bold;" data-i18n="export_csv">export CSV</span>
-                      <span style="font-size: 1.3em; color: var(--success);">🗀</span>
+                      <span style="font-size: 1.3em; color: var(--success);"><img src='svg/folder-up.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                   </button>
                   <input type="hidden" id="csvMode" value="2" />
               </div>
@@ -629,11 +629,11 @@
 
               <div style="display:flex; align-items:center; gap:8px;">
                   <button id="vocabUndoBtn" class="btn-sm" style="display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-color); font-size:0.89em;" onclick="restoreVocab()" title="Undo">
-                      <span style="font-size: 1.5em; color: var(--accent);">↩</span>
+                      <span style="font-size: 1.5em; color: var(--accent);"><img src='svg/undo-2.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                   </button>
 
                   <button id="clearBtn" class="btn-sm danger" style="display:flex; flex-direction:column; align-items:center; gap:2px; font-size:0.89em;" type="button" title="Clear">
-                      <span style="font-size: 1.5em; color: var(--danger);">🗑</span>
+                      <span style="font-size: 1.5em; color: var(--danger);"><img src='svg/trash.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></span>
                   </button>
               </div>
 
@@ -670,7 +670,7 @@
   <div id="alignerModal" class="modal-overlay" style="display:none" onclick="this.style.display='none'">
      <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 600px; width: 90%;">
         <span class="modal-close" onclick="document.getElementById('alignerModal').style.display='none'">×</span>
-        <h3 style="margin-top:0; color: var(--accent);">🪄 Auto-Align Ebooks <span style="font-size: 0.6em; color: var(--muted); font-weight: normal;">(txt and epub)</span></h3>
+        <h3 style="margin-top:0; color: var(--accent);"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Auto-Align Ebooks <span style="font-size: 0.6em; color: var(--muted); font-weight: normal;">(txt and epub)</span></h3>
         <p style="font-size: 0.89em; opacity: 0.8; margin-bottom: 5px;">Auto-Aligner takes the same ebook of 2 different languages, matching them up sentence-by-sentence the best it can, making it into an easy-to-read bilingual version. Simply hit 'Play' as soon as they are imported into the reader! Don't worry about any settings! <a href="demo.html" style="color: var(--accent); font-weight: bold; text-decoration: underline;" target="_blank">(See Demo)</a></p>
         <p style="font-size: 0.75em; opacity: 0.6; margin-top: 0; margin-bottom: 15px; font-style: italic;">* Text might misalign due to structural differences of the languages.</p>
         

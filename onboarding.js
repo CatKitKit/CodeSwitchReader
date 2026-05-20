@@ -83,7 +83,7 @@ Luego se iba al gimnasio.`;
             }
         },
         {
-            title: "Step 5: Ebooks Aligner 🪄",
+            title: "Step 5: Ebooks Aligner <img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'>",
             text: "Don't want to copy and paste but upload your files instead? Use the <strong>Auto-Align Ebooks</strong> tool right here in the sidebar to magically sync entire books!",
             target: ".res-item[onclick*='alignerModal']",
             position: "left",
