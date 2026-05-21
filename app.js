@@ -2079,7 +2079,7 @@ if (seg._activeWordNode) {
     window.currentUtterance = utter; synth.speak(utter);
   }
 
-  function play() {
+  async function play() {
     // 1. Show the Stop button immediately
     els.stop.style.display = "flex"; els.stop.className = "action-btn stop"; els.stop.disabled = false;
 
@@ -2127,11 +2127,6 @@ if (seg._activeWordNode) {
 
     els.display.style.display = "block";
 
-    // Auto-generate IPA if toggles are checked
-    if (window.generateIpa) {
-        window.generateIpa(true).catch(e => console.error("Auto-IPA generation failed:", e));
-    }
-
     const isLargeText = raw.length >= 5000;
 
     // Show overlay for large texts so the browser stays responsive
@@ -2145,6 +2140,27 @@ if (seg._activeWordNode) {
         els.display.textContent = "";
     } else {
         els.display.textContent = "Parsing text...";
+    }
+
+    // Auto-generate IPA if toggles are checked (AWAIT THIS SO CACHE IS READY BEFORE PARSING)
+    if (window.generateIpa) {
+        if (overlay && isLargeText) {
+            messageEl.textContent = "Generating IPA...";
+        } else {
+            els.display.textContent = "Generating IPA...";
+        }
+        try {
+            await window.generateIpa(true);
+        } catch(e) {
+            console.error("Auto-IPA generation failed:", e);
+        }
+        
+        // Reset the message back to parsing for the actual chunking phase
+        if (overlay && isLargeText) {
+            messageEl.textContent = "Parsing your text...";
+        } else {
+            els.display.textContent = "Parsing text...";
+        }
     }
 
     // Cancel any existing speech, with a safety timeout for stuck browsers
@@ -2670,11 +2686,11 @@ if (seg._activeWordNode) {
           await navigator.clipboard.writeText(textToCopy);
           showToast(`📋 Copied Voice ${colIndex + 1} column!`);
           if (btn) {
-              const originalText = btn.textContent;
+              const originalHTML = btn.innerHTML;
               btn.textContent = "✔️";
               btn.style.color = "#28a745";
               setTimeout(() => {
-                  btn.textContent = originalText;
+                  btn.innerHTML = originalHTML;
                   btn.style.color = "";
               }, 1000);
           }
