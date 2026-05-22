@@ -267,7 +267,7 @@
           <input type="file" id="fileLoader" style="display:none" accept=".txt">
           <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#ffc107;" onclick="document.getElementById('fileLoader').click()" title="Import txt for 1 voice.&#10;or&#10;Import previously aligned text."><img src='svg/import.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
           <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:#6f42c1;" onclick="downloadText()" title="Export aligned txt for next time."><img src='svg/folder-up.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'></button>
-          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:var(--accent);" onclick="document.getElementById('alignerModal').style.display='flex'" title="Upload 2 Text/EPUB files to auto align">≔</button>
+          <button class="btn-sm" style="font-size:1.25em; padding:2px 6px; color:var(--accent);" onclick="document.getElementById('alignerModal').style.display='flex'" title="Upload 2 - 3 txt/EPUB files to auto align">≔</button>
           <div style="display: flex; align-items: center; gap: 4px;">
               <button id="btnCheckAlignment" class="btn-sm" style="background-color: var(--accent); color: var(--bg-color); font-weight: bold; padding: 4px 10px; border-radius: 6px; cursor: default; display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em;" onclick="if(this.dataset.clickable==='true') window.findMisalignment()"
                       data-i18n-title="align_btn_help_ok"
@@ -677,17 +677,20 @@
         <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; justify-content: center; width: 100%; box-sizing: border-box;">
             <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--accent);">
                 <label style="font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.9em;">Text 1</label>
-                <input type="file" id="alignerSourceFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box; font-size: 0.8em;">
+                <button onclick="document.getElementById('alignerSourceFile').click()" id="btnAlignerSourceFile" class="action-btn" style="width: 100%; font-size: 0.8em; padding: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">Choose File</button>
+                <input type="file" id="alignerSourceFile" accept=".txt, .epub, application/epub+zip, text/plain" style="display:none;" onchange="document.getElementById('btnAlignerSourceFile').textContent = this.files.length ? this.files[0].name : 'Choose File'">
             </div>
             <div style="font-size: 1.2em; font-weight: bold; color: var(--accent);">+</div>
             <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--accent);">
                 <label style="font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.9em;">Text 2</label>
-                <input type="file" id="alignerTargetFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box; font-size: 0.8em;">
+                <button onclick="document.getElementById('alignerTargetFile').click()" id="btnAlignerTargetFile" class="action-btn" style="width: 100%; font-size: 0.8em; padding: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">Choose File</button>
+                <input type="file" id="alignerTargetFile" accept=".txt, .epub, application/epub+zip, text/plain" style="display:none;" onchange="document.getElementById('btnAlignerTargetFile').textContent = this.files.length ? this.files[0].name : 'Choose File'">
             </div>
             <div style="font-size: 1.2em; font-weight: bold; color: var(--accent);">+</div>
             <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--accent);">
                 <label style="font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.9em;">Text 3 <span style="font-weight:normal; opacity:0.7;">(optional)</span></label>
-                <input type="file" id="alignerThirdFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box; font-size: 0.8em;">
+                <button onclick="document.getElementById('alignerThirdFile').click()" id="btnAlignerThirdFile" class="action-btn" style="width: 100%; font-size: 0.8em; padding: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">Choose File</button>
+                <input type="file" id="alignerThirdFile" accept=".txt, .epub, application/epub+zip, text/plain" style="display:none;" onchange="document.getElementById('btnAlignerThirdFile').textContent = this.files.length ? this.files[0].name : 'Choose File'">
             </div>
         </div>
         <button class="action-btn" style="width: 100%; background: var(--accent);" onclick="startAutoAlignment()">🚀 Align & Play</button>
