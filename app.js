@@ -426,7 +426,7 @@
           state.text = compiledText;
           els.text.value = state.text;
           
-      } else if (els.gridEditor) {
+      } else if (state.editorMode === "grid" && els.gridEditor) {
           const data = [];
           Array.from(els.gridEditor.querySelectorAll(".grid-row")).forEach(row => {
               const cells = row.querySelectorAll(".grid-cell");
@@ -517,11 +517,19 @@
           els.modeVerticalBtn.style.color = "var(--bg-color)";
           els.modeGridBtn.style.backgroundColor = "transparent";
           els.modeGridBtn.style.color = "var(--accent)";
-      } else {
+      } else if (state.editorMode === "grid") {
           els.verticalWrapper.style.display = "none";
           els.gridWrapper.style.display = "block";
           els.modeGridBtn.style.backgroundColor = "var(--accent)";
           els.modeGridBtn.style.color = "var(--bg-color)";
+          els.modeVerticalBtn.style.backgroundColor = "transparent";
+          els.modeVerticalBtn.style.color = "var(--accent)";
+      } else {
+          // Raw mode (e.g. bypassed grid from Ebook Alignment)
+          els.verticalWrapper.style.display = "none";
+          els.gridWrapper.style.display = "none";
+          els.modeGridBtn.style.backgroundColor = "transparent";
+          els.modeGridBtn.style.color = "var(--accent)";
           els.modeVerticalBtn.style.backgroundColor = "transparent";
           els.modeVerticalBtn.style.color = "var(--accent)";
       }
@@ -694,16 +702,25 @@
             } else {
                 document.execCommand("insertText", false, chunks[0]);
                 let currentRow = row;
+                const fragment = document.createDocumentFragment();
+                let createdNewRows = false;
+                
                 for (let i = 1; i < chunks.length; i++) {
-                    let nextRow = currentRow.nextElementSibling;
-                    if (!nextRow || !nextRow.classList.contains("grid-row")) {
-                        nextRow = createGridRow();
-                        currentRow.after(nextRow);
+                    if (!createdNewRows && currentRow.nextElementSibling && currentRow.nextElementSibling.classList.contains("grid-row")) {
+                        currentRow = currentRow.nextElementSibling;
+                        const nextCell = currentRow.children[colIndex].querySelector('.grid-cell');
+                        const existingText = nextCell.textContent;
+                        nextCell.textContent = existingText ? existingText + (autoSplit ? " " : "\n") + chunks[i] : chunks[i];
+                    } else {
+                        createdNewRows = true;
+                        const nextRow = createGridRow();
+                        const nextCell = nextRow.children[colIndex].querySelector('.grid-cell');
+                        nextCell.textContent = chunks[i];
+                        fragment.appendChild(nextRow);
                     }
-                    const nextCell = nextRow.children[colIndex].querySelector('.grid-cell');
-                    const existingText = nextCell.textContent;
-                    nextCell.textContent = existingText ? existingText + (autoSplit ? " " : "\n") + chunks[i] : chunks[i];
-                    currentRow = nextRow;
+                }
+                if (createdNewRows) {
+                    currentRow.after(fragment);
                 }
             }
             saveSettings();
@@ -752,7 +769,9 @@
       if(!els.gridEditor) return;
       els.gridEditor.innerHTML = "";
       if (state.gridData && state.gridData.length > 0) {
-          state.gridData.forEach(r => els.gridEditor.appendChild(createGridRow(r.t1, r.t2, r.t3)));
+          const fragment = document.createDocumentFragment();
+          state.gridData.forEach(r => fragment.appendChild(createGridRow(r.t1, r.t2, r.t3)));
+          els.gridEditor.appendChild(fragment);
       } else {
           els.gridEditor.appendChild(createGridRow());
       }
@@ -828,6 +847,7 @@
               
               const autoDetectEl = document.getElementById("verticalAutoDetectChk");
               const autoDetect = autoDetectEl ? autoDetectEl.checked : true;
+              const fragment = document.createDocumentFragment();
 
               for (let i = 0; i < lines.length; i++) {
                   let lineText = lines[i];
@@ -853,9 +873,11 @@
                       firstLine = false;
                   } else {
                       const newRow = createVerticalRow(assignedVoice, lineText);
-                      currentRow.after(newRow);
-                      currentRow = newRow;
+                      fragment.appendChild(newRow);
                   }
+              }
+              if (fragment.childElementCount > 0) {
+                  currentRow.after(fragment);
               }
               updateVerticalDropdownLabels();
               saveSettings();
@@ -909,7 +931,9 @@
       if(!els.verticalEditor) return;
       els.verticalEditor.innerHTML = "";
       if (state.verticalData && state.verticalData.length > 0) {
-          state.verticalData.forEach(r => els.verticalEditor.appendChild(createVerticalRow(r.voice, r.text)));
+          const fragment = document.createDocumentFragment();
+          state.verticalData.forEach(r => fragment.appendChild(createVerticalRow(r.voice, r.text)));
+          els.verticalEditor.appendChild(fragment);
       } else {
           els.verticalEditor.appendChild(createVerticalRow());
       }
@@ -1856,7 +1880,7 @@ function buildWordSpans(text, localeHint = "en", trackIndex = -1) {
       }
   };
 
-  function renderPage(pageIndex, autoPlay = true, startIndex = 0) {
+  async function renderPage(pageIndex, autoPlay = true, startIndex = 0) {
      if (renderTask) cancelAnimationFrame(renderTask);
      els.display.innerHTML = "";
      segments = [];
@@ -1888,6 +1912,14 @@ function buildWordSpans(text, localeHint = "en", trackIndex = -1) {
      if (!allPages[pageIndex] || allPages[pageIndex].length === 0) { stop(); return; }
 
      const segmentsToRender = allPages[pageIndex];
+
+     // JUST-IN-TIME IPA GENERATION
+     if (window.generateIpaForSegments) {
+         els.display.innerHTML = "<div style='padding:20px; text-align:center; color:var(--muted);'>Generating phonetic guides...</div>";
+         await window.generateIpaForSegments(segmentsToRender);
+         els.display.innerHTML = ""; // Clear loader
+     }
+
      let processed = 0; const batchSize = 50;
      function renderBatch() {
          const chunk = document.hidden ? segmentsToRender.length : batchSize;
@@ -2142,27 +2174,6 @@ if (seg._activeWordNode) {
         els.display.textContent = "Parsing text...";
     }
 
-    // Auto-generate IPA if toggles are checked (AWAIT THIS SO CACHE IS READY BEFORE PARSING)
-    if (window.generateIpa) {
-        if (overlay && isLargeText) {
-            messageEl.textContent = "Generating IPA...";
-        } else {
-            els.display.textContent = "Generating IPA...";
-        }
-        try {
-            await window.generateIpa(true);
-        } catch(e) {
-            console.error("Auto-IPA generation failed:", e);
-        }
-        
-        // Reset the message back to parsing for the actual chunking phase
-        if (overlay && isLargeText) {
-            messageEl.textContent = "Parsing your text...";
-        } else {
-            els.display.textContent = "Parsing text...";
-        }
-    }
-
     // Cancel any existing speech, with a safety timeout for stuck browsers
     try { synth.cancel(); } catch(e) { console.warn("synth.cancel() failed:", e); }
 
@@ -2305,6 +2316,17 @@ if (seg._activeWordNode) {
     window.currentUtterance = null;
     isPlaying = false; isPaused = false; isSkipping = false;
     updatePauseUI();
+
+    // Dump massive text if exiting from Ebook Aligner (raw mode)
+    if (state.editorMode === "raw") {
+        state.editorMode = "grid";
+        state.text = "";
+        els.text.value = "";
+        state.gridData = [];
+        initGridFromState();
+        updateModeUI();
+        saveSettingsImmediate();
+    }
 
     // Swap views instantly
     els.display.style.display = "none";
@@ -2708,9 +2730,10 @@ if (seg._activeWordNode) {
   window.startAutoAlignment = async () => {
       const sourceFileInput = document.getElementById('alignerSourceFile');
       const targetFileInput = document.getElementById('alignerTargetFile');
+      const thirdFileInput = document.getElementById('alignerThirdFile');
 
       if (!sourceFileInput.files.length || !targetFileInput.files.length) {
-          alert("Please select both files to align.");
+          alert("Please select at least Text 1 and Text 2 to align.");
           return;
       }
 
@@ -2794,39 +2817,102 @@ if (seg._activeWordNode) {
               readFile(sourceFileInput.files[0]),
               readFile(targetFileInput.files[0])
           ]);
+          
+          let thirdText = "";
+          if (thirdFileInput && thirdFileInput.files.length > 0) {
+              thirdText = await readFile(thirdFileInput.files[0]);
+          }
 
       // To bypass 'file://' origin null CORS issues on local execution,
       // we embed the worker code as a blob instead of loading 'aligner_worker.js' directly.
       const workerCode = `
 self.onmessage = function(e) {
-    const { sourceText, targetText } = e.data;
+    const { sourceText, targetText, thirdText } = e.data;
     self.postMessage({ type: 'progress', percent: 10 });
     try {
         const sourceParagraphs = sourceText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
         const targetParagraphs = targetText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
 
-        let alignments = [];
+        let alignments1 = [];
 
         if (sourceParagraphs.length === targetParagraphs.length && sourceParagraphs.length > 1) {
             for (let i = 0; i < sourceParagraphs.length; i++) {
-                const percent = 10 + Math.floor((i / sourceParagraphs.length) * 85);
+                const percent = 10 + Math.floor((i / sourceParagraphs.length) * 40);
                 self.postMessage({ type: 'progress', percent: percent });
                 
-                const paraAlignments = runBandedAlignment(sourceParagraphs[i], targetParagraphs[i], false);
-                alignments.push(...paraAlignments);
+                const paraAlignments = runBandedAlignment(sourceParagraphs[i], targetParagraphs[i], false, 10, 50);
+                alignments1.push(...paraAlignments);
             }
-            self.postMessage({ type: 'progress', percent: 95 });
         } else {
-            alignments = runBandedAlignment(sourceText, targetText, true);
+            alignments1 = runBandedAlignment(sourceText, targetText, true, 10, 50);
         }
         
-        self.postMessage({ type: 'complete', alignments: alignments });
+        let finalAlignments = [];
+
+        if (!thirdText) {
+            finalAlignments = alignments1;
+            self.postMessage({ type: 'progress', percent: 95 });
+        } else {
+            const thirdParagraphs = thirdText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
+            let alignments2 = [];
+            
+            if (sourceParagraphs.length === thirdParagraphs.length && sourceParagraphs.length > 1) {
+                for (let i = 0; i < sourceParagraphs.length; i++) {
+                    const percent = 50 + Math.floor((i / sourceParagraphs.length) * 40);
+                    self.postMessage({ type: 'progress', percent: percent });
+                    
+                    const paraAlignments = runBandedAlignment(sourceParagraphs[i], thirdParagraphs[i], false, 50, 90);
+                    alignments2.push(...paraAlignments);
+                }
+            } else {
+                alignments2 = runBandedAlignment(sourceText, thirdText, true, 50, 90);
+            }
+            
+            // Zipper alignments1 and alignments2
+            let i = 0, j = 0;
+            while (i < alignments1.length || j < alignments2.length) {
+                let a1 = alignments1[i] ? { source: alignments1[i].source, target: alignments1[i].target } : { source: "", target: "" };
+                let a2 = alignments2[j] ? { source: alignments2[j].source, target: alignments2[j].target } : { source: "", target: "" };
+                
+                if (a1.source === "" && a1.target !== "") {
+                    finalAlignments.push({ source: "", target: a1.target, third: "" });
+                    i++;
+                    continue;
+                }
+                if (a2.source === "" && a2.target !== "") {
+                    finalAlignments.push({ source: "", target: "", third: a2.target });
+                    j++;
+                    continue;
+                }
+                
+                if (a1.source === a2.source) {
+                    finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
+                    i++; j++;
+                } else if (a1.source.length > a2.source.length && a1.source.startsWith(a2.source)) {
+                    finalAlignments.push({ source: a2.source, target: a1.target, third: a2.target });
+                    alignments1[i].source = a1.source.substring(a2.source.length).trim();
+                    alignments1[i].target = "";
+                    j++;
+                } else if (a2.source.length > a1.source.length && a2.source.startsWith(a1.source)) {
+                    finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
+                    alignments2[j].source = a2.source.substring(a1.source.length).trim();
+                    alignments2[j].target = "";
+                    i++;
+                } else {
+                    finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
+                    i++; j++;
+                }
+            }
+            self.postMessage({ type: 'progress', percent: 95 });
+        }
+        
+        self.postMessage({ type: 'complete', alignments: finalAlignments });
     } catch (err) {
         self.postMessage({ type: 'error', message: err.message });
     }
 };
 
-function runBandedAlignment(sourceText, targetText, emitProgress) {
+function runBandedAlignment(sourceText, targetText, emitProgress, progressStart = 10, progressEnd = 95) {
     const splitRegex = /(?<=[.!?。！？])\\s*/;
     const sourceSentences = sourceText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
     const targetSentences = targetText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
@@ -2834,7 +2920,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
     const N = sourceSentences.length;
     const M = targetSentences.length;
 
-    self.postMessage({ type: 'progress', percent: 20 });
+    if (emitProgress) self.postMessage({ type: 'progress', percent: progressStart });
     if (N === 0 || M === 0) return [];
 
     const sourceChars = sourceSentences.reduce((sum, s) => sum + s.length, 0) || 1;
@@ -2882,7 +2968,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
 
     for (let i = 0; i <= N; i++) {
         if (emitProgress && progressCounter++ % 1000 === 0) {
-            const percent = 20 + Math.floor((i / N) * 70);
+            const percent = progressStart + Math.floor((i / N) * (progressEnd - progressStart));
             self.postMessage({ type: 'progress', percent: percent });
         }
 
@@ -2982,27 +3068,27 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
           } else if (e.data.type === 'complete') {
               overlay.style.display = 'none';
               
-              if (els.gridEditor) {
-                  // Capture state before overwriting for undo
-                  captureGridSnapshot();
-                  
-                  els.gridEditor.innerHTML = "";
-                  e.data.alignments.forEach(item => {
-                      els.gridEditor.appendChild(createGridRow(item.source, item.target, ""));
-                  });
-                  
-                  captureGridSnapshot();
-                  saveSettingsImmediate();
-                  
-                  if (window.checkAlignmentStatus) {
-                      setTimeout(window.checkAlignmentStatus, 500);
-                  }
-                  
-                  // Clear the file inputs for next time
-                  document.getElementById('alignerSourceFile').value = "";
-                  document.getElementById('alignerTargetFile').value = "";
-              }
+              let compiledText = "";
+              e.data.alignments.forEach(item => {
+                  if (item.source) compiledText += item.source.trim() + "\n";
+                  if (item.target) compiledText += "{" + item.target.trim() + "}\n";
+                  if (item.third) compiledText += "[" + item.third.trim() + "]\n";
+              });
+              
+              state.editorMode = "raw"; // Bypass grid
+              state.text = compiledText;
+              els.text.value = state.text;
+              
+              updateModeUI();
+              saveSettingsImmediate();
+              
+              // Clear the file inputs for next time
+              document.getElementById('alignerSourceFile').value = "";
+              document.getElementById('alignerTargetFile').value = "";
+              
               worker.terminate();
+              
+              if (els.play) els.play.click();
           } else if (e.data.type === 'error') {
               overlay.style.display = 'none';
               alert("Error during alignment: " + e.data.message);
@@ -3010,7 +3096,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
           }
       };
 
-      worker.postMessage({ sourceText, targetText });
+      worker.postMessage({ sourceText, targetText, thirdText });
       } catch (err) {
           overlay.style.display = 'none';
           alert("Error reading files: " + err.message);
@@ -3617,9 +3703,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
       textarea.setSelectionRange(0, 99999);
   };
 
-  window.generateIpa = async (isAuto = false) => {
-      if (!els.gridEditor) return;
-
+  window.generateIpaForSegments = async (segmentsToRender) => {
       const ipaToggles = [
           document.getElementById('chkIpa1'),
           document.getElementById('chkIpa2'),
@@ -3643,8 +3727,6 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
 
           if (!targetLang) continue; // Skip unsupported languages silently
 
-          // Collect words from this column
-          const rows = Array.from(els.gridEditor.querySelectorAll(".grid-row"));
           const wordsToFetch = new Set();
           
           let scriptRegex = null;
@@ -3655,14 +3737,15 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
           const segIpa = getWordSegmenter(vVoice.lang);
           if (!state.ipaCache) state.ipaCache = {};
           
-          rows.forEach(row => {
-              const cells = row.querySelectorAll(".grid-cell");
-              const rawText = cells[i] ? cells[i].textContent.trim() : "";
-              if (rawText && segIpa && scriptRegex) {
-                  for (const part of segIpa.segment(rawText)) {
-                      if (part.isWordLike && scriptRegex.test(part.segment)) {
-                          if (!state.ipaCache[part.segment]) {
-                              wordsToFetch.add(part.segment);
+          segmentsToRender.forEach(seg => {
+              if (seg.typeIndex === i) {
+                  const rawText = seg.text;
+                  if (rawText && segIpa && scriptRegex) {
+                      for (const part of segIpa.segment(rawText)) {
+                          if (part.isWordLike && scriptRegex.test(part.segment)) {
+                              if (!state.ipaCache[part.segment]) {
+                                  wordsToFetch.add(part.segment);
+                              }
                           }
                       }
                   }
@@ -3816,29 +3899,33 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             let wordCount = fullText.split(/\s+/).length;
             if (wordCount > 450) {
                 console.log(`AI Context (Col ${i}): Text is ${wordCount} words (>450). Fetching background summary...`);
-                fetchGeminiSummary(i, fullText);
+                let textToSummarize = fullText;
+                if (wordCount > 3000) {
+                    console.log(`AI Context (Col ${i}): Truncating text from ${wordCount} to 3000 words before summarization.`);
+                    textToSummarize = fullText.split(/\s+/).slice(0, 3000).join(" ");
+                }
+                fetchGeminiSummary(i, textToSummarize);
             } else {
                 console.log(`AI Context (Col ${i}): Text is ${wordCount} words (<=450). Storing full text as summary. No API call needed.`);
                 aiSummaries[i] = fullText;
             }
-        }
-    };
+            }
+            };
 
-    async function getGeminiApiKey() {
-        let key = localStorage.getItem("geminiApiKey");
-        if (!key) {
+            async function getGeminiApiKey() {
+            let key = localStorage.getItem("geminiApiKey");
+            if (!key) {
             key = prompt("Please enter your Google Gemini API Key to use the AI Explanation feature.\n(This is stored locally in your browser)");
             if (key) localStorage.setItem("geminiApiKey", key);
-        }
-        return key;
-    }
+            }
+            return key;
+            }
 
-    async function fetchGeminiSummary(colIndex, text) {
-        const apiKey = await getGeminiApiKey();
-        if (!apiKey) return;
-        
-        const promptText = `Please provide a concise 150-300 word summary of the following text to serve as global context. Do not include any pleasantries or conversational filler, just the summary itself. Keep in mind that it could be an auto caption transcript that involves multiple people and incorrect capturing. Infer the best as you can. \n\nText:\n${text}`;
-        try {
+            async function fetchGeminiSummary(colIndex, text) {
+            const apiKey = await getGeminiApiKey();
+            if (!apiKey) return;
+
+            const promptText = `Please provide a concise 150-300 word summary of the following text to serve as global context. Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers and transcription errors or incomplete chopped off text, so infer the context as best you can.\n\n**Important:** If the text is a widely known work (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;        try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

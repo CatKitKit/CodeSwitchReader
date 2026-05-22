@@ -671,22 +671,26 @@
      <div class="modal-box" onclick="event.stopPropagation()" style="max-width: 600px; width: 90%;">
         <span class="modal-close" onclick="document.getElementById('alignerModal').style.display='none'">×</span>
         <h3 style="margin-top:0; color: var(--accent);"><img src='svg/wand.svg' class='ui-icon' style='width: 1em; height: 1em; vertical-align: -0.125em;'> Auto-Align Ebooks <span style="font-size: 0.6em; color: var(--muted); font-weight: normal;">(txt and epub)</span></h3>
-        <p style="font-size: 0.89em; opacity: 0.8; margin-bottom: 5px;">Auto-Aligner takes the same ebook of 2 different languages, matching them up sentence-by-sentence the best it can, making it into an easy-to-read bilingual version. Simply hit 'Play' as soon as they are imported into the reader! Don't worry about any settings! <a href="demo.html" style="color: var(--accent); font-weight: bold; text-decoration: underline;" target="_blank">(See Demo)</a></p>
+        <p style="font-size: 0.89em; opacity: 0.8; margin-bottom: 5px;">Auto-Aligner takes the same ebook of up to 3 different languages, matching them up sentence-by-sentence the best it can, making it into an easy-to-read bilingual version. Simply hit 'Play' as soon as they are imported into the reader! Don't worry about any settings! <a href="demo.html" style="color: var(--accent); font-weight: bold; text-decoration: underline;" target="_blank">(See Demo)</a></p>
         <p style="font-size: 0.75em; opacity: 0.6; margin-top: 0; margin-bottom: 15px; font-style: italic;">* Text might misalign due to structural differences of the languages.</p>
-        
-        <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center; justify-content: center; width: 100%; box-sizing: border-box;">
-            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--accent);">
-                <label style="font-weight: bold; margin-bottom: 10px; text-align: center;">Text 1</label>
-                <input type="file" id="alignerSourceFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box;">
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; justify-content: center; width: 100%; box-sizing: border-box;">
+            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--accent);">
+                <label style="font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.9em;">Text 1</label>
+                <input type="file" id="alignerSourceFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box; font-size: 0.8em;">
             </div>
-            <div style="font-size: 1.5em; font-weight: bold; color: var(--accent);">+</div>
-            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--accent);">
-                <label style="font-weight: bold; margin-bottom: 10px; text-align: center;">Text 2</label>
-                <input type="file" id="alignerTargetFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box;">
+            <div style="font-size: 1.2em; font-weight: bold; color: var(--accent);">+</div>
+            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--accent);">
+                <label style="font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.9em;">Text 2</label>
+                <input type="file" id="alignerTargetFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box; font-size: 0.8em;">
+            </div>
+            <div style="font-size: 1.2em; font-weight: bold; color: var(--accent);">+</div>
+            <div style="flex: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.03); padding: 15px 10px; border-radius: 8px; border: 1px dashed var(--accent);">
+                <label style="font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.9em;">Text 3 <span style="font-weight:normal; opacity:0.7;">(optional)</span></label>
+                <input type="file" id="alignerThirdFile" accept=".txt, .epub, application/epub+zip, text/plain" style="max-width: 100%; box-sizing: border-box; font-size: 0.8em;">
             </div>
         </div>
-
-        <button class="action-btn" style="width: 100%; background: var(--accent);" onclick="startAutoAlignment()">🚀 Align & Import to Grid</button>
+        <button class="action-btn" style="width: 100%; background: var(--accent);" onclick="startAutoAlignment()">🚀 Align & Play</button>
      </div>
   </div>
 
