@@ -510,9 +510,14 @@
   }
 
   function updateModeUI() {
+      if (els.gridWrapper) els.gridWrapper.classList.remove("hidden");
+      if (els.verticalWrapper) els.verticalWrapper.classList.remove("hidden");
+      if (els.text) els.text.classList.remove("hidden");
+
       if (state.editorMode === "vertical") {
           els.verticalWrapper.style.display = "block";
           els.gridWrapper.style.display = "none";
+          els.text.style.display = "none";
           els.modeVerticalBtn.style.backgroundColor = "var(--accent)";
           els.modeVerticalBtn.style.color = "var(--bg-color)";
           els.modeGridBtn.style.backgroundColor = "transparent";
@@ -520,6 +525,7 @@
       } else if (state.editorMode === "grid") {
           els.verticalWrapper.style.display = "none";
           els.gridWrapper.style.display = "block";
+          els.text.style.display = "none";
           els.modeGridBtn.style.backgroundColor = "var(--accent)";
           els.modeGridBtn.style.color = "var(--bg-color)";
           els.modeVerticalBtn.style.backgroundColor = "transparent";
@@ -528,6 +534,7 @@
           // Raw mode (e.g. bypassed grid from Ebook Alignment)
           els.verticalWrapper.style.display = "none";
           els.gridWrapper.style.display = "none";
+          els.text.style.display = "block";
           els.modeGridBtn.style.backgroundColor = "transparent";
           els.modeGridBtn.style.color = "var(--accent)";
           els.modeVerticalBtn.style.backgroundColor = "transparent";
@@ -2144,7 +2151,12 @@ if (seg._activeWordNode) {
 
     // 4. THE "FRESH START" LOGIC (Start from 0)
     // If we are NOT playing (stopped or finished), parse and start from top.
-    const raw = els.text.value || ""; if (!raw.trim()) return;
+    let raw = els.text.value || ""; 
+    if (raw.startsWith("Press 'play' to continue reading") && window.wizardFilesText && window.wizardFilesText['alignerText']) {
+        raw = window.wizardFilesText['alignerText'];
+    }
+    if (!raw.trim()) return;
+    
     isPlaying = true; isPaused = false; updatePauseUI();
 
     // Trigger background AI summaries if toggled
@@ -2152,10 +2164,8 @@ if (seg._activeWordNode) {
 
     if (els.gridWrapper) els.gridWrapper.classList.add("hidden");
     if (els.verticalWrapper) els.verticalWrapper.classList.add("hidden");
-
-    if (!els.gridWrapper && !els.verticalWrapper) {
-        els.text.classList.add("hidden");
-    }
+    els.text.style.display = "none";
+    els.text.classList.add("hidden");
 
     els.display.style.display = "block";
 
@@ -2317,24 +2327,9 @@ if (seg._activeWordNode) {
     isPlaying = false; isPaused = false; isSkipping = false;
     updatePauseUI();
 
-    // Dump massive text if exiting from Ebook Aligner (raw mode)
-    if (state.editorMode === "raw") {
-        state.editorMode = "grid";
-        state.text = "";
-        els.text.value = "";
-        state.gridData = [];
-        initGridFromState();
-        updateModeUI();
-        saveSettingsImmediate();
-    }
-
     // Swap views instantly
     els.display.style.display = "none";
-    if (els.gridWrapper) els.gridWrapper.classList.remove("hidden");
-    if (els.verticalWrapper) els.verticalWrapper.classList.remove("hidden");
-    if (!els.gridWrapper && !els.verticalWrapper) {
-        els.text.classList.remove("hidden");
-    }
+    updateModeUI();
 
     // Drop heavy JS references and nuke DOM instantly
     segments = [];
@@ -3076,15 +3071,29 @@ function runBandedAlignment(sourceText, targetText, emitProgress, progressStart 
               });
               
               state.editorMode = "raw"; // Bypass grid
-              state.text = compiledText;
-              els.text.value = state.text;
+              window.wizardFilesText = window.wizardFilesText || {};
+              window.wizardFilesText['alignerText'] = compiledText;
+              
+              const placeholder = "Press 'play' to continue reading your uploaded files or go to '☷ Grid/⚌ Vertical' to paste your text.";
+              state.text = placeholder;
+              els.text.value = placeholder;
               
               updateModeUI();
               saveSettingsImmediate();
               
-              // Clear the file inputs for next time
+              // Clear the file inputs and reset button names for next time
               document.getElementById('alignerSourceFile').value = "";
+              const btnSource = document.getElementById('btnAlignerSourceFile');
+              if (btnSource) btnSource.textContent = "Choose File";
+              
               document.getElementById('alignerTargetFile').value = "";
+              const btnTarget = document.getElementById('btnAlignerTargetFile');
+              if (btnTarget) btnTarget.textContent = "Choose File";
+              
+              const thirdFile = document.getElementById('alignerThirdFile');
+              if (thirdFile) thirdFile.value = "";
+              const btnThird = document.getElementById('btnAlignerThirdFile');
+              if (btnThird) btnThird.textContent = "Choose File";
               
               worker.terminate();
               
