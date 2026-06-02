@@ -2727,8 +2727,8 @@ if (seg._activeWordNode) {
       const targetFileInput = document.getElementById('alignerTargetFile');
       const thirdFileInput = document.getElementById('alignerThirdFile');
 
-      if (!sourceFileInput.files.length || !targetFileInput.files.length) {
-          alert("Please select at least Text 1 and Text 2 to align.");
+      if (!sourceFileInput.files.length || (!targetFileInput.files.length && !thirdFileInput.files.length)) {
+          alert("Please upload at least Text 1 and 1-2 other text(s) to align.");
           return;
       }
 
@@ -2808,15 +2808,13 @@ if (seg._activeWordNode) {
               }
           };
 
-          const [sourceText, targetText] = await Promise.all([
-              readFile(sourceFileInput.files[0]),
-              readFile(targetFileInput.files[0])
-          ]);
-          
+          let sourceText = "";
+          let targetText = "";
           let thirdText = "";
-          if (thirdFileInput && thirdFileInput.files.length > 0) {
-              thirdText = await readFile(thirdFileInput.files[0]);
-          }
+
+          if (sourceFileInput.files.length > 0) sourceText = await readFile(sourceFileInput.files[0]);
+          if (targetFileInput.files.length > 0) targetText = await readFile(targetFileInput.files[0]);
+          if (thirdFileInput && thirdFileInput.files.length > 0) thirdText = await readFile(thirdFileInput.files[0]);
 
       // To bypass 'file://' origin null CORS issues on local execution,
       // we embed the worker code as a blob instead of loading 'aligner_worker.js' directly.
@@ -2826,79 +2824,95 @@ self.onmessage = function(e) {
     self.postMessage({ type: 'progress', percent: 10 });
     try {
         const sourceParagraphs = sourceText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
-        const targetParagraphs = targetText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
-
-        let alignments1 = [];
-
-        if (sourceParagraphs.length === targetParagraphs.length && sourceParagraphs.length > 1) {
-            for (let i = 0; i < sourceParagraphs.length; i++) {
-                const percent = 10 + Math.floor((i / sourceParagraphs.length) * 40);
-                self.postMessage({ type: 'progress', percent: percent });
-                
-                const paraAlignments = runBandedAlignment(sourceParagraphs[i], targetParagraphs[i], false, 10, 50);
-                alignments1.push(...paraAlignments);
-            }
-        } else {
-            alignments1 = runBandedAlignment(sourceText, targetText, true, 10, 50);
-        }
         
         let finalAlignments = [];
 
-        if (!thirdText) {
-            finalAlignments = alignments1;
-            self.postMessage({ type: 'progress', percent: 95 });
-        } else {
+        if (!targetText) {
             const thirdParagraphs = thirdText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
-            let alignments2 = [];
-            
+            let alignments = [];
             if (sourceParagraphs.length === thirdParagraphs.length && sourceParagraphs.length > 1) {
                 for (let i = 0; i < sourceParagraphs.length; i++) {
-                    const percent = 50 + Math.floor((i / sourceParagraphs.length) * 40);
+                    const percent = 10 + Math.floor((i / sourceParagraphs.length) * 85);
                     self.postMessage({ type: 'progress', percent: percent });
-                    
-                    const paraAlignments = runBandedAlignment(sourceParagraphs[i], thirdParagraphs[i], false, 50, 90);
-                    alignments2.push(...paraAlignments);
+                    alignments.push(...runBandedAlignment(sourceParagraphs[i], thirdParagraphs[i], false, 10, 95));
                 }
             } else {
-                alignments2 = runBandedAlignment(sourceText, thirdText, true, 50, 90);
+                alignments = runBandedAlignment(sourceText, thirdText, true, 10, 95);
+            }
+            finalAlignments = alignments.map(a => ({ source: a.source, target: "", third: a.target }));
+            self.postMessage({ type: 'progress', percent: 95 });
+        } else {
+            const targetParagraphs = targetText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
+            let alignments1 = [];
+
+            if (sourceParagraphs.length === targetParagraphs.length && sourceParagraphs.length > 1) {
+                for (let i = 0; i < sourceParagraphs.length; i++) {
+                    const percent = 10 + Math.floor((i / sourceParagraphs.length) * 40);
+                    self.postMessage({ type: 'progress', percent: percent });
+                    
+                    const paraAlignments = runBandedAlignment(sourceParagraphs[i], targetParagraphs[i], false, 10, 50);
+                    alignments1.push(...paraAlignments);
+                }
+            } else {
+                alignments1 = runBandedAlignment(sourceText, targetText, true, 10, 50);
             }
             
-            // Zipper alignments1 and alignments2
-            let i = 0, j = 0;
-            while (i < alignments1.length || j < alignments2.length) {
-                let a1 = alignments1[i] ? { source: alignments1[i].source, target: alignments1[i].target } : { source: "", target: "" };
-                let a2 = alignments2[j] ? { source: alignments2[j].source, target: alignments2[j].target } : { source: "", target: "" };
+            if (!thirdText) {
+                finalAlignments = alignments1.map(a => ({ source: a.source, target: a.target, third: "" }));
+                self.postMessage({ type: 'progress', percent: 95 });
+            } else {
+                const thirdParagraphs = thirdText.replace(/\\r\\n/g, '\\n').split(/\\n\\s*\\n+/).filter(p => p.trim().length > 0);
+                let alignments2 = [];
                 
-                if (a1.source === "" && a1.target !== "") {
-                    finalAlignments.push({ source: "", target: a1.target, third: "" });
-                    i++;
-                    continue;
-                }
-                if (a2.source === "" && a2.target !== "") {
-                    finalAlignments.push({ source: "", target: "", third: a2.target });
-                    j++;
-                    continue;
-                }
-                
-                if (a1.source === a2.source) {
-                    finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
-                    i++; j++;
-                } else if (a1.source.length > a2.source.length && a1.source.startsWith(a2.source)) {
-                    finalAlignments.push({ source: a2.source, target: a1.target, third: a2.target });
-                    alignments1[i].source = a1.source.substring(a2.source.length).trim();
-                    alignments1[i].target = "";
-                    j++;
-                } else if (a2.source.length > a1.source.length && a2.source.startsWith(a1.source)) {
-                    finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
-                    alignments2[j].source = a2.source.substring(a1.source.length).trim();
-                    alignments2[j].target = "";
-                    i++;
+                if (sourceParagraphs.length === thirdParagraphs.length && sourceParagraphs.length > 1) {
+                    for (let i = 0; i < sourceParagraphs.length; i++) {
+                        const percent = 50 + Math.floor((i / sourceParagraphs.length) * 40);
+                        self.postMessage({ type: 'progress', percent: percent });
+                        
+                        const paraAlignments = runBandedAlignment(sourceParagraphs[i], thirdParagraphs[i], false, 50, 90);
+                        alignments2.push(...paraAlignments);
+                    }
                 } else {
-                    finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
-                    i++; j++;
+                    alignments2 = runBandedAlignment(sourceText, thirdText, true, 50, 90);
                 }
+                
+                // Zipper alignments1 and alignments2
+                let i = 0, j = 0;
+                while (i < alignments1.length || j < alignments2.length) {
+                    let a1 = alignments1[i] ? { source: alignments1[i].source, target: alignments1[i].target } : { source: "", target: "" };
+                    let a2 = alignments2[j] ? { source: alignments2[j].source, target: alignments2[j].target } : { source: "", target: "" };
+                    
+                    if (a1.source === "" && a1.target !== "") {
+                        finalAlignments.push({ source: "", target: a1.target, third: "" });
+                        i++;
+                        continue;
+                    }
+                    if (a2.source === "" && a2.target !== "") {
+                        finalAlignments.push({ source: "", target: "", third: a2.target });
+                        j++;
+                        continue;
+                    }
+                    
+                    if (a1.source === a2.source) {
+                        finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
+                        i++; j++;
+                    } else if (a1.source.length > a2.source.length && a1.source.startsWith(a2.source)) {
+                        finalAlignments.push({ source: a2.source, target: a1.target, third: a2.target });
+                        alignments1[i].source = a1.source.substring(a2.source.length).trim();
+                        alignments1[i].target = "";
+                        j++;
+                    } else if (a2.source.length > a1.source.length && a2.source.startsWith(a1.source)) {
+                        finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
+                        alignments2[j].source = a2.source.substring(a1.source.length).trim();
+                        alignments2[j].target = "";
+                        i++;
+                    } else {
+                        finalAlignments.push({ source: a1.source, target: a1.target, third: a2.target });
+                        i++; j++;
+                    }
+                }
+                self.postMessage({ type: 'progress', percent: 95 });
             }
-            self.postMessage({ type: 'progress', percent: 95 });
         }
         
         self.postMessage({ type: 'complete', alignments: finalAlignments });
@@ -3863,6 +3877,34 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
     let aiSummaries = { 0: null, 1: null, 2: null };
     let aiTexts = { 0: "", 1: "", 2: "" };
     let aiEnabledCols = { 0: false, 1: false, 2: false };
+
+    // Helper: Accurately count words/tokens, treating CJK characters as individual words
+    function countAndTruncateTokens(text, limit) {
+        if (!text) return { count: 0, text: "" };
+        let tokenCount = 0;
+        let inWord = false;
+        const cjkRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+        
+        for (let i = 0; i < text.length; i++) {
+            let char = text[i];
+            if (cjkRegex.test(char)) {
+                tokenCount++;
+                inWord = false;
+            } else if (/\s/.test(char)) {
+                inWord = false;
+            } else {
+                if (!inWord) {
+                    tokenCount++;
+                    inWord = true;
+                }
+            }
+            
+            if (limit && tokenCount >= limit) {
+                return { count: tokenCount, text: text.substring(0, i + 1) + "... [TEXT TRUNCATED]" };
+            }
+        }
+        return { count: tokenCount, text: text };
+    }
     
     window.kickoffAiSummaries = async function() {
         for (let i = 0; i < 3; i++) {
@@ -3905,17 +3947,14 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             aiTexts[i] = fullText;
             aiSummaries[i] = null; // Reset summary since text changed
             
-            let wordCount = fullText.split(/\s+/).length;
+            let tokenInfo = countAndTruncateTokens(fullText);
+            let wordCount = tokenInfo.count;
+            
             if (wordCount > 450) {
-                console.log(`AI Context (Col ${i}): Text is ${wordCount} words (>450). Fetching background summary...`);
-                let textToSummarize = fullText;
-                if (wordCount > 3000) {
-                    console.log(`AI Context (Col ${i}): Truncating text from ${wordCount} to 3000 words before summarization.`);
-                    textToSummarize = fullText.split(/\s+/).slice(0, 3000).join(" ");
-                }
-                fetchGeminiSummary(i, textToSummarize);
+                console.log(`AI Context (Col ${i}): Text is ${wordCount} words/tokens (>450). Fetching background summary...`);
+                fetchGeminiSummary(i, fullText);
             } else {
-                console.log(`AI Context (Col ${i}): Text is ${wordCount} words (<=450). Storing full text as summary. No API call needed.`);
+                console.log(`AI Context (Col ${i}): Text is ${wordCount} words/tokens (<=450). Storing full text as summary. No API call needed.`);
                 aiSummaries[i] = fullText;
             }
             }
@@ -3933,6 +3972,12 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             async function fetchGeminiSummary(colIndex, text) {
             const apiKey = await getGeminiApiKey();
             if (!apiKey) return;
+
+            let truncatedInfo = countAndTruncateTokens(text, 3000);
+            if (truncatedInfo.text !== text) {
+                console.log(`AI Context (Col ${colIndex}): Truncating text to 3000 words/tokens before summarization.`);
+            }
+            text = truncatedInfo.text;
 
             const promptText = `Please provide a concise 150-300 word summary of the following text to serve as global context. Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers and transcription errors or incomplete chopped off text, so infer the context as best you can.\n\n**Important:** If the text is a widely known work (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;        try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
