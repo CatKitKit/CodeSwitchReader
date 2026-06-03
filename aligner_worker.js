@@ -59,8 +59,37 @@ function runBandedAlignment(sourceText, targetText) {
         '2-2': 25
     };
 
-    function getCost(sLen, tLen) {
-        return Math.abs(sLen * C - tLen);
+    function getAnchors(str) {
+        const nums = str.match(/\b\d+(?:[,.]\d+)*\b/g) || [];
+        const puncs = str.match(/[!?！？]/g) || [];
+        const quotes = str.match(/["“”«»「」『』„]/g) || [];
+        const quoteTokens = quotes.map(() => '<QUOTE>');
+        return nums.concat(puncs, quoteTokens);
+    }
+
+    const sourceAnchors = sourceSentences.map(getAnchors);
+    const targetAnchors = targetSentences.map(getAnchors);
+
+    function getCost(sLen, tLen, iArr, jArr) { 
+        let cost = Math.abs(sLen * C - tLen); 
+        
+        let sAnchors = [];
+        for (let idx of iArr) if (idx >= 0 && idx < N) sAnchors.push(...sourceAnchors[idx]);
+        
+        let tAnchors = [];
+        for (let idx of jArr) if (idx >= 0 && idx < M) tAnchors.push(...targetAnchors[idx]);
+        
+        let matchCount = 0;
+        for (let anchor of sAnchors) {
+            const tIdx = tAnchors.indexOf(anchor);
+            if (tIdx !== -1) {
+                matchCount++;
+                tAnchors.splice(tIdx, 1);
+            }
+        }
+        
+        cost -= matchCount * 100;
+        return cost;
     }
 
     let progressCounter = 0;
@@ -86,13 +115,13 @@ function runBandedAlignment(sourceText, targetText) {
             let bestPrev = null;
             let bestType = null;
 
-            const evaluate = (prevI, prevJ, type, sLen, tLen) => {
+            const evaluate = (prevI, prevJ, type, sLen, tLen, iArr, jArr) => {
                 if (prevI >= 0 && prevJ >= 0) {
                     const prevRow = dp[prevI];
                     if (prevRow && prevRow.has(prevJ)) {
                         const prevCost = prevRow.get(prevJ).cost;
                         if (prevCost !== Infinity) {
-                            const currentCost = prevCost + getCost(sLen, tLen) + penalties[type];
+                            const currentCost = prevCost + getCost(sLen, tLen, iArr, jArr) + penalties[type];
                             if (currentCost < minCost) {
                                 minCost = currentCost;
                                 bestPrev = [prevI, prevJ];
@@ -103,12 +132,12 @@ function runBandedAlignment(sourceText, targetText) {
                 }
             };
 
-            if (i >= 1 && j >= 1) evaluate(i - 1, j - 1, '1-1', sourceSentences[i - 1].length, targetSentences[j - 1].length);
-            if (i >= 1)           evaluate(i - 1, j,     '1-0', sourceSentences[i - 1].length, 0);
-            if (j >= 1)           evaluate(i,     j - 1, '0-1', 0, targetSentences[j - 1].length);
-            if (i >= 2 && j >= 1) evaluate(i - 2, j - 1, '2-1', sourceSentences[i - 1].length + sourceSentences[i - 2].length, targetSentences[j - 1].length);
-            if (i >= 1 && j >= 2) evaluate(i - 1, j - 2, '1-2', sourceSentences[i - 1].length, targetSentences[j - 1].length + targetSentences[j - 2].length);
-            if (i >= 2 && j >= 2) evaluate(i - 2, j - 2, '2-2', sourceSentences[i - 1].length + sourceSentences[i - 2].length, targetSentences[j - 1].length + targetSentences[j - 2].length);
+            if (i >= 1 && j >= 1) evaluate(i - 1, j - 1, '1-1', sourceSentences[i - 1].length, targetSentences[j - 1].length, [i-1], [j-1]);
+            if (i >= 1)           evaluate(i - 1, j,     '1-0', sourceSentences[i - 1].length, 0, [i-1], []);
+            if (j >= 1)           evaluate(i,     j - 1, '0-1', 0, targetSentences[j - 1].length, [], [j-1]);
+            if (i >= 2 && j >= 1) evaluate(i - 2, j - 1, '2-1', sourceSentences[i - 1].length + sourceSentences[i - 2].length, targetSentences[j - 1].length, [i-1, i-2], [j-1]);
+            if (i >= 1 && j >= 2) evaluate(i - 1, j - 2, '1-2', sourceSentences[i - 1].length, targetSentences[j - 1].length + targetSentences[j - 2].length, [i-1], [j-1, j-2]);
+            if (i >= 2 && j >= 2) evaluate(i - 2, j - 2, '2-2', sourceSentences[i - 1].length + sourceSentences[i - 2].length, targetSentences[j - 1].length + targetSentences[j - 2].length, [i-1, i-2], [j-1, j-2]);
 
             if (minCost !== Infinity) {
                 dp[i].set(j, { cost: minCost, prev: bestPrev, type: bestType });

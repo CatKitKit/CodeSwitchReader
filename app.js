@@ -2943,33 +2943,36 @@ function runBandedAlignment(sourceText, targetText, emitProgress, progressStart 
 
     const penalties = { '1-1': 0, '0-1': 20, '1-0': 20, '2-1': 15, '1-2': 15, '2-2': 25 };
 
-    function getNumbers(str) {
-        const matches = str.match(/\\b\\d+(?:[,.]\\d+)*\\b/g);
-        return matches ? matches : [];
+    function getAnchors(str) {
+        const nums = str.match(/\\b\\d+(?:[,.]\\d+)*\\b/g) || [];
+        const puncs = str.match(/[!?！？]/g) || [];
+        const quotes = str.match(/["“”«»「」『』„]/g) || [];
+        const quoteTokens = quotes.map(() => '<QUOTE>');
+        return nums.concat(puncs, quoteTokens);
     }
 
-    const sourceNumbers = sourceSentences.map(getNumbers);
-    const targetNumbers = targetSentences.map(getNumbers);
+    const sourceAnchors = sourceSentences.map(getAnchors);
+    const targetAnchors = targetSentences.map(getAnchors);
 
     function getCost(sLen, tLen, iArr, jArr) { 
         let cost = Math.abs(sLen * C - tLen); 
         
-        let sNums = [];
-        for (let idx of iArr) if (idx >= 0 && idx < N) sNums.push(...sourceNumbers[idx]);
+        let sAnchors = [];
+        for (let idx of iArr) if (idx >= 0 && idx < N) sAnchors.push(...sourceAnchors[idx]);
         
-        let tNums = [];
-        for (let idx of jArr) if (idx >= 0 && idx < M) tNums.push(...targetNumbers[idx]);
+        let tAnchors = [];
+        for (let idx of jArr) if (idx >= 0 && idx < M) tAnchors.push(...targetAnchors[idx]);
         
         let matchCount = 0;
-        for (let num of sNums) {
-            const tIdx = tNums.indexOf(num);
+        for (let anchor of sAnchors) {
+            const tIdx = tAnchors.indexOf(anchor);
             if (tIdx !== -1) {
                 matchCount++;
-                tNums.splice(tIdx, 1);
+                tAnchors.splice(tIdx, 1);
             }
         }
         
-        cost -= matchCount * 100; // Massive bonus for matching numbers
+        cost -= matchCount * 100; // Massive bonus for matching numbers and punctuation
         return cost;
     }
 
@@ -3513,29 +3516,32 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
 
     const penalties = { '1-1': 0, '0-1': 20, '1-0': 20, '2-1': 15, '1-2': 15, '2-2': 25 };
 
-    function getNumbers(str) {
-        const matches = str.match(/\\b\\d+(?:[,.]\\d+)*\\b/g);
-        return matches ? matches : [];
+    function getAnchors(str) {
+        const nums = str.match(/\\b\\d+(?:[,.]\\d+)*\\b/g) || [];
+        const puncs = str.match(/[!?！？]/g) || [];
+        const quotes = str.match(/["“”«»「」『』„]/g) || [];
+        const quoteTokens = quotes.map(() => '<QUOTE>');
+        return nums.concat(puncs, quoteTokens);
     }
 
-    const sourceNumbers = sourceSentences.map(getNumbers);
-    const targetNumbers = targetSentences.map(getNumbers);
+    const sourceAnchors = sourceSentences.map(getAnchors);
+    const targetAnchors = targetSentences.map(getAnchors);
 
     function getCost(sLen, tLen, iArr, jArr) { 
         let cost = Math.abs(sLen * C - tLen); 
         
-        let sNums = [];
-        for (let idx of iArr) if (idx >= 0 && idx < N) sNums.push(...sourceNumbers[idx]);
+        let sAnchors = [];
+        for (let idx of iArr) if (idx >= 0 && idx < N) sAnchors.push(...sourceAnchors[idx]);
         
-        let tNums = [];
-        for (let idx of jArr) if (idx >= 0 && idx < M) tNums.push(...targetNumbers[idx]);
+        let tAnchors = [];
+        for (let idx of jArr) if (idx >= 0 && idx < M) tAnchors.push(...targetAnchors[idx]);
         
         let matchCount = 0;
-        for (let num of sNums) {
-            const tIdx = tNums.indexOf(num);
+        for (let anchor of sAnchors) {
+            const tIdx = tAnchors.indexOf(anchor);
             if (tIdx !== -1) {
                 matchCount++;
-                tNums.splice(tIdx, 1);
+                tAnchors.splice(tIdx, 1);
             }
         }
         
@@ -3884,11 +3890,11 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
         let tokenCount = 0;
         let inWord = false;
         const cjkRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
-        
+
         for (let i = 0; i < text.length; i++) {
             let char = text[i];
             if (cjkRegex.test(char)) {
-                tokenCount++;
+                tokenCount += 0.5;
                 inWord = false;
             } else if (/\s/.test(char)) {
                 inWord = false;
@@ -3898,7 +3904,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
                     inWord = true;
                 }
             }
-            
+
             if (limit && tokenCount >= limit) {
                 return { count: tokenCount, text: text.substring(0, i + 1) + "... [TEXT TRUNCATED]" };
             }
@@ -3979,7 +3985,7 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             }
             text = truncatedInfo.text;
 
-            const promptText = `Please provide a concise 150-300 word summary of the following text to serve as global context. Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers and transcription errors or incomplete chopped off text, so infer the context as best you can.\n\n**Important:** If the text is a widely known work (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;        try {
+            const promptText = `Please provide a concise summary of the following text to serve as global context (150-300 words, or 200-400 characters if the summary is in a CJK language). Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers and transcription errors or incomplete chopped off text, so infer the context as best you can.\n\n**Important:** If the text is a widely known work (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;        try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -4294,6 +4300,7 @@ ${translationInstruction}
 2. Explain its grammatical role and meaning *specifically within the [TARGET SENTENCE]*, considering the global context. Keep the explanation concise and easy to read.
 3. Provide 3 short example sentences using "${word}" in a similar context or meaning, along with their translations (following the instruction above).
 Keep in mind that the text can be an auto caption transcipt with incorrect captioning. Infer the best that you can.
+If you do not know or are not at all confident about either the source language or ${targetLang}, set the translation field to "Unsupported Language" and explain which language you cannot handle in the explainHtml field.
 
 CRITICAL INSTRUCTION: You MUST output ONLY a single, valid JSON object. Your entire response must start with { and end with }.
 
@@ -4317,17 +4324,30 @@ Format the response exactly like this JSON object:
             if (data.candidates && data.candidates[0]) {
                 let responseText = data.candidates[0].content.parts[0].text;
                 let parsed = null;
-                
-                // Try to aggressively extract JSON in case the model added conversational filler
-                let jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    try {
-                        parsed = JSON.parse(jsonMatch[0]);
-                    } catch(e) {
-                        console.warn("Extracted JSON was invalid", e);
+
+                // Robust JSON parsing to handle LLM hallucinations (markdown, trailing commas, extra braces)
+                let cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                let startIndex = cleanText.indexOf('{');
+                let endIndex = cleanText.lastIndexOf('}');
+
+                if (startIndex !== -1 && endIndex !== -1) {
+                    let jsonStr = cleanText.substring(startIndex, endIndex + 1);
+                    // Fix trailing commas
+                    jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+
+                    while (jsonStr.length > 0) {
+                        try {
+                            parsed = JSON.parse(jsonStr);
+                            break;
+                        } catch(e) {
+                            // If it fails, drop the last closing brace and try again (fixes "}\n}" hallucination)
+                            let lastBraceIdx = jsonStr.lastIndexOf('}', jsonStr.length - 2);
+                            if (lastBraceIdx === -1) break;
+                            jsonStr = jsonStr.substring(0, lastBraceIdx + 1);
+                        }
                     }
                 }
-                
+
                 if (parsed && parsed.translation) {
                     // Valid JSON extracted
                     // Determine language for pronunciation mapping based on the track's voice
