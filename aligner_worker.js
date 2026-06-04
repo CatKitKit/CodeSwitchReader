@@ -16,13 +16,15 @@ self.onmessage = function(e) {
 };
 
 function runBandedAlignment(sourceText, targetText) {
-    // 1. Split into sentences (handling Japanese/Chinese punctuation properly)
-    // We use a regex that looks for sentence-ending punctuation.
-    const splitRegex = /(?<=[.!?。！？])\s*/;
-    
-    // Clean and split
-    const sourceSentences = sourceText.replace(/\r\n/g, '\n').split(splitRegex).filter(s => s.trim().length > 0);
-    const targetSentences = targetText.replace(/\r\n/g, '\n').split(splitRegex).filter(s => s.trim().length > 0);
+    // 1. Split into sentences (safely grouping quotes with punctuation)
+    function splitText(text) {
+        return text.replace(/\r\n/g, '\n')
+            .replace(/([.!?¡¿؟\u06D4]['"”»«」』„]?)\s+/g, "$1___SPLIT___")
+            .replace(/([。！？]['"”»«」』„]?)\s*(?![。！？.!?¡¿؟\u06D4]|['"”»«」』„]|$)/g, "$1___SPLIT___")
+            .split("___SPLIT___").map(s => s.trim()).filter(s => s.length > 0);
+    }
+    const sourceSentences = splitText(sourceText);
+    const targetSentences = splitText(targetText);
 
     const N = sourceSentences.length;
     const M = targetSentences.length;

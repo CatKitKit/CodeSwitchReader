@@ -2922,9 +2922,14 @@ self.onmessage = function(e) {
 };
 
 function runBandedAlignment(sourceText, targetText, emitProgress, progressStart = 10, progressEnd = 95) {
-    const splitRegex = /(?<=[.!?。！？])\\s*/;
-    const sourceSentences = sourceText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
-    const targetSentences = targetText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
+    function splitText(text) {
+        return text.replace(/\\r\\n/g, '\\n')
+            .replace(/([.!?¡¿؟\\u06D4]['"”»«」』„]?)\\s+/g, "$1___SPLIT___")
+            .replace(/([。！？]['"”»«」』„]?)\\s*(?![。！？.!?¡¿؟\\u06D4]|['"”»«」』„]|$)/g, "$1___SPLIT___")
+            .split("___SPLIT___").map(s => s.trim()).filter(s => s.length > 0);
+    }
+    const sourceSentences = splitText(sourceText);
+    const targetSentences = splitText(targetText);
 
     const N = sourceSentences.length;
     const M = targetSentences.length;
@@ -3416,8 +3421,13 @@ self.onmessage = function(e) {
 };
 
 function runFixedAlignment(fixedRows, targetText) {
-    const splitRegex = /(?<=[.!?。！？])\\s*/;
-    const targetSentences = targetText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
+    function splitText(text) {
+        return text.replace(/\\r\\n/g, '\\n')
+            .replace(/([.!?¡¿؟\\u06D4]['"”»«」』„]?)\\s+/g, "$1___SPLIT___")
+            .replace(/([。！？]['"”»«」』„]?)\\s*(?![。！？.!?¡¿؟\\u06D4]|['"”»«」』„]|$)/g, "$1___SPLIT___")
+            .split("___SPLIT___").map(s => s.trim()).filter(s => s.length > 0);
+    }
+    const targetSentences = splitText(targetText);
 
     const N = fixedRows.length;
     const M = targetSentences.length;
@@ -3495,9 +3505,14 @@ function runFixedAlignment(fixedRows, targetText) {
 }
 
 function runBandedAlignment(sourceText, targetText, emitProgress) {
-    const splitRegex = /(?<=[.!?。！？])\\s*/;
-    const sourceSentences = sourceText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
-    const targetSentences = targetText.replace(/\\r\\n/g, '\\n').split(splitRegex).filter(s => s.trim().length > 0);
+    function splitText(text) {
+        return text.replace(/\\r\\n/g, '\\n')
+            .replace(/([.!?¡¿؟\\u06D4]['"”»«」』„]?)\\s+/g, "$1___SPLIT___")
+            .replace(/([。！？]['"”»«」』„]?)\\s*(?![。！？.!?¡¿؟\\u06D4]|['"”»«」』„]|$)/g, "$1___SPLIT___")
+            .split("___SPLIT___").map(s => s.trim()).filter(s => s.length > 0);
+    }
+    const sourceSentences = splitText(sourceText);
+    const targetSentences = splitText(targetText);
 
     const N = sourceSentences.length;
     const M = targetSentences.length;
