@@ -450,6 +450,8 @@
           state.text = els.text.value;
       }
 
+      state.wizardFilesText = window.wizardFilesText;
+
       state.v1 = els.v1.value;
       state.v2 = els.v2.value;
       state.v3 = els.v3.value;
@@ -543,6 +545,9 @@
   }
 
   function applySettingsToUI() {
+    if (state.wizardFilesText) {
+        window.wizardFilesText = state.wizardFilesText;
+    }
     els.text.value = state.text || "";
     initGridFromState();
     initVerticalFromState();
@@ -3968,14 +3973,13 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             aiTexts[i] = fullText;
             aiSummaries[i] = null; // Reset summary since text changed
             
-            let tokenInfo = countAndTruncateTokens(fullText);
-            let wordCount = tokenInfo.count;
-            
-            if (wordCount > 450) {
-                console.log(`AI Context (Col ${i}): Text is ${wordCount} words/tokens (>450). Fetching background summary...`);
+            // Threshold: Summarize if > 1200 Latin chars or > 600 CJK chars
+            let info = countAndTruncateCharacters(fullText, 1200, 600);
+            if (info.text.includes("[TEXT TRUNCATED]")) { 
+                console.log(`AI Context (Col ${i}): Text exceeded limits (>1200 Latin / >600 CJK). Fetching background summary...`);
                 fetchGeminiSummary(i, fullText);
             } else {
-                console.log(`AI Context (Col ${i}): Text is ${wordCount} words/tokens (<=450). Storing full text as summary. No API call needed.`);
+                console.log(`AI Context (Col ${i}): Text within limits. Storing full text as summary. No API call needed.`);
                 aiSummaries[i] = fullText;
             }
             }
@@ -3994,13 +3998,20 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             const apiKey = await getGeminiApiKey();
             if (!apiKey) return;
 
-            let truncatedInfo = countAndTruncateTokens(text, 3000);
+            // Truncate before sending to AI: Max 16000 Latin or 8000 CJK
+            let truncatedInfo = countAndTruncateCharacters(text, 16000, 8000);
             if (truncatedInfo.text !== text) {
-                console.log(`AI Context (Col ${colIndex}): Truncating text to 3000 words/tokens before summarization.`);
+                console.log(`AI Context (Col ${colIndex}): Truncating text to character limits before summarization.`);
             }
             text = truncatedInfo.text;
 
-            const promptText = `Please provide a concise summary of the following text to serve as global context (150-300 words, or 200-400 characters if the summary is in a CJK language). Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers and transcription errors or incomplete chopped off text, so infer the context as best you can.\n\n**Important:** If the text is a widely known work (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;        try {
+            let promptText = "";
+            if (text.includes("[TEXT TRUNCATED]")) {
+                const charLimitStr = truncatedInfo.isCJK ? "8000 CJK characters" : "16000 characters";
+                promptText = `You have been provided a unfinished truncated piece of text, containing the first ${charLimitStr}. Please provide a concise summary of the following text to serve as global context, up to 150-300 words, or 200-400 characters for CJK languages. Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers, errors, or unfinished stories, so infer the context as best you can.\n\n**Important:** If the text is a widely known work within our training data (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;
+            } else {
+                promptText = `Please provide a concise summary of the following text to serve as global context. IMPORTANT: Scale the length of your summary based on the length of the provided text. For shorter texts, 1-3 sentences are enough. For very long texts, provide a more detailed summary (up to 150-300 words, or 200-400 characters for CJK languages). Do not include any pleasantries or conversational filler; output only the summary. Keep in mind this may be an auto-generated transcript with multiple speakers and transcription errors, so infer the context as best you can.\n\n**Important:** If the text is a widely known work (e.g., a famous book, transcript, or lecture), skip the summary and simply identify it. (e.g., 'This is the book Lord of the Rings' or 'This is the XYZ lecture from TED-Ed').\n\nText:\n${text}`;
+            }        try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -4268,54 +4279,98 @@ function runBandedAlignment(sourceText, targetText, emitProgress) {
             switchAiTab('explain');
 
             let localSentences = [];
-        
-        let isFullTextSummary = (aiSummaries[trackIdx] && aiTexts[trackIdx] && aiSummaries[trackIdx] === aiTexts[trackIdx]);
-        let summaryText = aiSummaries[trackIdx] || "(No background summary available. Please infer from local context only.)";
-        let localContextStr = "";
 
-        if (currentIndex !== -1) {
-            if (isFullTextSummary) {
-                // If the summary is the full text, inject the marker directly and skip the redundant local context block
-                let fullTextWithMarker = [];
-                for (let i = 0; i < trackSegments.length; i++) {
-                    let prefix = (i === currentIndex) ? ">>[TARGET SENTENCE]<< " : "";
-                    fullTextWithMarker.push(prefix + trackSegments[i].text);
+            let isFullTextSummary = (aiSummaries[trackIdx] && aiTexts[trackIdx] && aiSummaries[trackIdx] === aiTexts[trackIdx]);
+            let hasSummary = !!aiSummaries[trackIdx];
+            let summaryText = aiSummaries[trackIdx] || "(No background summary available. Please infer from local context only.)";
+            let localContextStr = "";
+
+            if (currentIndex !== -1) {
+                if (isFullTextSummary) {
+                    // If the summary is the full text, inject the marker directly and skip the redundant local context block
+                    let fullTextWithMarker = [];
+                    for (let i = 0; i < trackSegments.length; i++) {
+                        let prefix = (i === currentIndex) ? ">>[TARGET SENTENCE]<< " : "";
+                        fullTextWithMarker.push(prefix + trackSegments[i].text);
+                    }
+                    summaryText = fullTextWithMarker.join(" ");
+                } else {
+                    let getSegText = (idx) => trackSegments[idx]?.text || "";
+                    let targetText = getSegText(currentIndex);
+
+                    const isCJK = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/.test(targetText);
+                    let totalBudget = 500;
+                    if (hasSummary) {
+                        totalBudget = isCJK ? 100 : 200;
+                    } else {
+                        totalBudget = isCJK ? 250 : 500;
+                    }
+
+                    let halfBudget = Math.floor(totalBudget / 2);
+
+                    let beforeSentences = [];
+                    let beforeLen = 0;
+                    let beforeIdx = currentIndex - 1;
+                    while (beforeIdx >= 0 && beforeLen < halfBudget) {
+                        let text = getSegText(beforeIdx);
+                        if (text) {
+                            beforeSentences.unshift(text);
+                            beforeLen += text.length;
+                        }
+                        beforeIdx--;
+                    }
+
+                    let afterBudget = totalBudget - beforeLen;
+                    let afterSentences = [];
+                    let afterLen = 0;
+                    let afterIdx = currentIndex + 1;
+                    while (afterIdx < trackSegments.length && afterLen < afterBudget) {
+                        let text = getSegText(afterIdx);
+                        if (text) {
+                            afterSentences.push(text);
+                            afterLen += text.length;
+                        }
+                        afterIdx++;
+                    }
+
+                    if (afterLen < afterBudget && beforeIdx >= 0) {
+                        let remainingBudget = afterBudget - afterLen;
+                        let extraBeforeLen = 0;
+                        while (beforeIdx >= 0 && extraBeforeLen < remainingBudget) {
+                            let text = getSegText(beforeIdx);
+                            if (text) {
+                                beforeSentences.unshift(text);
+                                extraBeforeLen += text.length;
+                            }
+                            beforeIdx--;
+                        }
+                    }
+
+                    localSentences = [...beforeSentences, ">>[TARGET SENTENCE]<< " + targetText, ...afterSentences];
+                    localContextStr = `### Local Context (~${totalBudget} characters):\n${localSentences.join("\n")}\n\n`;
                 }
-                summaryText = fullTextWithMarker.join(" ");
-            } else {
-                // Regular 7-sentence zoom window
-                let start = currentIndex - 3;
-                let end = currentIndex + 3;
-                
-                // Shift the 7-sentence window if we hit the beginning or end of the text
-                if (start < 0) { end += Math.abs(start); start = 0; }
-                if (end > trackSegments.length - 1) { start -= (end - (trackSegments.length - 1)); end = trackSegments.length - 1; }
-                start = Math.max(0, start); // Failsafe if total text is less than 7 sentences
-                
-                for (let i = start; i <= end; i++) {
-                    let prefix = (i === currentIndex) ? ">>[TARGET SENTENCE]<< " : "";
-                    localSentences.push(prefix + trackSegments[i].text);
-                }
-                localContextStr = `### Local Context (Up to 7 sentences):\n${localSentences.join("\n")}\n\n`;
             }
-        }
         
         const targetLang = localStorage.getItem("aiLanguage") || "English";
-        const translationInstruction = `Provide all explanations and example translations in ${targetLang}. If the source language and ${targetLang} are the same, provide explanations in simpler ${targetLang} acting as a monoligual dictionary and skip the translations.`;
+
+        const seg = trackSegments[currentIndex];
+        const sourceLangCode = (seg && seg.voiceIndex !== undefined && voices[seg.voiceIndex]) ? voices[seg.voiceIndex].lang : "Unknown";
+
+        const translationInstruction = `Provide all explanations and translations in ${targetLang}. If the source language (${sourceLangCode}) and ${targetLang} are the same, provide explanations in simpler ${targetLang} acting as a monoligual dictionary and skip the translations.`;
 
         const prompt = `You are a helpful language learning assistant.
-The user clicked on the word/phrase: "${word}".
+The user clicked on the word/phrase: "${word}" (Source Language: ${sourceLangCode}).
 
-### Global Story Summary:
+### Global Text Summary:
 ${summaryText}
 
 ${localContextStr}### Task:
 ${translationInstruction}
 1. Provide a brief, literal meaning of "${word}".
-2. Explain its grammatical role and meaning *specifically within the [TARGET SENTENCE]*, considering the global context. Keep the explanation concise and easy to read.
-3. Provide 3 short example sentences using "${word}" in a similar context or meaning, along with their translations (following the instruction above).
+2. Explain in ${targetLang}(user's native language) its grammatical role and meaning *specifically within the [TARGET SENTENCE]*, considering the global context. Keep the explanation concise and easy to read.
+3. Provide 3 short example sentences in ${sourceLangCode} using "${word}" in a similar context or meaning, along with their translations in ${targetLang} (following the instruction above).
 Keep in mind that the text can be an auto caption transcipt with incorrect captioning. Infer the best that you can.
-If you do not know or are not at all confident about either the source language or ${targetLang}, set the translation field to "Unsupported Language" and explain which language you cannot handle in the explainHtml field.
+If you do not know or are not confident about either ${sourceLangCode} or ${targetLang}, set the translation field to "Unsupported Language" and explain which language you cannot handle in the explainHtml field: 'This model can not handle [language you can't support]'.
 
 CRITICAL INSTRUCTION: You MUST output ONLY a single, valid JSON object. Your entire response must start with { and end with }.
 
